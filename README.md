@@ -1,4 +1,4 @@
-[![Picard.js Logo](https://raw.githubusercontent.com/picardjs/docs/main/assets/picard-logo.png =128x128)](https://picard.js.org)
+[![Picard.js Logo](https://raw.githubusercontent.com/picardjs/docs/main/assets/picard-logo.png)](https://picard.js.org)
 
 # Picard.js
 

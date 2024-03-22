@@ -1,0 +1,23 @@
+# Exclude compiled files
+dist
+__generated__
+
+# OS files
+.DS_STORE
+
+# npm files
+node_modules
+yarn.lock
+*.log
+
+# Editor files
+.idea
+.vscode
+.vs
+*.sublime-project
+*.sublime-workspace
+
+coverage
+.cache
+.nyc_output
+

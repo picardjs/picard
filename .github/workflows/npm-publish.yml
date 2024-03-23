@@ -1,1 +1,82 @@
-name: npm-publish
+name: npm Publish
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install Dependencies
+        run: npm install
+      - name: Verify Build
+        run: npm run build
+
+  pre_release:
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    if: ${{ github.ref == 'refs/heads/develop' && github.event_name == 'push' }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install Dependencies
+        run: npm install
+      - name: Make Pre-Version
+        run: npm version $(node -e "console.log(require('./package.json').version)")-pre.${{ github.run_number }} --no-git-tag-version
+      - name: Build Package
+        run: npm run build
+      - name: Publish Package
+        run: npm publish --tag next
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+  release:
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install Dependencies
+        run: npm install
+      - name: Build Package
+        run: npm run build
+      - name: Publish Package
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+      - name: Create tag for release
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/v${require(require('path').resolve(process.env.GITHUB_WORKSPACE, 'package.json')).version}`,
+              sha: context.sha
+            })

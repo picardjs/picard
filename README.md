@@ -9,6 +9,14 @@
 
 The next generation of micro frontend orchestrators.
 
+> A micro frontend *orchestrator* is a library that helps you loading, mounting, and unmounting micro frontends incl. their exposed functionality such as components.
+
+## Getting Started
+
+(tbd)
+
+## Further Information
+
 👉 For more information visit the [documentation](https://picardjs.github.io).
 
 ## License

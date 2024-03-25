@@ -1,14 +1,73 @@
 {
   "name": "picard-js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A next generation micro frontend orchestrator.",
-  "main": "dist/index.js",
+  "keywords": [
+    "modules",
+    "siteless",
+    "serverless",
+    "microfrontend",
+    "microfrontends",
+    "microapps",
+    "modulith",
+    "webapps",
+    "spa",
+    "islands",
+    "orchestrator"
+  ],
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --outdir=dist"
+    "build": "node tools/build-all.mjs",
+    "build:server": "node tools/build.mjs server",
+    "build:client": "node tools/build.mjs client",
+    "build:native": "node tools/build.mjs native"
   },
+  "author": "smapiot",
+  "homepage": "https://picard.js.org",
+  "license": "MIT",
+  "module": "dist/server/picard.mjs",
+  "main": "dist/server/picard.js",
+  "typings": "dist/server/picard.d.ts",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/smapiot"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/picardjs/picard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/picardjs/picard/issues"
+  },
+  "exports": {
+    ".": {
+      "node": "./dist/server/picard.js",
+      "require": "./dist/server/picard.js",
+      "browser": "./dist/client/picard.js",
+      "import": "./dist/client/picard.mjs",
+      "types": "./dist/server/picard.d.ts"
+    },
+    "./package.json": "./package.json",
+    "./server": {
+      "require": "./dist/server/picard.js",
+      "import": "./dist/server/picard.mjs",
+      "types": "./dist/server/picard.d.ts"
+    },
+    "./client": {
+      "require": "./dist/client/picard.js",
+      "import": "./dist/client/picard.mjs",
+      "types": "./dist/client/picard.d.ts"
+    },
+    "./native": {
+      "require": "./dist/native/picard.js",
+      "import": "./dist/native/picard.mjs",
+      "types": "./dist/native/picard.d.ts"
+    }
+  },
+  "sideEffects": false,
   "devDependencies": {
     "esbuild": "0.20.2",
     "prettier": "3.2.5",
-    "typescript": "5.4.3"
+    "typescript": "5.4.3",
+    "zustand": "4.5.2"
   }
 }

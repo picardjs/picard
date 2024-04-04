@@ -65,6 +65,7 @@
   },
   "sideEffects": false,
   "devDependencies": {
+    "dets": "0.15.0",
     "esbuild": "0.20.2",
     "prettier": "3.2.5",
     "typescript": "5.4.3",

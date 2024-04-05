@@ -65,10 +65,12 @@
   },
   "sideEffects": false,
   "devDependencies": {
+    "@types/systemjs": "6.13.5",
     "dets": "0.15.0",
     "esbuild": "0.20.2",
     "prettier": "3.2.5",
     "typescript": "5.4.3",
+    "systemjs": "6.14.3",
     "zustand": "4.5.2"
   }
 }

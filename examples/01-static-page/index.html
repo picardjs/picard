@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Picard.js Static Page Example</title>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 <script src="./picard.js"></script>
 </head>
 <body>
   <div class="jumbotron text-center">
     <h1>Hello World!</h1>
     <p>This page contains some fragments from micro frontends!</p> 
-    </div>
+  </div>
     
-    <div class="container">
+  <div class="container">
     <div class="row">
       <div class="col-sm-4">
         <h3>Static Column 1</h3>
@@ -21,11 +21,14 @@
         <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...</p>
       </div>
       <div class="col-sm-4">
-        <pi-component name="column" source="https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/mf-simple-html"></pi-component>
+        <pi-component name="column" source="mf:simplehtml@https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js"></pi-component>
       </div>
       <div class="col-sm-4">
-        <pi-component name="column" source="https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/nfsimplehtml"></pi-component>
+        <pi-component name="column" source="nf:https://assets.piral.cloud/pilets/picard-demos/nfsimplehtml/1.0.0/remoteEntry.json"></pi-component>
       </div>
+    </div>
+    <div class="d-flex p-2 justify-content-center">
+      <pi-component name="counter" source="https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.meta.json"></pi-component>
     </div>
   </div>
 </body>

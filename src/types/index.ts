@@ -11,9 +11,14 @@ export interface PiletEntry {
   dependencies?: Record<string, string>;
 }
 
-export interface ModuleFederationEntry {}
+export interface ModuleFederationEntry {
+  id: string;
+  url: string;
+}
 
-export interface NativeFederationEntry {}
+export interface NativeFederationEntry {
+  url: string;
+}
 
 export interface BasePicardMicrofrontend {
   name: string;

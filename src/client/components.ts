@@ -98,6 +98,7 @@ export function createCustomElements(options: CustomElementsOptions = defaultOpt
   class PiComponent extends HTMLElement {
     private _lc: ComponentLifecycle | undefined;
     private _data: any;
+    private _queue: Promise<any> | undefined;
 
     get data() {
       return this._data;
@@ -108,34 +109,38 @@ export function createCustomElements(options: CustomElementsOptions = defaultOpt
       this.rerender();
     }
 
-    connectedCallback() {
-      this.bootstrap();
-      const lc = this._lc;
+    enqueue(cb: () => void | Promise<void>) {
+      this._queue = this._queue?.then(() => {
+        if (this.isConnected) {
+          return cb();
+        }
+      });
+    }
 
-      if (lc) {
-        const data = this._data || JSON.parse(this.getAttribute('data') || '{}');
-        lc.mount(this, data);
-      }
+    connectedCallback() {
+      this._queue = Promise.resolve();
+      this.bootstrap();
+
+      this.enqueue(() => {
+        const lc = this._lc;
+
+        if (lc) {
+          const data = this._data || JSON.parse(this.getAttribute('data') || '{}');
+          lc.mount(this, data);
+        }
+      });
     }
 
     disconnectedCallback() {
-      const lc = this._lc;
-
-      if (lc) {
-        // just make sure to remove everything
-        lc.unmount(this);
-        this._lc = undefined;
-      }
-
+      // just make sure to remove everything
+      this._lc?.unmount(this);
+      this._lc = undefined;
+      this._queue = undefined;
       this.innerHTML = '';
     }
 
     rerender() {
-      const lc = this._lc;
-
-      if (lc) {
-        lc.update(this._data);
-      }
+      this.enqueue(() => this._lc?.update(this._data));
     }
 
     bootstrap() {
@@ -148,11 +153,15 @@ export function createCustomElements(options: CustomElementsOptions = defaultOpt
         const source = this.getAttribute('source') || undefined;
         this._lc = render({ name, source });
       }
+
+      this.enqueue(() => this._lc?.bootstrap());
     }
 
-    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-      if (name === 'data') {
-        this.data = JSON.parse(newValue || '{}');
+    attributeChangedCallback(name: string, _prev: string, value: string) {
+      if (!this._queue) {
+        // do nothing
+      } else if (name === 'data') {
+        this.data = JSON.parse(value || '{}');
       } else if (name === 'cid' || name === 'name' || name === 'source') {
         this.disconnectedCallback();
         this.connectedCallback();

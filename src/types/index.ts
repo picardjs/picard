@@ -1,3 +1,5 @@
+import type { StoreApi } from 'zustand/vanilla';
+
 export interface PiletEntry {
   name?: string;
   version?: string;
@@ -8,6 +10,50 @@ export interface PiletEntry {
   config?: Record<string, any>;
   dependencies?: Record<string, string>;
 }
+
+export interface ModuleFederationEntry {}
+
+export interface NativeFederationEntry {}
+
+export interface BasePicardMicrofrontend {
+  name: string;
+  components: Record<string, string>;
+  source: string;
+}
+
+export interface PiletPicardMicrofrontend extends BasePicardMicrofrontend {
+  kind: 'pilet';
+  details: PiletEntry;
+}
+
+export interface ModuleFederationPicardMicrofrontend extends BasePicardMicrofrontend {
+  kind: 'mf';
+  details: ModuleFederationEntry;
+}
+
+export interface NativeFederationPicardMicrofrontend extends BasePicardMicrofrontend {
+  kind: 'nf';
+  details: NativeFederationEntry;
+}
+
+export type PicardMicrofrontend =
+  | PiletPicardMicrofrontend
+  | ModuleFederationPicardMicrofrontend
+  | NativeFederationPicardMicrofrontend;
+
+export interface PicardComponent {
+  id: string;
+  name: string;
+  origin: PicardMicrofrontend;
+  render: ComponentLifecycle;
+};
+
+export interface PicardState {
+  microfrontends: Array<PicardMicrofrontend>;
+  components: Record<string, Array<PicardComponent>>;
+}
+
+export type PicardStore = StoreApi<PicardState>;
 
 export interface DiscoveryResponse {
   microFrontends: {
@@ -25,7 +71,17 @@ export interface MicroFrontendDefinition {
   extras?: any;
 }
 
+export type ComponentRef =
+  | string
+  | {
+      name: string;
+      source?: string;
+    };
+
 export interface ComponentLifecycle {
+  bootstrap(): Promise<void>;
+  unload(): Promise<void>;
+
   mount(container: HTMLElement, params: any): void;
   unmount(container: HTMLElement): void;
   update(params: any): void;

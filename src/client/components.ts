@@ -1,10 +1,11 @@
-import type { ComponentLifecycle } from '../types';
+import { empty } from './empty';
+import type { ComponentLifecycle, ComponentRef } from '../types';
 
 export interface CustomElementsOptions {
   componentName?: string;
   slotName?: string;
   loadFragment?(name: string, parameters: any): Promise<string>;
-  render?(component: string): ComponentLifecycle;
+  render?(component: ComponentRef): ComponentLifecycle;
 }
 
 const defaultOptions: Required<CustomElementsOptions> = {
@@ -14,11 +15,7 @@ const defaultOptions: Required<CustomElementsOptions> = {
     return Promise.resolve('');
   },
   render() {
-    return {
-      mount() {},
-      unmount() {},
-      update() {},
-    };
+    return empty;
   },
 };
 
@@ -112,13 +109,12 @@ export function createCustomElements(options: CustomElementsOptions = defaultOpt
     }
 
     connectedCallback() {
-      const componentId = this.getAttribute('cid');
+      this.bootstrap();
+      const lc = this._lc;
 
-      if (componentId) {
+      if (lc) {
         const data = this._data || JSON.parse(this.getAttribute('data') || '{}');
-        const lc = render(componentId);
         lc.mount(this, data);
-        this._lc = lc;
       }
     }
 
@@ -142,15 +138,29 @@ export function createCustomElements(options: CustomElementsOptions = defaultOpt
       }
     }
 
+    bootstrap() {
+      const componentId = this.getAttribute('cid');
+      const name = this.getAttribute('name');
+
+      if (componentId) {
+        this._lc = render(componentId);
+      } else if (name) {
+        const source = this.getAttribute('source') || undefined;
+        this._lc = render({ name, source });
+      }
+    }
+
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
       if (name === 'data') {
         this.data = JSON.parse(newValue || '{}');
-      } else if (name === 'cid') {
+      } else if (name === 'cid' || name === 'name' || name === 'source') {
+        this.disconnectedCallback();
+        this.connectedCallback();
       }
     }
 
     static get observedAttributes() {
-      return ['cid', 'data'];
+      return ['cid', 'data', 'name', 'source'];
     }
   }
 

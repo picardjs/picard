@@ -21,4 +21,5 @@ await Promise.all([
   copyFile(resolve(dstdir, 'browser', 'picard.js'), resolve(exsdir, '01-static-page', 'picard.js')),
   copyFile(resolve(dstdir, 'browser', 'picard.js'), resolve(exsdir, '02-static-page-feed', 'picard.js')),
   copyFile(resolve(dstdir, 'browser', 'picard.js'), resolve(exsdir, '03-static-page-slots', 'picard.js')),
+  copyFile(resolve(dstdir, 'browser', 'picard.js'), resolve(exsdir, '04-static-page-initial-state', 'picard.js')),
 ]);

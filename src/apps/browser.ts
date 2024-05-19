@@ -1,3 +1,4 @@
+import { PicardStore } from '../types';
 import { initializePicard } from './client';
 
 const script = document.currentScript;
@@ -13,13 +14,23 @@ function deserializeState() {
   return {};
 }
 
+declare global {
+  interface Window {
+    /**
+     * Gets access to the Picard.js API.
+     */
+    picard: PicardStore;
+  }
+}
+
 const runPicard = () => {
   const feed = script?.getAttribute('feed') || undefined;
   const state = deserializeState();
-  initializePicard({
+  const scope = initializePicard({
     feed,
     state,
   });
+  window.picard = scope;
 };
 
 if (document.readyState === 'loading') {

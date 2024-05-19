@@ -36,4 +36,5 @@ export function initializePicard(options?: PicardOptions) {
     events,
   });
   createRouter();
+  return scope;
 }

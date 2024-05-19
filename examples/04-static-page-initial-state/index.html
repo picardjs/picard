@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Picard.js Static Page incl. Slots Filled from Feed</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script type="pi-state">
+  {
+    "microfrontends": [
+      {
+        "components": {},
+        "details": {
+          "id": "simplehtml",
+          "url": "https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js"
+        },
+        "kind": "mf",
+        "name": "mf-simple-html",
+        "source": "mf:https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js"
+      },
+      {
+        "components": {},
+        "details": {
+          "url": "https://assets.piral.cloud/pilets/picard-demos/nfsimplehtml/1.0.0/remoteEntry.json",
+          "exposes": [
+            {
+              "key": "./column",
+              "outFileName": "column-GYWVDTPB.js"
+            }
+          ]
+        },
+        "kind": "nf",
+        "name": "nfsimplehtml",
+        "source": "nf:https://assets.piral.cloud/pilets/picard-demos/nfsimplehtml/1.0.0/remoteEntry.json"
+      },
+      {
+        "components": {},
+        "details": {
+          "name": "pi-simple-html",
+          "url": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js",
+          "link": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js"
+        },
+        "kind": "pilet",
+        "name": "pi-simple-html",
+        "source": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js"
+      }
+    ]
+  }
+</script>
+<script src="./picard.js"></script>
+</head>
+<body>
+  <div class="jumbotron text-center">
+    <h1>Hello World!</h1>
+    <p>This page contains some fragments from micro frontends!</p> 
+  </div>
+    
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-4">
+        <h3>Static Column 1</h3>
+        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit...</p>
+        <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...</p>
+      </div>
+      <pi-slot name="column" item-template-id="column-template"></pi-slot>
+    </div>
+    <div class="d-flex p-2 justify-content-center">
+      <pi-slot name="counter"></pi-slot>
+    </div>
+  </div>
+
+  <template id="column-template">
+    <div class="col-sm-4">
+      <slot></slot>
+    </div>
+  </template>
+</body>
+</html>

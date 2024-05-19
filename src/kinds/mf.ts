@@ -1,24 +1,6 @@
 import { loadScript, registerModule } from './utils';
-
-interface ModuleFederationFactory {
-  (): any;
-}
-
-interface ModuleFederationFactoryScope {
-  [depName: string]: {
-    [depVersion: string]: {
-      from: string;
-      eager: boolean;
-      loaded?: number;
-      get(): Promise<ModuleFederationFactory>;
-    };
-  };
-}
-
-interface ModuleFederationContainer {
-  init(scope: ModuleFederationFactoryScope): void;
-  get(path: string): Promise<ModuleFederationFactory>;
-}
+import { retrieveComponent, registerComponent, updateDetails } from '../state';
+import type { ModuleFederationContainer, ModuleFederationPicardMicrofrontend, ModuleFederationFactoryScope, PicardStore } from '../types';
 
 const appShell = 'app';
 
@@ -71,11 +53,40 @@ function loadFactory(name: string) {
 
 /**
  * Loads the micro frontend from module federation.
- * @param url The URL leading to the remote entry.
- * @param name The name of the container.
+ * @param entry The module federation entry to fully load.
  * @returns The factory to retrieve exposed components.
  */
-export async function withModuleFederation(url: string, name: string) {
-  await loadScript(url);
-  return loadFactory(name);
+export async function withModuleFederation(mf: ModuleFederationPicardMicrofrontend, scope: PicardStore) {
+  const entry = {
+    ...mf.details,
+  };
+
+  if (!entry.container) {
+    await loadScript(entry.url);
+    const container = loadFactory(entry.id);
+    entry.container = {
+      async load(name) {
+        const id = mf.components[name];
+
+        if (id) {
+          return retrieveComponent(scope, id)?.render;
+        }
+
+        try {
+          const factory = await container.get(name);
+          const component = factory();
+          const lifecycle = component.default || component;
+          registerComponent(scope, mf, name, lifecycle);
+          return lifecycle;
+        } catch {
+          mf.components[name] = 'void';
+          return undefined;
+        }
+      },
+    };
+
+    updateDetails(scope, mf, entry);
+  }
+
+  return entry.container;
 }

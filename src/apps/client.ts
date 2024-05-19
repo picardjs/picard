@@ -1,28 +1,39 @@
 import { createPicardScope } from '../state';
 import { createLoader } from '../loader';
-import { createCustomElements } from '../client/components';
+import { createFeed } from '../client/feed';
+import { createElements } from '../client/elements';
+import { createFragments } from '../client/fragments';
 import { createListener } from '../client/events';
 import { createRenderer } from '../client/render';
 import { createRouter } from '../client/router';
-import { DiscoveryResponse, PiletEntry } from '../types';
+import type { FeedDefinition } from '../types';
 
 export interface PicardOptions {
   componentName?: string;
+  fragmentUrl?: string;
   slotName?: string;
-  feed?: string | (() => Promise<Array<PiletEntry> | DiscoveryResponse>);
+  feed?: FeedDefinition;
   state?: any;
 }
 
 export function initializePicard(options?: PicardOptions) {
-  const { feed, state, componentName, slotName } = options || {};
-  const scope = createPicardScope(state);
+  const { feed, state, componentName, slotName, fragmentUrl } = options || {};
   const events = createListener();
-  const render = createRenderer(scope);
+  const scope = createPicardScope(state, events);
+  const queue = createFeed(feed, scope);
+  const { render, collect } = createRenderer(queue, scope);
+  const loadFragment = createFragments({
+    componentName,
+    fragmentUrl,
+    collect,
+  });
   createLoader();
-  createCustomElements({
+  createElements({
     render,
     componentName,
+    loadFragment,
     slotName,
+    events,
   });
   createRouter();
 }

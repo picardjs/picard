@@ -1,51 +1,49 @@
-import { empty } from './empty';
+import { emptyLifecycle } from './empty';
+import { retrieveComponent } from '../state';
 import { withPilet } from '../kinds/pi';
 import { withModuleFederation } from '../kinds/mf';
 import { withNativeFederation } from '../kinds/nf';
-import type { ComponentRef, ComponentLifecycle, PicardStore, PicardComponent, PicardMicrofrontend } from '../types';
+import type { ComponentRef, ComponentLifecycle, PicardStore, PicardComponent, PicardMicrofrontend, LoadingQueue } from '../types';
 
 function getLifecycle(component: PicardComponent): ComponentLifecycle {
-  return component?.render || empty;
+  return component?.render || emptyLifecycle;
 }
 
-function getComponent(state: PicardStore, name: string): ComponentLifecycle {
-  const c = state.getState().components[name];
+function getComponents(scope: PicardStore, name: string): Array<PicardComponent> {
+  return scope.getState().components[name] || [];
+}
 
-  if (Array.isArray(c)) {
-    return getLifecycle(c[0]);
+function getComponentLifecycle(scope: PicardStore, name: string): ComponentLifecycle {
+  const [component] = getComponents(scope, name);
+  return getLifecycle(component);
+}
+
+async function loadMicrofrontend(scope: PicardStore, mf: PicardMicrofrontend) {
+  switch (mf.kind) {
+    case 'mf': {
+      const container = await withModuleFederation(mf, scope);
+      return container;
+    }
+    case 'nf': {
+      const container = await withNativeFederation(mf, scope);
+      return container;
+    }
+    default: {
+      const container = await withPilet(mf, scope);
+      return container;
+    }
   }
-
-  return empty;
 }
 
-function createDynamicComponent(state: PicardStore, mf: PicardMicrofrontend, name: string): ComponentLifecycle {
+function createDynamicComponent(scope: PicardStore, mf: PicardMicrofrontend, name: string): ComponentLifecycle {
   const impl = {
-    ...empty,
+    ...emptyLifecycle,
   };
   return {
     async bootstrap(...args) {
-      switch (mf.kind) {
-        case 'mf': {
-          const container = await withModuleFederation(mf.details.url, mf.details.id);
-          const factory = await container.get(name);
-          const component = factory();
-          Object.assign(impl, component.default || component);
-          break;
-        }
-        case 'nf': {
-          const container = await withNativeFederation(mf.details.url);
-          const component = await container.get(name);
-          Object.assign(impl, component.default || component);
-          break;
-        }
-        default: {
-          const container = await withPilet(mf.source);
-          const component = container.get(name);
-          Object.assign(impl, component);
-          break;
-        }
-      }
-
+      const container = await loadMicrofrontend(scope, mf);
+      const component = await container.load(name);
+      Object.assign(impl, component);
       return await impl.bootstrap(...args);
     },
     mount(...args) {
@@ -63,19 +61,21 @@ function createDynamicComponent(state: PicardStore, mf: PicardMicrofrontend, nam
   };
 }
 
-function getComponentFrom(state: PicardStore, mf: PicardMicrofrontend, name: string): ComponentLifecycle {
+function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: string): ComponentLifecycle {
   const cid = mf.components[name];
 
   if (cid) {
     // component already loaded; let's use it
-    return getComponent(state, cid);
+    return retrieveComponent(scope, cid)?.render || emptyLifecycle;
   }
 
-  return createDynamicComponent(state, mf, name);
+  // component unknown; let's create it
+  return createDynamicComponent(scope, mf, name);
 }
 
-function findMicrofrontend(state: PicardStore, source: string) {
-  return state.getState().microfrontends.find((m) => m.source === source);
+function findMicrofrontend(state: PicardStore, full: boolean, source: string) {
+  const selector = full ? 'source' : 'name';
+  return state.getState().microfrontends.find((m) => m[selector] === source);
 }
 
 function createMicrofrontend(source: string): PicardMicrofrontend {
@@ -108,39 +108,56 @@ function createMicrofrontend(source: string): PicardMicrofrontend {
     return {
       kind: 'pilet',
       name: source,
-      details: {} as any,
+      details: {
+        url: source,
+      },
       source,
       components: {},
     };
   }
 }
 
-export function createRenderer(state: PicardStore) {
-  return (component: ComponentRef): ComponentLifecycle => {
-    if (typeof component === 'string') {
-      // look up if we have this component via its ID.
-      return getComponent(state, component);
-    } else if (typeof component.source === 'string') {
-      // do we have the source? otherwise load it.
-      const source = component.source;
-      const existing = findMicrofrontend(state, source);
+export function createRenderer(queue: LoadingQueue, scope: PicardStore) {
+  return {
+    collect(name: string) {
+      return queue.enqueue(async () => {
+        const { microfrontends } = scope.getState();
+        await Promise.all(microfrontends.map((mf) => loadMicrofrontend(scope, mf).then((m) => m.load(name))));
+        const components = getComponents(scope, name);
+        return components.map((m) => m.id);
+      });
+    },
+    render(component: ComponentRef) {
+      if (typeof component === 'string') {
+        // look up if we have this component via its ID.
+        return retrieveComponent(scope, component)?.render || emptyLifecycle;
+      } else if (typeof component.source === 'string') {
+        // do we have the source? otherwise load it.
+        const source = component.source;
+        const full =
+          source.startsWith('mf:') ||
+          source.startsWith('nf:') ||
+          source.startsWith('http:') ||
+          source.startsWith('https:');
+        const existing = findMicrofrontend(scope, full, source);
 
-      if (!existing) {
-        const mf = createMicrofrontend(source);
-        state.setState((state) => ({
-          ...state,
-          microfrontends: [...state.microfrontends, mf],
-        }));
-        return getComponentFrom(state, mf, component.name);
+        if (existing) {
+          return getComponentFrom(scope, existing, component.name);
+        } else if (full) {
+          const mf = createMicrofrontend(source);
+          scope.setState((state) => ({
+            ...state,
+            microfrontends: [...state.microfrontends, mf],
+          }));
+          return getComponentFrom(scope, mf, component.name);
+        }
+      } else if (typeof component.name === 'string') {
+        // look up if we have this component via its name / take first.
+        return getComponentLifecycle(scope, component.name);
       }
 
-      return getComponentFrom(state, existing, component.name);
-    } else if (typeof component.name === 'string') {
-      // look up if we have this component via its name / take first.
-      return getComponent(state, component.name);
-    }
-
-    // Fallback; render nothing
-    return empty;
+      // Fallback; render nothing
+      return emptyLifecycle;
+    },
   };
 }

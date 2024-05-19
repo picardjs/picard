@@ -1,5 +1,6 @@
+import { registerComponent, retrieveComponent, updateDetails } from '../state';
 import { loadJson, loadModule, registerDependencyUrls } from './utils';
-import type { ComponentLifecycle } from '../types';
+import type { ComponentLifecycle, PicardStore, PiletPicardMicrofrontend } from '../types';
 
 interface PiletManifest {
   name: string;
@@ -17,36 +18,54 @@ interface PiletManifest {
 
 /**
  * Loads the micro frontend from a pilet.
- * @param url The URL leading to the manifest.
+ * @param entry The pilet to fully load.
  * @returns The factory to retrieve exposed components.
  */
-export async function withPilet(url: string) {
-  const manifest = await loadJson<PiletManifest>(url);
-  const { main, dependencies = {}, config = {}, ...data } = manifest;
-  const link = new URL(main, url);
-  const basePath = new URL('.', link.href);
+export async function withPilet(mf: PiletPicardMicrofrontend, scope: PicardStore) {
+  const entry = {
+    ...mf.details,
+  };
 
-  registerDependencyUrls(dependencies);
-  const app = await loadModule(link.href);
-  const components = {};
-
-  if (app && 'setup' in app) {
-    await app.setup({
-      registerComponent(name: string, lifecycle: ComponentLifecycle) {
-        components[name] = lifecycle;
-      },
-    });
+  if (!entry.name) {
+    const manifest = await loadJson<PiletManifest>(entry.url);
+    const { main, dependencies = {}, config = {}, ...data } = manifest;
+    const link = new URL(main, entry.url);
+    registerDependencyUrls(dependencies);
+    Object.assign(entry, data);
+    entry.link = link.href;
   }
 
-  return {
-    ...data,
-    dependencies,
-    config,
-    link: link.href,
-    basePath: basePath.href,
-    app,
-    get(name: string) {
-      return components[name];
-    },
-  };
+  if (!entry.container) {
+    const url = entry.link || entry.url;
+    const app = await loadModule(url);
+
+    if (app && 'setup' in app) {
+      const basePath = new URL('.', url);
+
+      await app.setup({
+        meta: {
+          basePath: basePath.href,
+        },
+        registerComponent(name: string, lifecycle: ComponentLifecycle) {
+          registerComponent(scope, mf, name, lifecycle);
+        },
+      });
+    }
+
+    entry.container = {
+      async load(name: string) {
+        const id = mf.components[name];
+
+        if (id) {
+          return retrieveComponent(scope, id)?.render;
+        }
+
+        return undefined;
+      },
+    };
+
+    updateDetails(scope, mf, entry);
+  }
+
+  return entry.container;
 }

@@ -1,4 +1,4 @@
-import { emptyLifecycle } from '../client/empty';
+import { emptyLifecycle } from '../kinds/lifecycle';
 import { ComponentLifecycle, PicardMicrofrontend, PicardStore } from '../types';
 
 function generateUID() {

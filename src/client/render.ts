@@ -1,9 +1,16 @@
-import { emptyLifecycle } from './empty';
 import { retrieveComponent } from '../state';
 import { withPilet } from '../kinds/pi';
 import { withModuleFederation } from '../kinds/mf';
 import { withNativeFederation } from '../kinds/nf';
-import type { ComponentRef, ComponentLifecycle, PicardStore, PicardComponent, PicardMicrofrontend, LoadingQueue } from '../types';
+import { createLazyLifecycle, emptyLifecycle } from '../kinds/lifecycle';
+import type {
+  ComponentRef,
+  ComponentLifecycle,
+  PicardStore,
+  PicardComponent,
+  PicardMicrofrontend,
+  LoadingQueue,
+} from '../types';
 
 function getLifecycle(component: PicardComponent): ComponentLifecycle {
   return component?.render || emptyLifecycle;
@@ -35,32 +42,6 @@ async function loadMicrofrontend(scope: PicardStore, mf: PicardMicrofrontend) {
   }
 }
 
-function createDynamicComponent(scope: PicardStore, mf: PicardMicrofrontend, name: string): ComponentLifecycle {
-  const impl = {
-    ...emptyLifecycle,
-  };
-  return {
-    async bootstrap(...args) {
-      const container = await loadMicrofrontend(scope, mf);
-      const component = await container.load(name);
-      Object.assign(impl, component);
-      return await impl.bootstrap(...args);
-    },
-    mount(...args) {
-      return impl.mount(...args);
-    },
-    update(...args) {
-      return impl.update(...args);
-    },
-    unmount(...args) {
-      return impl.unmount(...args);
-    },
-    unload(...args) {
-      return impl.unload(...args);
-    },
-  };
-}
-
 function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: string): ComponentLifecycle {
   const cid = mf.components[name];
 
@@ -70,7 +51,10 @@ function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: str
   }
 
   // component unknown; let's create it
-  return createDynamicComponent(scope, mf, name);
+  return createLazyLifecycle(async () => {
+    const container = await loadMicrofrontend(scope, mf);
+    return await container.load(name);
+  });
 }
 
 function findMicrofrontend(state: PicardStore, full: boolean, source: string) {

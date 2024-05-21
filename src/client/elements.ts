@@ -1,5 +1,6 @@
 import { defer } from './utils';
-import { emptyLifecycle, emptyListener } from './empty';
+import { emptyListener } from './empty';
+import { emptyLifecycle } from '../kinds/lifecycle';
 import type { ComponentLifecycle, ComponentRef, EventEmitter, UpdatedMicrofrontendsEvent } from '../types';
 
 export interface ElementsOptions {

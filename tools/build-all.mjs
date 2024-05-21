@@ -17,9 +17,20 @@ await Promise.all(
   }),
 );
 
-await Promise.all([
-  copyFile(resolve(dstdir, 'browser', 'picard.js'), resolve(exsdir, '01-static-page', 'picard.js')),
-  copyFile(resolve(dstdir, 'browser', 'picard.js'), resolve(exsdir, '02-static-page-feed', 'picard.js')),
-  copyFile(resolve(dstdir, 'browser', 'picard.js'), resolve(exsdir, '03-static-page-slots', 'picard.js')),
-  copyFile(resolve(dstdir, 'browser', 'picard.js'), resolve(exsdir, '04-static-page-initial-state', 'picard.js')),
-]);
+const demos = {
+  browser: [
+    '01-static-page',
+    '02-static-page-feed',
+    '03-static-page-slots',
+    '04-static-page-initial-state',
+    '05-static-page-with-routing',
+  ],
+};
+
+await Promise.all(
+  Object.entries(demos).map(([type, targets]) =>
+    Promise.all(
+      targets.map((target) => copyFile(resolve(dstdir, type, 'picard.js'), resolve(exsdir, target, 'picard.js'))),
+    ),
+  ),
+);

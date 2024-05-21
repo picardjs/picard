@@ -1,12 +1,4 @@
-import type { ComponentLifecycle, EventEmitter } from '../types';
-
-export const emptyLifecycle: ComponentLifecycle = {
-  async bootstrap() {},
-  async unload() {},
-  mount() {},
-  unmount() {},
-  update() {},
-};
+import type { EventEmitter } from '../types';
 
 export const emptyListener: EventEmitter = {
   on() {

@@ -1,5 +1,6 @@
-import { registerComponent, retrieveComponent, updateDetails } from '../state';
+import { createLazyLifecycle } from './lifecycle';
 import { loadJson, loadModule, registerDependencyUrls } from './utils';
+import { registerComponent, retrieveComponent, updateDetails } from '../state';
 import type { ComponentLifecycle, PicardStore, PiletPicardMicrofrontend } from '../types';
 
 interface PiletManifest {
@@ -46,7 +47,8 @@ export async function withPilet(mf: PiletPicardMicrofrontend, scope: PicardStore
         meta: {
           basePath: basePath.href,
         },
-        registerComponent(name: string, lifecycle: ComponentLifecycle) {
+        registerComponent(name: string, component: ComponentLifecycle) {
+          const lifecycle = typeof component === 'function' ? createLazyLifecycle(component) : component;
           registerComponent(scope, mf, name, lifecycle);
         },
       });

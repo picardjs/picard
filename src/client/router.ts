@@ -11,13 +11,16 @@ function modifyHistory(type: string) {
 export function createRouter(slotName = 'pi-slot') {
   const routerSlot = `${slotName}[rel=router]`;
 
-  function onHistory() {
-    const target = location.pathname;
-    const slot = document.querySelector(routerSlot);
+  function navigate(target: string) {
+    const router = document.querySelector(routerSlot);
 
-    if (slot) {
-      slot.setAttribute('name', `page:${target}`);
+    if (router) {
+      router.setAttribute('name', `page:${target}`);
     }
+  }
+
+  function onHistory() {
+    navigate(location.pathname);
   }
 
   function onClick(e: MouseEvent) {
@@ -39,12 +42,6 @@ export function createRouter(slotName = 'pi-slot') {
     ) {
       e.preventDefault();
       history.pushState({}, '', link.href);
-      const target = link.href;
-      const slot = document.querySelector(routerSlot);
-
-      if (slot) {
-        slot.setAttribute('name', `page:${target}`);
-      }
     }
   }
 
@@ -55,6 +52,8 @@ export function createRouter(slotName = 'pi-slot') {
   window.addEventListener('pushstate', onHistory);
   window.addEventListener('replacestate', onHistory);
   document.addEventListener('click', onClick);
+
+  onHistory();
 
   return () => {
     window.removeEventListener('popstate', onHistory);

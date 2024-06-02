@@ -24,6 +24,7 @@ const demos = {
     '03-static-page-slots',
     '04-static-page-initial-state',
     '05-static-page-with-routing',
+    '06-static-page-single-spa',
   ],
 };
 

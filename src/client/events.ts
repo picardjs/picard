@@ -1,4 +1,4 @@
-import type { EventEmitter } from '../types';
+import type { DependencyInjector, EventEmitter } from '../types';
 
 type EventListeners = Array<[any, any]>;
 
@@ -12,7 +12,8 @@ function nameOf(type: string | number): any {
  * @param state The optional state object to identify the instance.
  * @returns The event emitter.
  */
-export function createListener(state: any = {}): EventEmitter {
+export function createListener(injector: DependencyInjector): EventEmitter {
+  const { state } = injector.get('config');
   const eventListeners: EventListeners = [];
 
   const events = {

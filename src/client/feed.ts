@@ -8,6 +8,7 @@ import type {
   PiletDefinition,
   StaticFeed,
   LoadingQueue,
+  DependencyInjector,
 } from '../types';
 
 function fromPilet(pilet: PiletDefinition): PicardMicrofrontend {
@@ -127,7 +128,10 @@ async function loadFeed(feed: FeedDefinition | undefined, scope: PicardStore) {
   }
 }
 
-export function createFeed(feed: FeedDefinition | undefined, scope: PicardStore): LoadingQueue {
+export function createFeed(injector: DependencyInjector): LoadingQueue {
+  const { feed } = injector.get('config');
+  const scope = injector.get('scope');
+
   const queue: LoadingQueue = {
     current: loadFeed(feed, scope),
     async enqueue(cb) {

@@ -103,4 +103,6 @@ export function createLoader() {
 
     return systemRegister.apply(this, args);
   };
+
+  return {};
 }

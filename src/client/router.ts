@@ -1,3 +1,5 @@
+import type { DependencyInjector } from '../types';
+
 function modifyHistory(type: string) {
   const orig = history[type];
   return function (...args: Array<any>) {
@@ -8,7 +10,8 @@ function modifyHistory(type: string) {
   };
 }
 
-export function createRouter(slotName = 'pi-slot') {
+export function createRouter(injector: DependencyInjector) {
+  const { slotName } = injector.get('config');
   const routerSlot = `${slotName}[rel=router]`;
 
   function navigate(target: string) {
@@ -55,10 +58,12 @@ export function createRouter(slotName = 'pi-slot') {
 
   onHistory();
 
-  return () => {
-    window.removeEventListener('popstate', onHistory);
-    window.removeEventListener('pushstate', onHistory);
-    window.removeEventListener('replacestate', onHistory);
-    document.removeEventListener('click', onClick);
+  return {
+    dispose() {
+      window.removeEventListener('popstate', onHistory);
+      window.removeEventListener('pushstate', onHistory);
+      window.removeEventListener('replacestate', onHistory);
+      document.removeEventListener('click', onClick);
+    },
   };
 }

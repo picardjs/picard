@@ -1,39 +1,13 @@
 import { defer } from './utils';
-import { emptyListener } from './empty';
-import { emptyLifecycle } from '../kinds/lifecycle';
-import type { ComponentLifecycle, ComponentRef, EventEmitter, UpdatedMicrofrontendsEvent } from '../types';
+import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent } from '../types';
 
-export interface ElementsOptions {
-  componentName?: string;
-  slotName?: string;
-  loadFragment?(name: string, parameters: any): Promise<string>;
-  render?(component: ComponentRef): ComponentLifecycle;
-  events?: EventEmitter;
-  stylesheet?: boolean;
-}
+export function createElements(injector: DependencyInjector) {
+  const config = injector.get('config');
+  const renderer = injector.get('renderer');
+  const fragments = injector.get('fragments');
+  const events = injector.get('events');
 
-const defaultOptions: Required<ElementsOptions> = {
-  componentName: 'pi-component',
-  slotName: 'pi-slot',
-  events: emptyListener,
-  stylesheet: true,
-  loadFragment() {
-    return Promise.resolve('');
-  },
-  render() {
-    return emptyLifecycle;
-  },
-};
-
-export function createElements(options: ElementsOptions = defaultOptions) {
-  const {
-    slotName = defaultOptions.slotName,
-    componentName = defaultOptions.componentName,
-    loadFragment = defaultOptions.loadFragment,
-    stylesheet = defaultOptions.stylesheet,
-    render = defaultOptions.render,
-    events = defaultOptions.events,
-  } = options;
+  const { componentName, slotName, stylesheet } = config;
 
   class PiSlot extends HTMLElement {
     get name() {
@@ -92,7 +66,7 @@ export function createElements(options: ElementsOptions = defaultOptions) {
     async setupChildren() {
       const fragment = document.createElement('template');
       const itemTemplate = document.getElementById(this.getAttribute('item-template-id') || '');
-      fragment.innerHTML = await loadFragment(this.name, this.params);
+      fragment.innerHTML = await fragments.load(this.name, this.params);
       this.innerHTML = '';
 
       if (itemTemplate instanceof HTMLTemplateElement) {
@@ -195,10 +169,10 @@ export function createElements(options: ElementsOptions = defaultOptions) {
       const name = this.getAttribute('name');
 
       if (componentId) {
-        this._lc = render(componentId);
+        this._lc = renderer.render(componentId);
       } else if (name) {
         const source = this.getAttribute('source') || undefined;
-        this._lc = render({ name, source });
+        this._lc = renderer.render({ name, source });
       }
 
       this.#enqueue(() => this._lc?.bootstrap());
@@ -216,4 +190,6 @@ export function createElements(options: ElementsOptions = defaultOptions) {
 
   customElements.define(slotName, PiSlot);
   customElements.define(componentName, PiComponent);
+
+  return {};
 }

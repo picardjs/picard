@@ -6,7 +6,15 @@ import { createFragments } from '../client/fragments';
 import { createListener } from '../client/events';
 import { createRenderer } from '../client/render';
 import { createRouter } from '../client/router';
-import type { FeedDefinition } from '../types';
+import { createInjector } from '../injector';
+import type {
+  ComponentLifecycle,
+  ComponentRef,
+  FeedDefinition,
+  FragmentsService,
+  LoadingQueue,
+  RendererService,
+} from '../types';
 
 export interface PicardOptions {
   componentName?: string;
@@ -14,27 +22,76 @@ export interface PicardOptions {
   slotName?: string;
   feed?: FeedDefinition;
   state?: any;
+  stylesheet?: boolean;
+}
+
+const defaultOptions = {
+  componentName: 'pi-component',
+  slotName: 'pi-slot',
+  fragmentUrl: '',
+  stylesheet: true,
+};
+
+interface LoaderService {}
+
+interface ElementsService {}
+
+interface RouterService {
+  dispose(): void;
+}
+
+declare module '../types/injector' {
+  interface Services {
+    loader: LoaderService;
+    elements: ElementsService;
+    router: RouterService;
+    renderer: RendererService;
+    fragments: FragmentsService;
+    feed: LoadingQueue;
+  }
+
+  interface Configuration {
+    feed?: FeedDefinition;
+    state?: any;
+    fragmentUrl?: string;
+    stylesheet: boolean;
+    slotName: string;
+    componentName: string;
+  }
 }
 
 export function initializePicard(options?: PicardOptions) {
-  const { feed, state, componentName, slotName, fragmentUrl } = options || {};
-  const events = createListener();
-  const scope = createPicardScope(state, events);
-  const queue = createFeed(feed, scope);
-  const { render, collect } = createRenderer(queue, scope);
-  const loadFragment = createFragments({
-    componentName,
-    fragmentUrl,
-    collect,
-  });
-  createLoader();
-  createElements({
-    render,
-    componentName,
-    loadFragment,
-    slotName,
-    events,
-  });
-  createRouter(slotName);
-  return scope;
+  const {
+    feed,
+    state,
+    fragmentUrl = defaultOptions.fragmentUrl,
+    componentName = defaultOptions.componentName,
+    slotName = defaultOptions.slotName,
+    stylesheet = defaultOptions.stylesheet,
+  } = options || {};
+
+  const serviceDefinitions = {
+    config: () => ({
+      feed,
+      state,
+      componentName,
+      slotName,
+      fragmentUrl,
+      stylesheet,
+    }),
+    events: createListener,
+    scope: createPicardScope,
+    feed: createFeed,
+    renderer: createRenderer,
+    fragments: createFragments,
+    loader: createLoader,
+    elements: createElements,
+    router: createRouter,
+  };
+
+  return createInjector(serviceDefinitions)
+    .instantiate('loader')
+    .instantiate('elements')
+    .instantiate('router')
+    .get('scope');
 }

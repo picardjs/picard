@@ -1,46 +1,35 @@
-type FragmentLoader = (name: string, parameters: any) => Promise<string>;
+import type { DependencyInjector, FragmentsService } from '../types';
 
-export interface FragmentsOptions {
-  fragmentUrl?: string;
-  componentName?: string;
-  collect?(component: string): Promise<Array<string>>;
-}
+export function createFragments(injector: DependencyInjector): FragmentsService {
+  const config = injector.get('config');
+  const renderer = injector.get('renderer');
 
-const defaultOptions: Required<FragmentsOptions> = {
-  fragmentUrl: '',
-  componentName: 'pi-component',
-  collect() {
-    return Promise.resolve([]);
-  },
-};
-
-export function createFragments(options: FragmentsOptions = defaultOptions): FragmentLoader {
-  const {
-    fragmentUrl = defaultOptions.fragmentUrl,
-    componentName = defaultOptions.componentName,
-    collect = defaultOptions.collect,
-  } = options;
+  const { fragmentUrl, componentName } = config;
 
   if (!fragmentUrl) {
-    return async (name) => {
-      const ids = await collect(name);
-      const content = ids.map((id) => `<${componentName} cid="${id}"></${componentName}>`);
-      return Promise.resolve(content.join(''));
+    return {
+      async load(name) {
+        const ids = await renderer.collect(name);
+        const content = ids.map((id) => `<${componentName} cid="${id}"></${componentName}>`);
+        return Promise.resolve(content.join(''));
+      },
     };
   }
 
-  return async (name, params) => {
-    const query = Object.entries(params || {})
-      .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(value as string)}`)
-      .join('&');
+  return {
+    async load(name, params) {
+      const query = Object.entries(params || {})
+        .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(value as string)}`)
+        .join('&');
 
-    const suffix = query ? `?${query}` : '';
-    const path = btoa(name);
+      const suffix = query ? `?${query}` : '';
+      const path = btoa(name);
 
-    const res = await fetch(`${fragmentUrl}/${path}${suffix}`, {
-      method: 'GET',
-    });
+      const res = await fetch(`${fragmentUrl}/${path}${suffix}`, {
+        method: 'GET',
+      });
 
-    return res.text();
+      return res.text();
+    },
   };
 }

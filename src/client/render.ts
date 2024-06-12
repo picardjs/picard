@@ -9,7 +9,7 @@ import type {
   PicardStore,
   PicardComponent,
   PicardMicrofrontend,
-  LoadingQueue,
+  DependencyInjector,
 } from '../types';
 
 function getLifecycle(component: PicardComponent): ComponentLifecycle {
@@ -101,7 +101,10 @@ function createMicrofrontend(source: string): PicardMicrofrontend {
   }
 }
 
-export function createRenderer(queue: LoadingQueue, scope: PicardStore) {
+export function createRenderer(injector: DependencyInjector) {
+  const scope = injector.get('scope');
+  const queue = injector.get('feed');
+
   return {
     collect(name: string) {
       return queue.enqueue(async () => {

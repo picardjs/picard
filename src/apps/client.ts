@@ -35,6 +35,6 @@ export function initializePicard(options?: PicardOptions) {
     slotName,
     events,
   });
-  createRouter();
+  createRouter(slotName);
   return scope;
 }

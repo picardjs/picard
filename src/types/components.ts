@@ -7,6 +7,8 @@ export interface ComponentLifecycle {
   mount(container: HTMLElement, params: any): void;
   unmount(container: HTMLElement): void;
   update(params: any): void;
+
+  stringify(params: any): string;
 }
 
 export type ComponentRef =

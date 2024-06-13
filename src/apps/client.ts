@@ -6,15 +6,9 @@ import { createFragments } from '../client/fragments';
 import { createListener } from '../client/events';
 import { createRenderer } from '../client/render';
 import { createRouter } from '../client/router';
+import { createDebug } from '../client/debug';
 import { createInjector } from '../injector';
-import type {
-  ComponentLifecycle,
-  ComponentRef,
-  FeedDefinition,
-  FragmentsService,
-  LoadingQueue,
-  RendererService,
-} from '../types';
+import type { FeedDefinition, FragmentsService, LoadingQueue, RendererService } from '../types';
 
 export interface PicardOptions {
   componentName?: string;
@@ -22,6 +16,7 @@ export interface PicardOptions {
   slotName?: string;
   feed?: FeedDefinition;
   state?: any;
+  meta?: any;
   stylesheet?: boolean;
 }
 
@@ -37,8 +32,11 @@ interface LoaderService {}
 interface ElementsService {}
 
 interface RouterService {
+  navigate(route: string, state: any): void;
   dispose(): void;
 }
+
+interface DebugService {}
 
 declare module '../types/injector' {
   interface Services {
@@ -48,11 +46,13 @@ declare module '../types/injector' {
     renderer: RendererService;
     fragments: FragmentsService;
     feed: LoadingQueue;
+    debug: DebugService;
   }
 
   interface Configuration {
     feed?: FeedDefinition;
     state?: any;
+    meta?: any;
     fragmentUrl?: string;
     stylesheet: boolean;
     slotName: string;
@@ -64,6 +64,7 @@ export function initializePicard(options?: PicardOptions) {
   const {
     feed,
     state,
+    meta,
     fragmentUrl = defaultOptions.fragmentUrl,
     componentName = defaultOptions.componentName,
     slotName = defaultOptions.slotName,
@@ -74,6 +75,7 @@ export function initializePicard(options?: PicardOptions) {
     config: () => ({
       feed,
       state,
+      meta,
       componentName,
       slotName,
       fragmentUrl,
@@ -87,11 +89,13 @@ export function initializePicard(options?: PicardOptions) {
     loader: createLoader,
     elements: createElements,
     router: createRouter,
+    debug: createDebug,
   };
 
   return createInjector(serviceDefinitions)
     .instantiate('loader')
     .instantiate('elements')
     .instantiate('router')
+    .instantiate('debug')
     .get('scope');
 }

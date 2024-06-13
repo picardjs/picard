@@ -59,6 +59,9 @@ export function createRouter(injector: DependencyInjector) {
   onHistory();
 
   return {
+    navigate(route: string, state: any) {
+      history.pushState(state, '', route);
+    },
     dispose() {
       window.removeEventListener('popstate', onHistory);
       window.removeEventListener('pushstate', onHistory);

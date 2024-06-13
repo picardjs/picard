@@ -1,6 +1,15 @@
 import { defer } from './utils';
 import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent } from '../types';
 
+const attrName = 'name';
+const attrGroup = 'group';
+const attrFallback = 'fallback';
+const attrParams = 'params';
+const attrTemplateId = 'item-template-id';
+const attrSource = 'source';
+const attrData = 'data';
+const attrCid = 'cid';
+
 export function createElements(injector: DependencyInjector) {
   const config = injector.get('config');
   const renderer = injector.get('renderer');
@@ -10,31 +19,41 @@ export function createElements(injector: DependencyInjector) {
   const { componentName, slotName, stylesheet } = config;
 
   class PiSlot extends HTMLElement {
+    private _empty = false;
+
     get name() {
-      return this.getAttribute('name') || '';
+      return this.getAttribute(attrName) || '';
     }
 
     set name(value: string) {
-      this.setAttribute('name', value);
+      this.setAttribute(attrName, value);
     }
 
     get group() {
-      return this.getAttribute('group') || '';
+      return this.getAttribute(attrGroup) || '';
     }
 
     set group(value: string) {
-      this.setAttribute('group', value);
+      this.setAttribute(attrGroup, value);
+    }
+
+    get fallback() {
+      return this.getAttribute(attrFallback) || '';
+    }
+
+    set fallback(value: string) {
+      this.setAttribute(attrFallback, value);
     }
 
     private get params() {
-      return JSON.parse(this.getAttribute('params') || '{}');
+      return JSON.parse(this.getAttribute(attrParams) || '{}');
     }
 
     async connectedCallback() {
       const prepared = !this.group.startsWith('client-');
 
       if (!prepared) {
-        await this.setupChildren();
+        await this.#setupChildren();
       }
     }
 
@@ -44,29 +63,34 @@ export function createElements(injector: DependencyInjector) {
     }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-      if (name === 'item-template-id') {
-      } else if (name === 'params') {
+      if (name === attrTemplateId && newValue !== oldValue) {
+        this.#rerender();
+      } else if (name === attrParams) {
         defer(() => {
           this.dispatchEvent(new CustomEvent('params-changed', { detail: this.params }));
         });
-      } else if (name === 'name' && newValue !== oldValue) {
-        // this is a worst-case scenario, we need to throw away everything
-        this.innerHTML = '';
-
-        if (newValue) {
-          this.rerender();
-        }
+      } else if (name === attrName && newValue !== oldValue) {
+        this.#rerender();
+      } else if (name === attrFallback && newValue !== oldValue && this._empty) {
+        this.#rerender();
       }
     }
 
-    async rerender() {
-      await this.setupChildren();
+    async #rerender() {
+      // this is a worst-case scenario, we need to throw away everything
+      this.innerHTML = '';
+
+      if (this.name) {
+        await this.#setupChildren();
+      }
     }
 
-    async setupChildren() {
+    async #setupChildren() {
       const fragment = document.createElement('template');
-      const itemTemplate = document.getElementById(this.getAttribute('item-template-id') || '');
-      fragment.innerHTML = await fragments.load(this.name, this.params);
+      const itemTemplate = document.getElementById(this.getAttribute(attrTemplateId) || '');
+      const content = await fragments.load(this.name, this.params);
+      this._empty = !!content;
+      fragment.innerHTML = content || this.fallback || '';
       this.innerHTML = '';
 
       if (itemTemplate instanceof HTMLTemplateElement) {
@@ -84,7 +108,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     static get observedAttributes() {
-      return ['name', 'params', 'group', 'item-template-id'];
+      return [attrName, attrParams, attrGroup, attrTemplateId, attrFallback];
     }
   }
 
@@ -93,7 +117,7 @@ export function createElements(injector: DependencyInjector) {
     private _data: any;
     private _queue: Promise<any> | undefined;
     private handleUpdate = (ev: UpdatedMicrofrontendsEvent) => {
-      const source = this.getAttribute('source') || undefined;
+      const source = this.getAttribute(attrSource) || undefined;
 
       if (source && (ev.added.includes(source) || ev.removed.includes(source))) {
         this.#reset();
@@ -118,7 +142,7 @@ export function createElements(injector: DependencyInjector) {
         const lc = this._lc;
 
         if (lc) {
-          const data = this._data || JSON.parse(this.getAttribute('data') || '{}');
+          const data = this._data || JSON.parse(this.getAttribute(attrData) || '{}');
           lc.mount(this, data);
         }
       });
@@ -136,15 +160,15 @@ export function createElements(injector: DependencyInjector) {
     attributeChangedCallback(name: string, _prev: string, value: string) {
       if (!this._queue) {
         // do nothing
-      } else if (name === 'data') {
+      } else if (name === attrData) {
         this.data = JSON.parse(value || '{}');
-      } else if (name === 'cid' || name === 'name' || name === 'source') {
+      } else if (name === attrCid || name === attrName || name === attrSource) {
         this.#reset();
       }
     }
 
     static get observedAttributes() {
-      return ['cid', 'data', 'name', 'source'];
+      return [attrCid, attrData, attrName, attrSource];
     }
 
     #enqueue(cb: () => void | Promise<void>) {
@@ -165,13 +189,13 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #bootstrap() {
-      const componentId = this.getAttribute('cid');
-      const name = this.getAttribute('name');
+      const componentId = this.getAttribute(attrCid);
+      const name = this.getAttribute(attrName);
 
       if (componentId) {
         this._lc = renderer.render(componentId);
       } else if (name) {
-        const source = this.getAttribute('source') || undefined;
+        const source = this.getAttribute(attrSource) || undefined;
         this._lc = renderer.render({ name, source });
       }
 

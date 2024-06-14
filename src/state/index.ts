@@ -2,14 +2,19 @@ import { initializeStore } from './store';
 import { registerComponent, retrieveComponent } from './actions';
 import type { DependencyInjector, PicardStore } from '../types';
 
+function defer(cb: () => void) {
+  setTimeout(cb, 0);
+}
+
 /**
  * Creates a new scope for obtaining MF information.
  */
-export function createPicardScope(injector: DependencyInjector): PicardStore {
+export function createPicardScope(injector: DependencyInjector) {
   const { state } = injector.get('config');
+  const events = injector.get('events');
   const store = initializeStore(state);
 
-  return {
+  const scope: PicardStore = {
     readState() {
       return store.getState();
     },
@@ -23,16 +28,32 @@ export function createPicardScope(injector: DependencyInjector): PicardStore {
       return retrieveComponent(store, id);
     },
     appendMicrofrontend(mf) {
+      scope.appendMicrofrontends([mf]);
+    },
+    appendMicrofrontends(mfs) {
       store.setState((state) => ({
         ...state,
-        microfrontends: [...state.microfrontends, mf],
+        microfrontends: [...state.microfrontends, ...mfs],
       }));
+
+      events.emit('updated-microfrontends', {
+        added: mfs.map((m) => m.name),
+        removed: [],
+      });
     },
     removeMicrofrontend(name) {
+      scope.removeMicrofrontends([name]);
+    },
+    removeMicrofrontends(names) {
       store.setState((state) => ({
         ...state,
-        microfrontends: state.microfrontends.filter((m) => m.name !== name),
+        microfrontends: state.microfrontends.filter((m) => !names.includes(m.name)),
       }));
+
+      events.emit('updated-microfrontends', {
+        added: [],
+        removed: names,
+      });
     },
     updateMicrofrontend(name, details) {
       store.setState((state) => ({
@@ -47,4 +68,5 @@ export function createPicardScope(injector: DependencyInjector): PicardStore {
       }));
     },
   };
+  return scope;
 }

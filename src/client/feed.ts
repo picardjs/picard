@@ -1,4 +1,3 @@
-import { defer } from './utils';
 import { loadJson } from '../kinds/utils';
 import type {
   DiscoveryResponse,
@@ -96,46 +95,30 @@ function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofrontend> {
     });
 }
 
-function storeMicrofrontends(microfrontends: Array<PicardMicrofrontend>, injector: DependencyInjector) {
-  const scope = injector.get('scope');
-  const events = injector.get('events');
-
-  scope.setState((state) => {
-    defer(() => {
-      events.emit('updated-microfrontends', {
-        added: microfrontends.map((m) => m.name),
-        removed: [],
-      });
-    });
-    return {
-      microfrontends: [...state.microfrontends, ...microfrontends],
-    };
-  });
-}
-
-async function loadFeed(feed: FeedDefinition | undefined, injector: DependencyInjector) {
+async function loadFeed(scope: PicardStore, feed: FeedDefinition | undefined) {
   if (typeof feed === 'string') {
     const doc = await loadJson<StaticFeed>(feed);
-    await loadFeed(doc, injector);
+    await loadFeed(scope, doc);
   } else if (typeof feed === 'function') {
     const doc = await feed();
-    await loadFeed(doc, injector);
+    await loadFeed(scope, doc);
   } else if (Array.isArray(feed)) {
-    storeMicrofrontends(feed.map(fromPilet), injector);
+    scope.appendMicrofrontends(feed.map(fromPilet));
   } else if (!feed || typeof feed !== 'object') {
     // We maybe should emit an error here.
   } else if ('items' in feed && Array.isArray(feed.items)) {
-    storeMicrofrontends(feed.items.map(fromPilet), injector);
+    scope.appendMicrofrontends(feed.items.map(fromPilet));
   } else if ('microFrontends' in feed) {
-    storeMicrofrontends(fromDiscovery(feed), injector);
+    scope.appendMicrofrontends(fromDiscovery(feed));
   }
 }
 
 export function createFeed(injector: DependencyInjector): LoadingQueue {
   const { feed } = injector.get('config');
+  const scope = injector.get('scope');
 
   const queue: LoadingQueue = {
-    current: loadFeed(feed, injector),
+    current: loadFeed(scope, feed),
     async enqueue(cb) {
       const next = queue.current.then(cb);
       queue.current = next.then(() => {});

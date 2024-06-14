@@ -1,4 +1,3 @@
-import { defer } from './utils';
 import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent } from '../types';
 
 const attrName = 'name';
@@ -66,9 +65,7 @@ export function createElements(injector: DependencyInjector) {
       if (name === attrTemplateId && newValue !== oldValue) {
         this.#rerender();
       } else if (name === attrParams) {
-        defer(() => {
-          this.dispatchEvent(new CustomEvent('params-changed', { detail: this.params }));
-        });
+        this.dispatchEvent(new CustomEvent('params-changed', { detail: this.params }));
       } else if (name === attrName && newValue !== oldValue) {
         this.#rerender();
       } else if (name === attrFallback && newValue !== oldValue && this._empty) {

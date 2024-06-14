@@ -11,8 +11,10 @@ export interface PicardStore {
   readState(): PicardState;
   subscribe(listener: (curr: PicardState, prev: PicardState) => void): Dispose;
   removeMicrofrontend(name: string): void;
+  removeMicrofrontends(names: Array<string>): void;
   updateMicrofrontend(name: string, details: any): void;
   appendMicrofrontend(mf: PicardMicrofrontend): void;
+  appendMicrofrontends(mfs: Array<PicardMicrofrontend>): void;
   registerComponent(mf: PicardMicrofrontend, name: string, lifecycle: ComponentLifecycle): PicardComponent;
   retrieveComponent(id: string): PicardComponent | undefined;
 }

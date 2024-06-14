@@ -1,4 +1,3 @@
-import { defer } from './utils';
 import { loadJson } from '../kinds/utils';
 import type {
   DiscoveryResponse,
@@ -95,41 +94,27 @@ function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofrontend> {
     });
 }
 
-function storeMicrofrontends(microfrontends: Array<PicardMicrofrontend>, scope: PicardStore) {
-  scope.setState((state) => {
-    defer(() => {
-      state.context.events.emit('updated-microfrontends', {
-        added: microfrontends.map((m) => m.name),
-        removed: [],
-      });
-    });
-    return {
-      microfrontends: [...state.microfrontends, ...microfrontends],
-    };
-  });
-}
-
-async function loadFeed(feed: FeedDefinition | undefined, scope: PicardStore) {
+async function loadFeed(scope: PicardStore, feed: FeedDefinition | undefined) {
   if (typeof feed === 'string') {
     const doc = await loadJson<StaticFeed>(feed);
-    await loadFeed(doc, scope);
+    await loadFeed(scope, doc);
   } else if (typeof feed === 'function') {
     const doc = await feed();
-    await loadFeed(doc, scope);
+    await loadFeed(scope, doc);
   } else if (Array.isArray(feed)) {
-    storeMicrofrontends(feed.map(fromPilet), scope);
+    scope.appendMicrofrontends(feed.map(fromPilet));
   } else if (!feed || typeof feed !== 'object') {
     // We maybe should emit an error here.
   } else if ('items' in feed && Array.isArray(feed.items)) {
-    storeMicrofrontends(feed.items.map(fromPilet), scope);
+    scope.appendMicrofrontends(feed.items.map(fromPilet));
   } else if ('microFrontends' in feed) {
-    storeMicrofrontends(fromDiscovery(feed), scope);
+    scope.appendMicrofrontends(fromDiscovery(feed));
   }
 }
 
 export function createFeed(feed: FeedDefinition | undefined, scope: PicardStore): LoadingQueue {
   const queue: LoadingQueue = {
-    current: loadFeed(feed, scope),
+    current: loadFeed(scope, feed),
     async enqueue(cb) {
       const next = queue.current.then(cb);
       queue.current = next.then(() => {});

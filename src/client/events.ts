@@ -1,24 +1,31 @@
-import type { DependencyInjector, EventEmitter } from '../types';
+import type { EventEmitter } from '../types';
 
 type EventListeners = Array<[any, any]>;
 
-function nameOf(type: string | number): any {
-  return `picard:${type}`;
+function nameOf(name: string | number): any {
+  return `picard:${name}`;
+}
+
+function dispatch(name: string | number, args: any) {
+  document.body.dispatchEvent(
+    new CustomEvent(nameOf(name), {
+      bubbles: false,
+      cancelable: false,
+      detail: args,
+    }),
+  );
 }
 
 /**
  * Creates a new Piral app shell event emitter.
  * Uses a custom event dispatcher with a state for usage control.
- * @param state The optional state object to identify the instance.
  * @returns The event emitter.
  */
-export function createListener(injector: DependencyInjector): EventEmitter {
-  const { state } = injector.get('config');
+export function createListener() {
   const eventListeners: EventListeners = [];
-
-  const events = {
+  const events: EventEmitter = {
     on(type, callback) {
-      const listener = ({ detail }: CustomEvent) => detail && detail.state === state && callback(detail.arg);
+      const listener = ({ detail }: CustomEvent) => detail && callback(detail);
       document.body.addEventListener(nameOf(type), listener);
       eventListeners.push([callback, listener]);
       return events;
@@ -40,17 +47,9 @@ export function createListener(injector: DependencyInjector): EventEmitter {
 
       return events;
     },
-    emit(type, arg) {
-      document.body.dispatchEvent(
-        new CustomEvent(nameOf(type), {
-          bubbles: false,
-          cancelable: false,
-          detail: {
-            arg,
-            state,
-          },
-        }),
-      );
+    emit(name, args) {
+      dispatch(name, args);
+      dispatch('*', { name, args });
       return events;
     },
   };

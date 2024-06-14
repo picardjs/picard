@@ -1,4 +1,3 @@
-import { retrieveComponent } from '../state';
 import { withPilet } from '../kinds/pi';
 import { withModuleFederation } from '../kinds/mf';
 import { withNativeFederation } from '../kinds/nf';
@@ -17,7 +16,7 @@ function getLifecycle(component: PicardComponent): ComponentLifecycle {
 }
 
 function getComponents(scope: PicardStore, name: string): Array<PicardComponent> {
-  return scope.getState().components[name] || [];
+  return scope.readState().components[name] || [];
 }
 
 function getComponentLifecycle(scope: PicardStore, name: string): ComponentLifecycle {
@@ -47,7 +46,7 @@ function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: str
 
   if (cid) {
     // component already loaded; let's use it
-    return retrieveComponent(scope, cid)?.render || emptyLifecycle;
+    return scope.retrieveComponent(cid)?.render || emptyLifecycle;
   }
 
   // component unknown; let's create it
@@ -59,7 +58,7 @@ function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: str
 
 function findMicrofrontend(state: PicardStore, full: boolean, source: string) {
   const selector = full ? 'source' : 'name';
-  return state.getState().microfrontends.find((m) => m[selector] === source);
+  return state.readState().microfrontends.find((m) => m[selector] === source);
 }
 
 function createMicrofrontend(source: string): PicardMicrofrontend {
@@ -108,7 +107,7 @@ export function createRenderer(injector: DependencyInjector) {
   return {
     collect(name: string) {
       return queue.enqueue(async () => {
-        const { microfrontends } = scope.getState();
+        const { microfrontends } = scope.readState();
         await Promise.all(microfrontends.map((mf) => loadMicrofrontend(scope, mf).then((m) => m.load(name))));
         const components = getComponents(scope, name);
         return components.map((m) => m.id);
@@ -117,7 +116,7 @@ export function createRenderer(injector: DependencyInjector) {
     render(component: ComponentRef) {
       if (typeof component === 'string') {
         // look up if we have this component via its ID.
-        return retrieveComponent(scope, component)?.render || emptyLifecycle;
+        return scope.retrieveComponent(component)?.render || emptyLifecycle;
       } else if (typeof component.source === 'string') {
         // do we have the source? otherwise load it.
         const source = component.source;
@@ -132,10 +131,7 @@ export function createRenderer(injector: DependencyInjector) {
           return getComponentFrom(scope, existing, component.name);
         } else if (full) {
           const mf = createMicrofrontend(source);
-          scope.setState((state) => ({
-            ...state,
-            microfrontends: [...state.microfrontends, mf],
-          }));
+          scope.appendMicrofrontend(mf);
           return getComponentFrom(scope, mf, component.name);
         }
       } else if (typeof component.name === 'string') {

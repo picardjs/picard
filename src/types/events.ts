@@ -35,6 +35,58 @@ export interface UpdatedMicrofrontendsEvent {
 }
 
 /**
+ * Gets fired when dependency has been resolved.
+ */
+export interface ResolvedDependencyEvent {
+  /**
+   * The id of the dependency to resolve.
+   */
+  id: string;
+  /**
+   * The URL of the parent requesting the dependency.
+   */
+  parentUrl: string;
+  /**
+   * The resolved name of the dependency.
+   */
+  result: string;
+}
+
+/**
+ * Gets fired when a pi-component mounts.
+ */
+export interface MountedComponentEvent {
+  /**
+   * The corresponding HTML element.
+   */
+  element: HTMLElement;
+}
+
+/**
+ * Gets fired when a pi-component unmounts.
+ */
+export interface UnmountedComponentEvent {
+  /**
+   * The corresponding HTML element.
+   */
+  element: HTMLElement;
+}
+
+/**
+ * Gets fired when any event occurs.
+ */
+export interface AnyEvent {
+  /**
+   * The name of the event.
+   */
+  name: string;
+  /**
+   * The args coming with the event.
+   */
+  args: any;
+}
+
+/**
  * The map of known events.
  */
 export interface PicardEventMap {
@@ -43,6 +95,10 @@ export interface PicardEventMap {
   'unload-microfrontend': UnloadMicrofrontendEvent;
   'unloaded-microfrontend': UnloadMicrofrontendEvent;
   'updated-microfrontends': UpdatedMicrofrontendsEvent;
+  'resolved-dependency': ResolvedDependencyEvent;
+  'mounted-component': MountedComponentEvent;
+  'unmounted-component': UnmountedComponentEvent;
+  '*': AnyEvent;
   [custom: string]: any;
 }
 

@@ -1,6 +1,7 @@
 import 'systemjs/dist/system.js';
 import 'systemjs/dist/extras/named-register.js';
 import { satisfies, validate } from './version';
+import { DependencyInjector } from '../types';
 
 declare const System: {
   registerRegistry: Record<string, any>;
@@ -50,13 +51,15 @@ function findMatchingPackage(id: string) {
   return undefined;
 }
 
-export function createLoader() {
+export function createLoader(injector: DependencyInjector) {
+  const events = injector.get('events');
+
   const systemResolve = System.constructor.prototype.resolve;
   const systemRegister = System.constructor.prototype.register;
 
-  System.constructor.prototype.resolve = function (id: string, parentUrl: string) {
+  const innerResolve = (context: any, id: string, parentUrl: string): string => {
     try {
-      return systemResolve.call(this, id, parentUrl);
+      return systemResolve.call(context, id, parentUrl);
     } catch (ex) {
       const result = findMatchingPackage(id);
 
@@ -66,6 +69,12 @@ export function createLoader() {
 
       return result;
     }
+  };
+
+  System.constructor.prototype.resolve = function (id: string, parentUrl: string) {
+    const result = innerResolve(this, id, parentUrl);
+    events.emit('resolved-dependency', { id, parentUrl, result });
+    return result;
   };
 
   System.constructor.prototype.register = function (...args) {

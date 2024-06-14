@@ -1,5 +1,6 @@
+import type { StoreApi } from 'zustand/vanilla';
 import { emptyLifecycle } from '../kinds/lifecycle';
-import { ComponentLifecycle, PicardMicrofrontend, PicardStore } from '../types';
+import type { ComponentLifecycle, PicardMicrofrontend, PicardState } from '../types';
 
 function generateUID() {
   const a = (Math.random() * 46656) | 0;
@@ -10,7 +11,7 @@ function generateUID() {
 }
 
 export function registerComponent(
-  scope: PicardStore,
+  store: StoreApi<PicardState>,
   origin: PicardMicrofrontend,
   name: string,
   render: ComponentLifecycle,
@@ -26,7 +27,7 @@ export function registerComponent(
     },
   };
 
-  scope.setState((state) => ({
+  store.setState((state) => ({
     components: {
       ...state.components,
       [name]: [...(state.components[name] || []), component],
@@ -37,25 +38,9 @@ export function registerComponent(
   return component;
 }
 
-export function updateDetails<T extends PicardMicrofrontend>(scope: PicardStore, mf: T, details: T['details']) {
-  scope.setState((state) => ({
-    microfrontends: state.microfrontends.map((item) =>
-      item === mf
-        ? {
-            ...mf,
-            details: {
-              ...mf.details,
-              ...details,
-            },
-          }
-        : item,
-    ),
-  }));
-}
-
-export function retrieveComponent(scope: PicardStore, id: string) {
+export function retrieveComponent(store: StoreApi<PicardState>, id: string) {
   if (id !== 'void') {
-    const { components } = scope.getState();
+    const { components } = store.getState();
 
     for (const list of Object.values(components)) {
       const component = list.find((m) => m.id === id);

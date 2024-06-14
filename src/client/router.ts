@@ -10,20 +10,24 @@ function modifyHistory(type: string) {
   };
 }
 
+function navigate(route: string, state: any) {
+  history.pushState(state, '', route);
+}
+
+const pageQualifier = 'page:';
+
 export function createRouter(injector: DependencyInjector) {
+  const scope = injector.get('scope');
   const { slotName } = injector.get('config');
   const routerSlot = `${slotName}[rel=router]`;
 
-  function navigate(target: string) {
+  function onHistory() {
+    const target = location.pathname;
     const router = document.querySelector(routerSlot);
 
     if (router) {
-      router.setAttribute('name', `page:${target}`);
+      router.setAttribute('name', `${pageQualifier}${target}`);
     }
-  }
-
-  function onHistory() {
-    navigate(location.pathname);
   }
 
   function onClick(e: MouseEvent) {
@@ -44,7 +48,7 @@ export function createRouter(injector: DependencyInjector) {
       !e.defaultPrevented
     ) {
       e.preventDefault();
-      history.pushState({}, '', link.href);
+      navigate(link.href, {});
     }
   }
 
@@ -59,8 +63,12 @@ export function createRouter(injector: DependencyInjector) {
   onHistory();
 
   return {
-    navigate(route: string, state: any) {
-      history.pushState(state, '', route);
+    navigate,
+    findRoutes() {
+      const state = scope.readState();
+      return Object.keys(state.components)
+        .filter((m) => m.startsWith(pageQualifier))
+        .map((m) => m.substring(pageQualifier.length));
     },
     dispose() {
       window.removeEventListener('popstate', onHistory);

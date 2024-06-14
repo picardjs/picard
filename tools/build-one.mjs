@@ -13,22 +13,28 @@ export async function buildOne(app) {
 
   console.log(`Building "${app}" ...`);
 
-  await build({
+  const esmResult = await build({
     entryPoints,
     bundle: true,
     outdir,
+    // minify: true,
+    // metafile: true,
     platform,
     format: 'esm',
     outExtension: { '.js': '.mjs' },
   });
 
-  await build({
+  const cjsResult = await build({
     entryPoints,
     bundle: true,
     outdir,
+    // minify: true,
+    // metafile: true,
     platform,
     format: 'cjs',
   });
+
+  //await writeFile(resolve(outdir, 'meta.json'), JSON.stringify(cjsResult.metafile), 'utf8');
 
   const declText = await generateDeclaration({
     name: 'picard-js',

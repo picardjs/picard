@@ -1,10 +1,18 @@
-import type { StoreApi } from 'zustand/vanilla';
 import type { PicardMicrofrontend } from './microfrontend';
-import type { PicardComponent } from './components';
+import type { ComponentLifecycle, PicardComponent } from './components';
+import type { Dispose } from './utils';
 
 export interface PicardState {
   microfrontends: Array<PicardMicrofrontend>;
   components: Record<string, Array<PicardComponent>>;
 }
 
-export type PicardStore = StoreApi<PicardState>;
+export interface PicardStore {
+  readState(): PicardState;
+  subscribe(listener: (curr: PicardState, prev: PicardState) => void): Dispose;
+  removeMicrofrontend(name: string): void;
+  updateMicrofrontend(name: string, details: any): void;
+  appendMicrofrontend(mf: PicardMicrofrontend): void;
+  registerComponent(mf: PicardMicrofrontend, name: string, lifecycle: ComponentLifecycle): PicardComponent;
+  retrieveComponent(id: string): PicardComponent | undefined;
+}

@@ -1,6 +1,10 @@
 import { loadScript, registerModule } from './utils';
-import { retrieveComponent, registerComponent, updateDetails } from '../state';
-import type { ModuleFederationContainer, ModuleFederationPicardMicrofrontend, ModuleFederationFactoryScope, PicardStore } from '../types';
+import type {
+  ModuleFederationContainer,
+  ModuleFederationPicardMicrofrontend,
+  ModuleFederationFactoryScope,
+  PicardStore,
+} from '../types';
 
 const appShell = 'app';
 
@@ -69,14 +73,14 @@ export async function withModuleFederation(mf: ModuleFederationPicardMicrofronte
         const id = mf.components[name];
 
         if (id) {
-          return retrieveComponent(scope, id)?.render;
+          return scope.retrieveComponent(id)?.render;
         }
 
         try {
           const factory = await container.get(name);
           const component = factory();
           const lifecycle = component.default || component;
-          registerComponent(scope, mf, name, lifecycle);
+          scope.registerComponent(mf, name, lifecycle);
           return lifecycle;
         } catch {
           mf.components[name] = 'void';
@@ -85,7 +89,7 @@ export async function withModuleFederation(mf: ModuleFederationPicardMicrofronte
       },
     };
 
-    updateDetails(scope, mf, entry);
+    scope.updateMicrofrontend(mf.name, { details: entry });
   }
 
   return entry.container;

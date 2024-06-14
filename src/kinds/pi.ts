@@ -1,6 +1,5 @@
 import { createLazyLifecycle } from './lifecycle';
 import { loadJson, loadModule, registerDependencyUrls } from './utils';
-import { registerComponent, retrieveComponent, updateDetails } from '../state';
 import type { ComponentLifecycle, PicardStore, PiletPicardMicrofrontend } from '../types';
 
 interface PiletManifest {
@@ -49,7 +48,7 @@ export async function withPilet(mf: PiletPicardMicrofrontend, scope: PicardStore
         },
         registerComponent(name: string, component: ComponentLifecycle) {
           const lifecycle = typeof component === 'function' ? createLazyLifecycle(component) : component;
-          registerComponent(scope, mf, name, lifecycle);
+          scope.registerComponent(mf, name, lifecycle);
         },
       });
     }
@@ -59,14 +58,14 @@ export async function withPilet(mf: PiletPicardMicrofrontend, scope: PicardStore
         const id = mf.components[name];
 
         if (id) {
-          return retrieveComponent(scope, id)?.render;
+          return scope.retrieveComponent(id)?.render;
         }
 
         return undefined;
       },
     };
 
-    updateDetails(scope, mf, entry);
+    scope.updateMicrofrontend(mf.name, { details: entry });
   }
 
   return entry.container;

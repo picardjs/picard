@@ -144,14 +144,17 @@ export function createElements(injector: DependencyInjector) {
         if (lc) {
           const data = this._data || JSON.parse(this.getAttribute(attrData) || '{}');
           lc.mount(this, data);
+          events.emit('mounted-component', { element: this });
         }
       });
     }
 
     disconnectedCallback() {
+      const lc = this._lc;
       // just make sure to remove everything
       events.off('updated-microfrontends', this.handleUpdate);
-      this._lc?.unmount(this);
+      lc?.unmount(this);
+      events.emit('unmounted-component', { element: this });
       this._lc = undefined;
       this._queue = undefined;
       this.innerHTML = '';

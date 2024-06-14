@@ -33,10 +33,13 @@ interface ElementsService {}
 
 interface RouterService {
   navigate(route: string, state: any): void;
+  findRoutes(): Array<string>;
   dispose(): void;
 }
 
-interface DebugService {}
+interface DebugService {
+  dispose(): void;
+}
 
 declare module '../types/injector' {
   interface Services {

@@ -1,5 +1,4 @@
 import { loadJson } from './utils';
-import { registerComponent, retrieveComponent, updateDetails } from '../state';
 import type { PicardStore, NativeFederationExposedEntry, NativeFederationPicardMicrofrontend } from '../types';
 
 interface NativeFederationManifest {
@@ -30,7 +29,7 @@ export async function withNativeFederation(mf: NativeFederationPicardMicrofronte
         const id = mf.components[name];
 
         if (id) {
-          return retrieveComponent(scope, id)?.render;
+          return scope.retrieveComponent(id)?.render;
         }
 
         const key = `./${name}`;
@@ -40,7 +39,7 @@ export async function withNativeFederation(mf: NativeFederationPicardMicrofronte
           const entryUrl = new URL(item.outFileName, entry.url);
           const component = await import(entryUrl.href);
           const lifecycle = component?.default || component;
-          registerComponent(scope, mf, name, lifecycle);
+          scope.registerComponent(mf, name, lifecycle);
           return lifecycle;
         }
 
@@ -49,7 +48,7 @@ export async function withNativeFederation(mf: NativeFederationPicardMicrofronte
       },
     };
 
-    updateDetails(scope, mf, entry);
+    scope.updateMicrofrontend(mf.name, { details: entry });
   }
 
   return entry.container;

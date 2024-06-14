@@ -1,9 +1,9 @@
-import { DependencyInjector } from '../types';
+import { decycle } from './decycle';
+import type { DependencyInjector, EventEmitter, Listener, PicardEventMap } from '../types';
 
 const selfSource = 'piral-debug-api';
 const debugApiVersion = 'v1';
 const visualizerName = 'piral-inspector-visualizer';
-const piletColorMap = {};
 const colors = [
   '#001F3F',
   '#0074D9',
@@ -20,13 +20,21 @@ const colors = [
   '#B10DC9',
 ];
 
-function sendMessage(content: any) {
+function sendMessage(data: any) {
   const message = {
-    content,
+    content: decycle(data),
     source: selfSource,
     version: debugApiVersion,
   };
   window.postMessage(message, '*');
+}
+
+function findAncestor(parent: string, subDeps: Record<string, string>) {
+  while (subDeps[parent]) {
+    parent = subDeps[parent];
+  }
+
+  return parent;
 }
 
 function getTarget(element: Element) {
@@ -53,45 +61,57 @@ function getTarget(element: Element) {
     });
 }
 
-interface DebugOptions {
-  getApplication(): { name: string; version: string };
-  getGlobalState(): any;
-  getExtensions(): Array<string>;
-  getDependencies(): Array<string>;
-  getRoutes(): Array<string>;
-  getPilets(): Array<{ name: string; version: string; disabled: boolean; dependencies: Array<string> }>;
-  fireEvent(name: string, args: any): void;
-  goToRoute(route: string, state: any): void;
-  removePilet(name: string): void;
-  updatePilet(name: string, disabled: boolean): void;
-  addPilet(meta: any): void;
+interface EventItem {
+  id: string;
+  name: string;
+  args: any;
+  time: number;
 }
 
-function installPiralDebug(options: DebugOptions) {
+type Dependencies = Array<{ demanded: string; resolved: string }>;
+
+type DependencyMap = Record<string, Dependencies>;
+
+interface DebugOptions {
+  getAppInfo(): { name: string; version: string };
+  getScopeState(): any;
+  getSlotNames(): Array<string>;
+  getDependencies(): DependencyMap;
+  getEvents(): Array<EventItem>;
+  getRoutes(): Array<string>;
+  getMicrofrontends(): Array<{ name: string; url: string; root: string; disabled: boolean }>;
+  fireEvent(name: string, args: any): void;
+  goToRoute(route: string, state: any): void;
+  removeMicrofrontend(name: string): void;
+  updateMicrofrontend(name: string, disabled: boolean): void;
+  addMicrofrontend(meta: any): void;
+}
+
+function install(options: DebugOptions) {
   const {
-    getApplication,
-    getGlobalState,
-    getExtensions,
+    getAppInfo,
+    getScopeState,
+    getSlotNames,
     getDependencies,
     getRoutes,
-    getPilets,
+    getMicrofrontends,
+    getEvents,
     fireEvent,
     goToRoute,
-    removePilet,
-    updatePilet,
-    addPilet,
+    removeMicrofrontend,
+    updateMicrofrontend,
+    addMicrofrontend,
   } = options;
-  const events = [];
   const settings = {
     extensionCatalogue: true,
     viewOrigins: true,
   };
 
-  const retrievePilets = () =>
-    getPilets().map((pilet) => ({
-      name: pilet.name,
-      version: pilet.version,
-      disabled: pilet.disabled,
+  const retrieveMicrofrontends = () =>
+    getMicrofrontends().map((mf) => ({
+      name: mf.name,
+      version: '0.0.0',
+      disabled: mf.disabled,
     }));
 
   const inspectorSettings = {
@@ -170,21 +190,21 @@ function installPiralDebug(options: DebugOptions) {
     });
   };
 
-  const togglePilet = (name: string) => {
-    const pilet = getPilets().find((m) => m.name === name);
+  const toggleMicrofrontend = (name: string) => {
+    const mf = getMicrofrontends().find((m) => m.name === name);
 
-    if (!pilet) {
+    if (!mf) {
       // nothing to do, obviously invalid call
       return;
     }
 
-    const disabled = !pilet.disabled;
-    pilet.disabled = disabled;
-    updatePilet(name, disabled);
+    const disabled = !mf.disabled;
+    mf.disabled = disabled;
+    updateMicrofrontend(name, disabled);
 
     sendMessage({
       type: 'pilets',
-      pilets: retrievePilets(),
+      pilets: retrieveMicrofrontends(),
     });
   };
 
@@ -198,24 +218,11 @@ function installPiralDebug(options: DebugOptions) {
     }
   };
 
-  const app = getApplication();
-  const debugApi = {
-    debug: debugApiVersion,
-    instance: {
-      name: app.name,
-      version: app.version,
-      dependencies: getDependencies(),
-    },
-    build: {
-      date: '',
-      cli: '',
-      compat: 'next',
-    },
-  };
+  const app = getAppInfo();
 
   const details = {
-    name: debugApi.instance.name,
-    version: debugApi.instance.version,
+    name: app.name,
+    version: app.version,
     kind: debugApiVersion,
     mode: 'development',
     capabilities: [
@@ -231,24 +238,17 @@ function installPiralDebug(options: DebugOptions) {
   };
 
   const start = () => {
-    const container = getGlobalState();
-    const routes = getRoutes();
-    const extensions = getExtensions();
-    const settings = getSettings();
-    const dependencies = getDependencies();
-    const pilets = retrievePilets();
-
     sendMessage({
       type: 'available',
       ...details,
       state: {
-        routes,
-        pilets,
-        container,
-        settings,
-        events,
-        extensions,
-        dependencies,
+        routes: getRoutes(),
+        pilets: retrieveMicrofrontends(),
+        container: getScopeState(),
+        settings: getSettings(),
+        events: getEvents(),
+        extensions: getSlotNames(),
+        dependencies: [],
       },
     });
   };
@@ -261,16 +261,7 @@ function installPiralDebug(options: DebugOptions) {
   };
 
   const getDependencyMap = () => {
-    const pilets = getPilets();
-    const dependencyMap = Object.fromEntries(
-      pilets.map((pilet) => [
-        pilet.name,
-        pilet.dependencies.map((depName) => ({
-          demanded: depName,
-          resolved: depName,
-        })),
-      ]),
-    );
+    const dependencyMap = getDependencies();
 
     sendMessage({
       type: 'dependency-map',
@@ -278,7 +269,7 @@ function installPiralDebug(options: DebugOptions) {
     });
   };
 
-  window.addEventListener('message', (event) => {
+  const handler = (event: MessageEvent) => {
     const { source, version, content } = event.data;
 
     if (source !== selfSource && version === debugApiVersion) {
@@ -292,11 +283,11 @@ function installPiralDebug(options: DebugOptions) {
         case 'update-settings':
           return updateSettings(content.settings);
         case 'append-pilet':
-          return addPilet(content.meta);
+          return addMicrofrontend(content.meta);
         case 'remove-pilet':
-          return removePilet(content.name);
+          return removeMicrofrontend(content.name);
         case 'toggle-pilet':
-          return togglePilet(content.name);
+          return toggleMicrofrontend(content.name);
         case 'emit-event':
           return fireEvent(content.name, content.args);
         case 'goto-route':
@@ -305,10 +296,26 @@ function installPiralDebug(options: DebugOptions) {
           return toggleVisualize();
       }
     }
-  });
+  };
 
-  window['dbg:piral'] = debugApi;
+  window.addEventListener('message', handler);
+
   start();
+
+  return () => {
+    window.removeEventListener('message', handler);
+  };
+}
+
+function attach<TEvent extends keyof PicardEventMap>(
+  events: EventEmitter,
+  name: TEvent,
+  handler: Listener<PicardEventMap[TEvent]>,
+) {
+  events.on(name, handler);
+  return () => {
+    events.off(name, handler);
+  };
 }
 
 export function createDebug(injector: DependencyInjector) {
@@ -319,11 +326,85 @@ export function createDebug(injector: DependencyInjector) {
 
   const { componentName } = config;
 
+  const eventList: Array<EventItem> = [];
+  const depMap: Record<string, Record<string, string>> = {};
+  const subDeps: Record<string, string> = {};
+  const mfColorMap: Record<string, string> = {};
+
+  const getMicrofrontend = (element: Element) => {
+    const origin = element.getAttribute('origin');
+
+    if (origin) {
+      return origin;
+    }
+
+    const cid = element.getAttribute('cid');
+
+    if (cid) {
+      const state = scope.readState();
+      const mf = state.microfrontends.find((m) => cid in m.components);
+      return mf?.name || '';
+    }
+
+    const source = element.getAttribute('source');
+
+    if (source) {
+      const state = scope.readState();
+      const mf = state.microfrontends.find((m) => m.source === source);
+      return mf?.name || '';
+    }
+
+    return '';
+  };
+
+  const addDeps = (result: DependencyMap, name: string, dependencies: Record<string, string>) => {
+    const deps = result[name] || [];
+
+    for (const depName of Object.keys(dependencies)) {
+      if (!deps.some((m) => m.demanded === depName)) {
+        deps.push({
+          demanded: depName,
+          resolved: dependencies[depName],
+        });
+      }
+    }
+
+    result[name] = deps;
+  };
+
+  const detachResolved = attach(events, 'resolved-dependency', ({ id, parentUrl, result }) => {
+    if (parentUrl) {
+      const ancestor = findAncestor(parentUrl, subDeps);
+
+      if (id.startsWith('./')) {
+        subDeps[result] = ancestor;
+      } else {
+        const deps = depMap[ancestor] || {};
+        deps[id] = result;
+        depMap[ancestor] = deps;
+      }
+    }
+  });
+
+  const detachAll = attach(events, '*', (ev) => {
+    eventList.unshift({
+      id: eventList.length.toString(),
+      name: ev.name,
+      args: decycle(ev.args),
+      time: Date.now(),
+    });
+
+    sendMessage({
+      events: eventList,
+      type: 'events',
+    });
+  });
+
   class PiralInspectorVisualizer extends HTMLElement {
     update = () => {
       this.innerText = '';
       document.querySelectorAll(componentName).forEach((element) => {
-        const pilet = element.getAttribute('origin') || '';
+        const mf = getMicrofrontend(element);
         const vis = this.appendChild(document.createElement('div'));
         const info = vis.appendChild(document.createElement('div'));
         const targetRect = getTarget(element);
@@ -336,13 +417,13 @@ export function createDebug(injector: DependencyInjector) {
         vis.style.zIndex = '99999999999';
         vis.style.border = '1px solid #ccc';
         info.style.color = 'white';
-        info.textContent = pilet;
+        info.textContent = mf;
         info.style.position = 'absolute';
         info.style.right = '0';
         info.style.top = '0';
         info.style.fontSize = '8px';
         info.style.background =
-          piletColorMap[pilet] || (piletColorMap[pilet] = colors[Object.keys(piletColorMap).length % colors.length]);
+          mfColorMap[mf] || (mfColorMap[mf] = colors[Object.keys(mfColorMap).length % colors.length]);
       });
     };
 
@@ -354,92 +435,145 @@ export function createDebug(injector: DependencyInjector) {
       this.style.height = '0';
 
       window.addEventListener('resize', this.update);
-      window.addEventListener('add-component', this.update);
-      window.addEventListener('remove-component', this.update);
-
+      events.on('mounted-component', this.update);
+      events.on('unmounted-component', this.update);
       this.update();
     }
 
     disconnectedCallback() {
       window.removeEventListener('resize', this.update);
-      window.removeEventListener('add-component', this.update);
-      window.removeEventListener('remove-component', this.update);
+      events.off('mounted-component', this.update);
+      events.off('unmounted-component', this.update);
     }
   }
 
   customElements.define(visualizerName, PiralInspectorVisualizer);
 
-  installPiralDebug({
+  const options: DebugOptions = {
     goToRoute(route, state) {
+      console.log('navigate', route);
       router.navigate(route, state);
     },
     fireEvent(name, args) {
-      return events.emit(name, args);
+      events.emit(name, args);
     },
-    getApplication() {
+    getAppInfo() {
       return {
-        name: config.meta?.name || 'App',
-        version: config.meta?.version || '0.0.0',
+        name:
+          config.meta?.name || document.querySelector('meta[name=app-name]')?.getAttribute('content') || document.title,
+        version:
+          config.meta?.version || document.querySelector('meta[name=app-version]')?.getAttribute('content') || '-',
       };
     },
     getDependencies() {
-      const state = scope.getState();
-      return [];
+      const result: DependencyMap = {};
+
+      const mfs = options
+        .getMicrofrontends()
+        .map((mf) => ({
+          name: mf.name,
+          link: mf.url,
+          base: mf.root,
+        }))
+        .filter((m) => m.link);
+
+      Object.keys(depMap).forEach((url) => {
+        const dependencies = depMap[url];
+        const mf = mfs.find((p) => p.link === url);
+
+        if (mf) {
+          addDeps(result, mf.name, dependencies);
+        } else if (!mf) {
+          const parent = mfs.find((p) => url.startsWith(p.base));
+
+          if (parent) {
+            addDeps(result, parent.name, dependencies);
+          }
+        }
+      });
+
+      return result;
     },
-    getExtensions() {
-      const state = scope.getState();
-      return [];
+    getSlotNames() {
+      const state = scope.readState();
+      return Object.keys(state.components);
     },
-    getGlobalState() {
-      const state = scope.getState();
-      return state;
+    getScopeState() {
+      return scope.readState();
     },
-    getPilets() {
-      const state = scope.getState();
+    getMicrofrontends() {
+      const state = scope.readState();
       return state.microfrontends.map((m) => ({
         name: m.name,
         version: '0.0.0',
+        root: m.source,
+        url: m.source,
         disabled: false,
-        dependencies: [],
       }));
     },
     getRoutes() {
-      const state = scope.getState();
-      return [];
+      return router.findRoutes();
     },
-    addPilet(pilet) {
-    //   scope.setState((state) => ({
-    //     ...state,
-    //     microfrontends: [
-    //       ...state.microfrontends,
-    //       {
-    //         name: pilet.name,
-    //         version: pilet.version,
-    //         disabled: false,
-    //       },
-    //     ],
-    //   }));
+    addMicrofrontend(meta) {
+      scope.appendMicrofrontend({
+        name: meta.name,
+        kind: 'pilet',
+        components: {},
+        details: {
+          ...meta,
+        },
+        source: meta.name,
+      });
     },
-    removePilet(name) {
-      scope.setState((state) => ({
-        ...state,
-        microfrontends: state.microfrontends.filter((m) => m.name !== name),
-      }));
+    removeMicrofrontend(name) {
+      scope.removeMicrofrontend(name);
     },
-    updatePilet(name, disabled) {
-      scope.setState((state) => ({
-        ...state,
-        microfrontends: state.microfrontends.map((m) =>
-          m.name === name
-            ? {
-                ...m,
-                disabled,
-              }
-            : m,
-        ),
-      }));
+    updateMicrofrontend(name, disabled) {
+      scope.updateMicrofrontend(name, { disabled });
     },
+    getEvents() {
+      return eventList;
+    },
+  };
+
+  const unsubscribe = scope.subscribe((current, previous) => {
+    sendMessage({
+      type: 'container',
+      container: options.getScopeState(),
+    });
+
+    if (current.microfrontends !== previous.microfrontends) {
+      sendMessage({
+        type: 'pilets',
+        pilets: options.getMicrofrontends().map((mf) => ({
+          name: mf.name,
+          version: '0.0.0',
+          disabled: !!mf.disabled,
+        })),
+      });
+    }
+
+    if (current.components !== previous.components) {
+      sendMessage({
+        type: 'routes',
+        routes: options.getRoutes(),
+      });
+
+      sendMessage({
+        type: 'extensions',
+        extensions: options.getSlotNames(),
+      });
+    }
   });
 
-  return {};
+  const uninstall = install(options);
+
+  return {
+    dispose() {
+      detachResolved();
+      detachAll();
+      unsubscribe();
+      uninstall();
+    },
+  };
 }

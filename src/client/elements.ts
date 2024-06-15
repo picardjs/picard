@@ -116,8 +116,12 @@ export function createElements(injector: DependencyInjector) {
     private handleUpdate = (ev: UpdatedMicrofrontendsEvent) => {
       const source = this.getAttribute(attrSource) || undefined;
 
-      if (source && (ev.added.includes(source) || ev.removed.includes(source))) {
-        this.#reset();
+      if (source) {
+        if (ev.removed.includes(source)) {
+          this.#reset();
+        } else if (ev.added.includes(source) && this._lc !== undefined) {
+          this.#reset();
+        }
       }
     };
 
@@ -132,29 +136,15 @@ export function createElements(injector: DependencyInjector) {
 
     connectedCallback() {
       events.on('updated-microfrontends', this.handleUpdate);
-      this._queue = Promise.resolve();
-      this.#bootstrap();
-
-      this.#enqueue(() => {
-        const lc = this._lc;
-
-        if (lc) {
-          const data = this._data || JSON.parse(this.getAttribute(attrData) || '{}');
-          lc.mount(this, data);
-          events.emit('mounted-component', { element: this });
-        }
-      });
+      this.#start();
+      events.emit('mounted-component', { element: this });
     }
 
     disconnectedCallback() {
-      const lc = this._lc;
       // just make sure to remove everything
       events.off('updated-microfrontends', this.handleUpdate);
-      lc?.unmount(this);
+      this.#clean();
       events.emit('unmounted-component', { element: this });
-      this._lc = undefined;
-      this._queue = undefined;
-      this.innerHTML = '';
     }
 
     attributeChangedCallback(name: string, _prev: string, value: string) {
@@ -171,6 +161,28 @@ export function createElements(injector: DependencyInjector) {
       return [attrCid, attrData, attrName, attrSource];
     }
 
+    #clean() {
+      const lc = this._lc;
+      lc?.unmount(this);
+      this._lc = undefined;
+      this._queue = undefined;
+      this.innerHTML = '';
+    }
+
+    #start() {
+      this._queue = Promise.resolve();
+      this.#bootstrap();
+
+      this.#enqueue(() => {
+        const lc = this._lc;
+
+        if (lc) {
+          const data = this._data || JSON.parse(this.getAttribute(attrData) || '{}');
+          lc.mount(this, data);
+        }
+      });
+    }
+
     #enqueue(cb: () => void | Promise<void>) {
       this._queue = this._queue?.then(() => {
         if (this.isConnected) {
@@ -180,8 +192,8 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #reset() {
-      this.disconnectedCallback();
-      this.connectedCallback();
+      this.#clean();
+      this.#start();
     }
 
     #rerender() {

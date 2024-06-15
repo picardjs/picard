@@ -4,7 +4,7 @@ import { createFeed } from '../client/feed';
 import { createElements } from '../client/elements';
 import { createFragments } from '../client/fragments';
 import { createListener } from '../client/events';
-import { createRenderer } from '../client/render';
+import { createRenderer } from '../client/renderer';
 import { createRouter } from '../client/router';
 import { createDebug } from '../client/debug';
 import { createInjector } from '../injector';

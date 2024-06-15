@@ -1,5 +1,3 @@
-import type { ComponentGetter } from './components';
-
 export interface ModuleFederationFactory {
   (): any;
 }
@@ -23,5 +21,4 @@ export interface ModuleFederationContainer {
 export interface ModuleFederationEntry {
   id: string;
   url: string;
-  container?: ComponentGetter;
 }

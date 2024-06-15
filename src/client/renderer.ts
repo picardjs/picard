@@ -9,6 +9,7 @@ import type {
   PicardComponent,
   PicardMicrofrontend,
   DependencyInjector,
+  ComponentGetter,
 } from '../types';
 
 function getLifecycle(component: PicardComponent): ComponentLifecycle {
@@ -24,21 +25,30 @@ function getComponentLifecycle(scope: PicardStore, name: string): ComponentLifec
   return getLifecycle(component);
 }
 
-async function loadMicrofrontend(scope: PicardStore, mf: PicardMicrofrontend) {
+async function createContainer(mf: PicardMicrofrontend) {
   switch (mf.kind) {
     case 'mf': {
-      const container = await withModuleFederation(mf, scope);
-      return container;
+      return await withModuleFederation(mf.details);
     }
     case 'nf': {
-      const container = await withNativeFederation(mf, scope);
-      return container;
+      return await withNativeFederation(mf.details);
     }
     default: {
-      const container = await withPilet(mf, scope);
-      return container;
+      return await withPilet(mf.details);
     }
   }
+}
+
+const containers: Record<string, ComponentGetter> = {};
+
+async function loadContainer(mf: PicardMicrofrontend) {
+  const container = containers[mf.name];
+
+  if (!container) {
+    return (containers[mf.name] = await createContainer(mf));
+  }
+
+  return container;
 }
 
 function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: string): ComponentLifecycle {
@@ -51,7 +61,7 @@ function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: str
 
   // component unknown; let's create it
   return createLazyLifecycle(async () => {
-    const container = await loadMicrofrontend(scope, mf);
+    const container = await loadContainer(mf);
     return await container.load(name);
   });
 }
@@ -107,10 +117,27 @@ export function createRenderer(injector: DependencyInjector) {
   return {
     collect(name: string) {
       return queue.enqueue(async () => {
+        const ids: Array<string> = [];
         const { microfrontends } = scope.readState();
-        await Promise.all(microfrontends.map((mf) => loadMicrofrontend(scope, mf).then((m) => m.load(name))));
-        const components = getComponents(scope, name);
-        return components.map((m) => m.id);
+        await Promise.all(
+          microfrontends.map((mf) =>
+            loadContainer(mf).then(async (m) => {
+              const id = mf.components[name];
+
+              if (!id) {
+                const lc = await m.load(name);
+
+                if (lc) {
+                  const component = scope.registerComponent(mf, name, lc);
+                  ids.push(component.id);
+                }
+              } else {
+                ids.push(id);
+              }
+            }),
+          ),
+        );
+        return ids;
       });
     },
     render(component: ComponentRef) {
@@ -134,9 +161,6 @@ export function createRenderer(injector: DependencyInjector) {
           scope.appendMicrofrontend(mf);
           return getComponentFrom(scope, mf, component.name);
         }
-      } else if (typeof component.name === 'string') {
-        // look up if we have this component via its name / take first.
-        return getComponentLifecycle(scope, component.name);
       }
 
       // Fallback; render nothing

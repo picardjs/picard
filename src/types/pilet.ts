@@ -1,5 +1,3 @@
-import type { ComponentGetter } from './components';
-
 export interface PiletDefinition {
   name: string;
   version?: string;
@@ -16,8 +14,6 @@ export interface PiletResponse {
 }
 
 export interface PiletEntry {
-  url: string;
   name?: string;
-  link?: string;
-  container?: ComponentGetter;
+  url: string;
 }

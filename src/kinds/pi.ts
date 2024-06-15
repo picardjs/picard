@@ -1,6 +1,6 @@
 import { createLazyLifecycle } from './lifecycle';
 import { loadJson, loadModule, registerDependencyUrls } from './utils';
-import type { ComponentLifecycle, PicardStore, PiletPicardMicrofrontend } from '../types';
+import type { ComponentGetter, ComponentLifecycle, PiletEntry } from '../types';
 
 interface PiletManifest {
   name: string;
@@ -21,52 +21,35 @@ interface PiletManifest {
  * @param entry The pilet to fully load.
  * @returns The factory to retrieve exposed components.
  */
-export async function withPilet(mf: PiletPicardMicrofrontend, scope: PicardStore) {
-  const entry = {
-    ...mf.details,
-  };
+export async function withPilet(entry: PiletEntry): Promise<ComponentGetter> {
+  const components = {};
+  let link = entry.url;
 
   if (!entry.name) {
     const manifest = await loadJson<PiletManifest>(entry.url);
-    const { main, dependencies = {}, config = {}, ...data } = manifest;
-    const link = new URL(main, entry.url);
+    const { main, dependencies = {} } = manifest;
+    link = new URL(main, entry.url).href;
     registerDependencyUrls(dependencies);
-    Object.assign(entry, data);
-    entry.link = link.href;
   }
+  
+  const app = await loadModule(link);
 
-  if (!entry.container) {
-    const url = entry.link || entry.url;
-    const app = await loadModule(url);
+  if (app && 'setup' in app) {
+    const basePath = new URL('.', link);
 
-    if (app && 'setup' in app) {
-      const basePath = new URL('.', url);
-
-      await app.setup({
-        meta: {
-          basePath: basePath.href,
-        },
-        registerComponent(name: string, component: ComponentLifecycle) {
-          const lifecycle = typeof component === 'function' ? createLazyLifecycle(component) : component;
-          scope.registerComponent(mf, name, lifecycle);
-        },
-      });
-    }
-
-    entry.container = {
-      async load(name: string) {
-        const id = mf.components[name];
-
-        if (id) {
-          return scope.retrieveComponent(id)?.render;
-        }
-
-        return undefined;
+    await app.setup({
+      meta: {
+        basePath: basePath.href,
       },
-    };
-
-    scope.updateMicrofrontend(mf.name, { details: entry });
+      registerComponent(name: string, component: ComponentLifecycle) {
+        components[name] = typeof component === 'function' ? createLazyLifecycle(component) : component;
+      },
+    });
   }
 
-  return entry.container;
+  return {
+    async load(name) {
+      return components[name];
+    },
+  };
 }

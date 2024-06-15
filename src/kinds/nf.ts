@@ -1,5 +1,5 @@
 import { loadJson } from './utils';
-import type { PicardStore, NativeFederationExposedEntry, NativeFederationPicardMicrofrontend } from '../types';
+import type { NativeFederationEntry, NativeFederationExposedEntry, ComponentGetter } from '../types';
 
 interface NativeFederationManifest {
   name: string;
@@ -12,44 +12,26 @@ interface NativeFederationManifest {
  * @param entry The native federation entry to fully load.
  * @returns The factory to retrieve exposed components.
  */
-export async function withNativeFederation(mf: NativeFederationPicardMicrofrontend, scope: PicardStore) {
-  const entry = {
-    ...mf.details,
-  };
+export async function withNativeFederation(entry: NativeFederationEntry): Promise<ComponentGetter> {
+  let exposes = entry.exposes;
 
-  if (!entry.exposes) {
+  if (!exposes) {
     const manifest = await loadJson<NativeFederationManifest>(entry.url);
-    const { exposes } = manifest;
-    entry.exposes = exposes;
+    exposes = manifest.exposes;
   }
 
-  if (!entry.container) {
-    entry.container = {
-      async load(name: string) {
-        const id = mf.components[name];
+  return {
+    async load(name: string) {
+      const key = `./${name}`;
+      const item = exposes?.find((m) => m.key === key);
 
-        if (id) {
-          return scope.retrieveComponent(id)?.render;
-        }
+      if (item) {
+        const entryUrl = new URL(item.outFileName, entry.url);
+        const component = await import(entryUrl.href);
+        return component?.default || component;
+      }
 
-        const key = `./${name}`;
-        const item = entry.exposes?.find((m) => m.key === key);
-
-        if (item) {
-          const entryUrl = new URL(item.outFileName, entry.url);
-          const component = await import(entryUrl.href);
-          const lifecycle = component?.default || component;
-          scope.registerComponent(mf, name, lifecycle);
-          return lifecycle;
-        }
-
-        mf.components[name] = 'void';
-        return undefined;
-      },
-    };
-
-    scope.updateMicrofrontend(mf.name, { details: entry });
-  }
-
-  return entry.container;
+      return undefined;
+    },
+  };
 }

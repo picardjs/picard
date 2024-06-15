@@ -2,10 +2,6 @@ import { initializeStore } from './store';
 import { registerComponent, retrieveComponent } from './actions';
 import type { DependencyInjector, PicardStore } from '../types';
 
-function defer(cb: () => void) {
-  setTimeout(cb, 0);
-}
-
 /**
  * Creates a new scope for obtaining MF information.
  */
@@ -15,6 +11,9 @@ export function createPicardScope(injector: DependencyInjector) {
   const store = initializeStore(state);
 
   const scope: PicardStore = {
+    saveSnapshot() {
+      return JSON.stringify(store.getState());
+    },
     readState() {
       return store.getState();
     },

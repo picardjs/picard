@@ -9,6 +9,7 @@ export interface PicardState {
 
 export interface PicardStore {
   readState(): PicardState;
+  saveSnapshot(): string;
   subscribe(listener: (curr: PicardState, prev: PicardState) => void): Dispose;
   removeMicrofrontend(name: string): void;
   removeMicrofrontends(names: Array<string>): void;

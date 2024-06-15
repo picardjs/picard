@@ -1,9 +1,9 @@
 import { loadScript, registerModule } from './utils';
 import type {
+  ModuleFederationEntry,
   ModuleFederationContainer,
-  ModuleFederationPicardMicrofrontend,
   ModuleFederationFactoryScope,
-  PicardStore,
+  ComponentGetter,
 } from '../types';
 
 const appShell = 'app';
@@ -60,37 +60,18 @@ function loadFactory(name: string) {
  * @param entry The module federation entry to fully load.
  * @returns The factory to retrieve exposed components.
  */
-export async function withModuleFederation(mf: ModuleFederationPicardMicrofrontend, scope: PicardStore) {
-  const entry = {
-    ...mf.details,
+export async function withModuleFederation(entry: ModuleFederationEntry): Promise<ComponentGetter> {
+  await loadScript(entry.url);
+  const container = loadFactory(entry.id);
+  return {
+    async load(name) {
+      try {
+        const factory = await container.get(name);
+        const component = factory();
+        return component.default || component;
+      } catch {
+        return undefined;
+      }
+    },
   };
-
-  if (!entry.container) {
-    await loadScript(entry.url);
-    const container = loadFactory(entry.id);
-    entry.container = {
-      async load(name) {
-        const id = mf.components[name];
-
-        if (id) {
-          return scope.retrieveComponent(id)?.render;
-        }
-
-        try {
-          const factory = await container.get(name);
-          const component = factory();
-          const lifecycle = component.default || component;
-          scope.registerComponent(mf, name, lifecycle);
-          return lifecycle;
-        } catch {
-          mf.components[name] = 'void';
-          return undefined;
-        }
-      },
-    };
-
-    scope.updateMicrofrontend(mf.name, { details: entry });
-  }
-
-  return entry.container;
 }

@@ -39,15 +39,13 @@ export function registerComponent(
 }
 
 export function retrieveComponent(store: StoreApi<PicardState>, id: string) {
-  if (id !== 'void') {
-    const { components } = store.getState();
+  const { components } = store.getState();
 
-    for (const list of Object.values(components)) {
-      const component = list.find((m) => m.id === id);
+  for (const list of Object.values(components)) {
+    const component = list.find((m) => m.id === id);
 
-      if (component) {
-        return component;
-      }
+    if (component) {
+      return component;
     }
   }
 

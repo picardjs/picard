@@ -32,6 +32,9 @@ export async function withPilet(injector: DependencyInjector, entry: PiletEntry)
     const { main, dependencies = {} } = manifest;
     link = new URL(main, entry.url).href;
     loader.registerUrls(dependencies);
+  } else {
+    const { dependencies = {} } = entry;
+    loader.registerUrls(dependencies);
   }
 
   const app = await loader.load(link);
@@ -42,12 +45,19 @@ export async function withPilet(injector: DependencyInjector, entry: PiletEntry)
       meta: {
         basePath: basePath.href,
       },
-      registerComponent(name: string, component: ComponentLifecycle) {
+      registerComponent(name: string, component: ComponentLifecycle, opts = {}) {
+        const { type = '' } = opts;
+        const framework = type && injector.get(`framework.${type}`);
+
+        if (framework) {
+          component = framework.convert(component);
+        }
+
         components[name] = typeof component === 'function' ? createLazyLifecycle(component) : component;
       },
     };
 
-    plugins.forEach(plugin => plugin.extend(api));
+    plugins.forEach((plugin) => plugin.extend(api));
     await app.setup(api);
   }
 

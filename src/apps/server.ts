@@ -58,6 +58,7 @@ export function initializePicard(options?: PicardOptions) {
   } = options || {};
 
   const serviceDefinitions = {
+    ...services,
     config: () => ({
       feed,
       state,

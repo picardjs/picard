@@ -17,6 +17,7 @@ export interface PiletResponse {
 
 export interface PiletEntry {
   name?: string;
+  dependencies?: Record<string, string>;
   url: string;
 }
 

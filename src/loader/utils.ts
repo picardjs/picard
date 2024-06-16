@@ -15,7 +15,9 @@ export function registerModule(name: string, resolve: ModuleResolver) {
       const content = resolve();
 
       if (content instanceof Promise) {
-        return content.then(_exports);
+        return content.then(m => {
+          return m.default || m;
+        }).then(_exports);
       } else {
         _exports(content);
       }

@@ -1,4 +1,4 @@
-import 'systemjs/dist/system.js';
+import 'systemjs';
 import 'systemjs/dist/extras/named-register.js';
 import { satisfies, validate } from './version';
 import { loadModule, registerDependencyResolvers, registerDependencyUrls } from './utils';

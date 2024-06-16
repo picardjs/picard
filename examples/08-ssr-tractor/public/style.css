@@ -3,6 +3,8 @@
   font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
+pi-component, pi-slot { display: contents; }
+
 aside {
   border-top: 1px solid gray;
   padding-top: 20px;
@@ -121,7 +123,7 @@ dd {
   grid-area: options;
 }
 
-#options button {
+#options a {
   border: none;
   border-bottom: 2px solid white;
   cursor: pointer;
@@ -131,8 +133,8 @@ dd {
   padding: 0;
 }
 
-#options button.active,
-#options button:hover {
+#options a.active,
+#options a:hover {
   border-bottom-color: seagreen;
 }
 

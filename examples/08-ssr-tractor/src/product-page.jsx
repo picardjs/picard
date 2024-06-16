@@ -34,10 +34,10 @@ function getCurrent(sku) {
   return product.variants.find((v) => v.sku === sku) || product.variants[0];
 }
 
-const ProductPage = ({ sku }) => {
+const ProductPage = ({ sku, count }) => {
   const current = getCurrent(sku);
   const item = current.sku;
-  const data = JSON.stringify({ item });
+  const data = JSON.stringify({ item, count });
 
   return (
     <>
@@ -53,7 +53,7 @@ const ProductPage = ({ sku }) => {
       </h2>
       <div id="options">
         {product.variants.map((variant) => (
-          <a href={`/products/${variant.sku}`} key={variant.sku} className={sku === variant.sku ? 'active' : ''}>
+          <a href={`/products/${variant.sku}`} key={variant.sku} className={item === variant.sku ? 'active' : ''}>
             <img src={variant.thumb} alt={variant.name} />
           </a>
         ))}

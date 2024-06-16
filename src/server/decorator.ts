@@ -14,12 +14,13 @@ function traverse(nodes: Array<ChildNode>, cb: (node: ChildNode) => boolean) {
   });
 }
 
-function getChildContent(renderer: RendererService, attribs: Record<string, string>) {
+async function getChildContent(renderer: RendererService, attribs: Record<string, string>): Promise<string> {
   const data = JSON.parse(attribs.data || '{}');
 
   if ('cid' in attribs) {
     return renderer.render(attribs.cid).stringify(data);
   } else if ('name' in attribs) {
+    await renderer.collect(attribs.name);
     return renderer.render({ name: attribs.name, source: attribs.source }).stringify(data);
   } else {
     return '';
@@ -64,7 +65,7 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
       const parts: Array<string> = [content];
 
       for (const [attribs, index] of markers[componentName]) {
-        const childContent = getChildContent(renderer, attribs);
+        const childContent = await getChildContent(renderer, attribs);
         parts.pop();
         parts.push(content.substring(previous, index));
         parts.push(childContent);

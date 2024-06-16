@@ -6,24 +6,12 @@ import type {
   ComponentRef,
   ComponentLifecycle,
   PicardStore,
-  PicardComponent,
   PicardMicrofrontend,
   DependencyInjector,
   ComponentGetter,
 } from '../types';
 
-function getLifecycle(component: PicardComponent): ComponentLifecycle {
-  return component?.render || emptyLifecycle;
-}
-
-function getComponents(scope: PicardStore, name: string): Array<PicardComponent> {
-  return scope.readState().components[name] || [];
-}
-
-function getComponentLifecycle(scope: PicardStore, name: string): ComponentLifecycle {
-  const [component] = getComponents(scope, name);
-  return getLifecycle(component);
-}
+const containers: Record<string, Promise<ComponentGetter>> = {};
 
 async function createContainer(injector: DependencyInjector, mf: PicardMicrofrontend) {
   switch (mf.kind) {
@@ -38,8 +26,6 @@ async function createContainer(injector: DependencyInjector, mf: PicardMicrofron
     }
   }
 }
-
-const containers: Record<string, Promise<ComponentGetter>> = {};
 
 async function loadContainer(injector: DependencyInjector, mf: PicardMicrofrontend) {
   let container = containers[mf.name];

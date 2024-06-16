@@ -1,0 +1,16 @@
+{
+  "name": "ssr-example",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "esbuild src/index.jsx --platform=node --bundle --outfile=dist/server.js"
+  },
+  "dependencies": {
+    "express": "^4",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "esbuild": "0.20.2"
+  }
+}

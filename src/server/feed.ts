@@ -36,9 +36,8 @@ function fromPilet(pilet: PiletDefinition): PicardMicrofrontend {
     return {
       components: {},
       details: {
-        name: pilet.name,
+        ...pilet,
         url: pilet.link,
-        link: pilet.link,
       },
       kind: 'pilet',
       name: pilet.name,

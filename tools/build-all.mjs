@@ -26,6 +26,7 @@ const demos = {
     '05-static-page-with-routing',
     '06-static-page-single-spa',
   ],
+  server: ['08-ssr-tractor/src'],
 };
 
 await Promise.all(

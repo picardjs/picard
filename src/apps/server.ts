@@ -2,7 +2,9 @@ import { createPicardScope } from '../state';
 import { createLoader } from '../loader';
 import { createFeed } from '../server/feed';
 import { createListener } from '../server/events';
-import { createRouter } from '../server/router';
+import { createRenderer } from '../server/renderer';
+import { createFragments } from '../server/fragments';
+import { DecoratorService, createDecorator } from '../server/decorator';
 import { createInjector } from '../injector';
 import type { FeedDefinition } from '../types';
 
@@ -13,6 +15,8 @@ export interface PicardOptions {
   feed?: FeedDefinition;
   state?: any;
   stylesheet?: boolean;
+  services?: Record<string, any>;
+  dependencies?: Record<string, () => Promise<any>>;
 }
 
 const defaultOptions = {
@@ -20,12 +24,33 @@ const defaultOptions = {
   slotName: 'pi-slot',
   fragmentUrl: '',
   stylesheet: true,
+  services: {},
+  dependencies: {},
 };
+
+declare module '../types/injector' {
+  interface Services {
+    decorator: DecoratorService;
+  }
+
+  interface Configuration {
+    feed?: FeedDefinition;
+    state?: any;
+    meta?: any;
+    fragmentUrl?: string;
+    stylesheet: boolean;
+    slotName: string;
+    componentName: string;
+    dependencies: Record<string, () => Promise<any>>;
+  }
+}
 
 export function initializePicard(options?: PicardOptions) {
   const {
     feed,
     state,
+    services = defaultOptions.services,
+    dependencies = defaultOptions.dependencies,
     fragmentUrl = defaultOptions.fragmentUrl,
     componentName = defaultOptions.componentName,
     slotName = defaultOptions.slotName,
@@ -40,6 +65,8 @@ export function initializePicard(options?: PicardOptions) {
       slotName,
       fragmentUrl,
       stylesheet,
+      dependencies,
+      services,
     }),
     events: createListener,
     scope: createPicardScope,
@@ -47,8 +74,8 @@ export function initializePicard(options?: PicardOptions) {
     renderer: createRenderer,
     fragments: createFragments,
     loader: createLoader,
-    router: createRouter,
+    decorator: createDecorator,
   };
 
-  return createInjector(serviceDefinitions).instantiate('loader').instantiate('router').get('scope');
+  return createInjector(serviceDefinitions).instantiate('loader').get('decorator');
 }

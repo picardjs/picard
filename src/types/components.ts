@@ -4,9 +4,9 @@ export interface ComponentLifecycle {
   bootstrap(): Promise<void>;
   unload(): Promise<void>;
 
-  mount(container: HTMLElement, params: any): void;
-  unmount(container: HTMLElement): void;
-  update(params: any): void;
+  mount(container: HTMLElement, params: any, locals: any): void;
+  unmount(container: HTMLElement, locals: any): void;
+  update(params: any, locals: any): void;
 
   stringify(params: any): string;
 }

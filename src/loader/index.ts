@@ -1,11 +1,13 @@
 import 'systemjs/dist/system.js';
 import 'systemjs/dist/extras/named-register.js';
 import { satisfies, validate } from './version';
-import { DependencyInjector } from '../types';
+import { loadModule, registerDependencyResolvers, registerDependencyUrls } from './utils';
+import type { DependencyInjector, DependencyModule, LoaderService } from '../types';
 
 declare const System: {
   registerRegistry: Record<string, any>;
   entries(): Iterable<[string, System.Module]>;
+  import(name: string): Promise<System.Module>;
 };
 
 function isPrimitiveExport(content: any) {
@@ -51,8 +53,9 @@ function findMatchingPackage(id: string) {
   return undefined;
 }
 
-export function createLoader(injector: DependencyInjector) {
+export function createLoader(injector: DependencyInjector): LoaderService {
   const events = injector.get('events');
+  const { dependencies } = injector.get('config');
 
   const systemResolve = System.constructor.prototype.resolve;
   const systemRegister = System.constructor.prototype.register;
@@ -113,5 +116,37 @@ export function createLoader(injector: DependencyInjector) {
     return systemRegister.apply(this, args);
   };
 
-  return {};
+  registerDependencyResolvers(dependencies);
+
+  return {
+    registerUrls(dependencies) {
+      registerDependencyUrls(dependencies);
+    },
+    registerResolvers(dependencies) {
+      registerDependencyResolvers(dependencies);
+    },
+    load(url) {
+      return loadModule(url);
+    },
+    list() {
+      const dependencies: Array<DependencyModule> = [];
+
+      for (const [entry] of System.entries()) {
+        const index = entry.lastIndexOf('@');
+
+        if (index > 0 && !entry.match(/^https?:\/\//)) {
+          const name = entry.substring(0, index);
+          const version = entry.substring(index + 1);
+
+          dependencies.push({
+            name,
+            version,
+            get: () => System.import(entry).then((result) => () => result),
+          });
+        }
+      }
+
+      return dependencies;
+    },
+  };
 }

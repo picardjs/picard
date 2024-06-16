@@ -1,5 +1,10 @@
 import { loadJson } from './utils';
-import type { NativeFederationEntry, NativeFederationExposedEntry, ComponentGetter } from '../types';
+import type {
+  NativeFederationEntry,
+  NativeFederationExposedEntry,
+  ComponentGetter,
+  DependencyInjector,
+} from '../types';
 
 interface NativeFederationManifest {
   name: string;
@@ -12,7 +17,10 @@ interface NativeFederationManifest {
  * @param entry The native federation entry to fully load.
  * @returns The factory to retrieve exposed components.
  */
-export async function withNativeFederation(entry: NativeFederationEntry): Promise<ComponentGetter> {
+export async function withNativeFederation(
+  injector: DependencyInjector,
+  entry: NativeFederationEntry,
+): Promise<ComponentGetter> {
   let exposes = entry.exposes;
 
   if (!exposes) {

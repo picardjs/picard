@@ -1,3 +1,5 @@
+import { ComponentLifecycle } from './components';
+
 export interface PiletDefinition {
   name: string;
   version?: string;
@@ -16,4 +18,17 @@ export interface PiletResponse {
 export interface PiletEntry {
   name?: string;
   url: string;
+}
+
+export interface PiletMeta {
+  basePath: string;
+}
+
+export interface PiletApi {
+  registerComponent(name: string, component: ComponentLifecycle): void;
+  meta: PiletMeta;
+}
+
+export interface PiletService {
+  extend(api: PiletApi): void;
 }

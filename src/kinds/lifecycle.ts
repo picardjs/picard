@@ -18,7 +18,7 @@ export function createLazyLifecycle(load: () => Promise<any>): ComponentLifecycl
   return {
     async bootstrap(...args) {
       const component = await load();
-      Object.assign(impl, component.default || component);
+      Object.assign(impl, component?.default || component);
       return await impl.bootstrap(...args);
     },
     mount(...args) {

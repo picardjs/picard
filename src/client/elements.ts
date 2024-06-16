@@ -111,6 +111,7 @@ export function createElements(injector: DependencyInjector) {
 
   class PiComponent extends HTMLElement {
     private _lc: ComponentLifecycle | undefined;
+    private _locals: any = {};
     private _data: any;
     private _queue: Promise<any> | undefined;
     private handleUpdate = (ev: UpdatedMicrofrontendsEvent) => {
@@ -163,8 +164,9 @@ export function createElements(injector: DependencyInjector) {
 
     #clean() {
       const lc = this._lc;
-      lc?.unmount(this);
+      lc?.unmount(this, this._locals);
       this._lc = undefined;
+      this._locals = {};
       this._queue = undefined;
       this.innerHTML = '';
     }
@@ -178,7 +180,7 @@ export function createElements(injector: DependencyInjector) {
 
         if (lc) {
           const data = this._data || JSON.parse(this.getAttribute(attrData) || '{}');
-          lc.mount(this, data);
+          lc.mount(this, data, this._locals);
         }
       });
     }
@@ -197,7 +199,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #rerender() {
-      this.#enqueue(() => this._lc?.update(this._data));
+      this.#enqueue(() => this._lc?.update(this._data, this._locals));
     }
 
     #bootstrap() {

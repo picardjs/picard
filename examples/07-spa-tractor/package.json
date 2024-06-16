@@ -1,0 +1,14 @@
+{
+  "name": "spa-example",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "vite"
+  },
+  "dependencies": {
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "vite": "5.3.1"
+  }
+}

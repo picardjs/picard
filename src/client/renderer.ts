@@ -25,33 +25,39 @@ function getComponentLifecycle(scope: PicardStore, name: string): ComponentLifec
   return getLifecycle(component);
 }
 
-async function createContainer(mf: PicardMicrofrontend) {
+async function createContainer(injector: DependencyInjector, mf: PicardMicrofrontend) {
   switch (mf.kind) {
     case 'mf': {
-      return await withModuleFederation(mf.details);
+      return await withModuleFederation(injector, mf.details);
     }
     case 'nf': {
-      return await withNativeFederation(mf.details);
+      return await withNativeFederation(injector, mf.details);
     }
     default: {
-      return await withPilet(mf.details);
+      return await withPilet(injector, mf.details);
     }
   }
 }
 
-const containers: Record<string, ComponentGetter> = {};
+const containers: Record<string, Promise<ComponentGetter>> = {};
 
-async function loadContainer(mf: PicardMicrofrontend) {
-  const container = containers[mf.name];
+async function loadContainer(injector: DependencyInjector, mf: PicardMicrofrontend) {
+  let container = containers[mf.name];
 
   if (!container) {
-    return (containers[mf.name] = await createContainer(mf));
+    container = createContainer(injector, mf);
+    containers[mf.name] = container;
   }
 
-  return container;
+  return await container;
 }
 
-function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: string): ComponentLifecycle {
+function getComponentFrom(
+  injector: DependencyInjector,
+  scope: PicardStore,
+  mf: PicardMicrofrontend,
+  name: string,
+): ComponentLifecycle {
   const cid = mf.components[name];
 
   if (cid) {
@@ -61,7 +67,7 @@ function getComponentFrom(scope: PicardStore, mf: PicardMicrofrontend, name: str
 
   // component unknown; let's create it
   return createLazyLifecycle(async () => {
-    const container = await loadContainer(mf);
+    const container = await loadContainer(injector, mf);
     return await container.load(name);
   });
 }
@@ -121,7 +127,7 @@ export function createRenderer(injector: DependencyInjector) {
         const { microfrontends } = scope.readState();
         await Promise.all(
           microfrontends.map((mf) =>
-            loadContainer(mf).then(async (m) => {
+            loadContainer(injector, mf).then(async (m) => {
               const id = mf.components[name];
 
               if (!id) {
@@ -155,11 +161,11 @@ export function createRenderer(injector: DependencyInjector) {
         const existing = findMicrofrontend(scope, full, source);
 
         if (existing) {
-          return getComponentFrom(scope, existing, component.name);
+          return getComponentFrom(injector, scope, existing, component.name);
         } else if (full) {
           const mf = createMicrofrontend(source);
           scope.appendMicrofrontend(mf);
-          return getComponentFrom(scope, mf, component.name);
+          return getComponentFrom(injector, scope, mf, component.name);
         }
       }
 

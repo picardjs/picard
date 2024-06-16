@@ -18,6 +18,8 @@ export interface PicardOptions {
   state?: any;
   meta?: any;
   stylesheet?: boolean;
+  services?: Record<string, any>;
+  dependencies?: Record<string, () => Promise<any>>;
 }
 
 const defaultOptions = {
@@ -25,9 +27,9 @@ const defaultOptions = {
   slotName: 'pi-slot',
   fragmentUrl: '',
   stylesheet: true,
+  services: {},
+  dependencies: {},
 };
-
-interface LoaderService {}
 
 interface ElementsService {}
 
@@ -43,7 +45,6 @@ interface DebugService {
 
 declare module '../types/injector' {
   interface Services {
-    loader: LoaderService;
     elements: ElementsService;
     router: RouterService;
     renderer: RendererService;
@@ -60,7 +61,12 @@ declare module '../types/injector' {
     stylesheet: boolean;
     slotName: string;
     componentName: string;
+    dependencies: Record<string, () => Promise<any>>;
   }
+}
+
+export function share(exports: any) {
+  return () => Promise.resolve(exports);
 }
 
 export function initializePicard(options?: PicardOptions) {
@@ -68,6 +74,8 @@ export function initializePicard(options?: PicardOptions) {
     feed,
     state,
     meta,
+    services = defaultOptions.services,
+    dependencies = defaultOptions.dependencies,
     fragmentUrl = defaultOptions.fragmentUrl,
     componentName = defaultOptions.componentName,
     slotName = defaultOptions.slotName,
@@ -75,6 +83,7 @@ export function initializePicard(options?: PicardOptions) {
   } = options || {};
 
   const serviceDefinitions = {
+    ...services,
     config: () => ({
       feed,
       state,
@@ -83,6 +92,7 @@ export function initializePicard(options?: PicardOptions) {
       slotName,
       fragmentUrl,
       stylesheet,
+      dependencies,
     }),
     events: createListener,
     scope: createPicardScope,

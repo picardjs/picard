@@ -451,7 +451,6 @@ export function createDebug(injector: DependencyInjector) {
 
   const options: DebugOptions = {
     goToRoute(route, state) {
-      console.log('navigate', route);
       router.navigate(route, state);
     },
     fireEvent(name, args) {

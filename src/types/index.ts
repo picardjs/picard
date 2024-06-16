@@ -3,6 +3,7 @@ export type * from './discovery';
 export type * from './events';
 export type * from './fragments';
 export type * from './injector';
+export type * from './loader';
 export type * from './microfrontend';
 export type * from './module-federation';
 export type * from './native-federation';

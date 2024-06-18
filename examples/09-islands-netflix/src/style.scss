@@ -1,0 +1,392 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900');
+@import url('https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css');
+@import url('https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css');
+
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol,
+ul {
+  list-style: none;
+}
+blockquote,
+q {
+  quotes: none;
+}
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+body {
+  background: #221f1f;
+  color: #ffffff;
+  font-family: 'Lato', sans-serif;
+}
+
+h2,
+.title-list .title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 1em;
+}
+
+p {
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.6;
+  margin-bottom: 1em;
+}
+
+a {
+  text-decoration: none !important ;
+  color: inherit !important;
+}
+
+#app {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  grid-template-columns: calc(100vw - calc(100vw - 100%));
+  grid-template-areas: 'main' 'footer';
+  min-height: 100vh;
+
+  .main-wrapper {
+    grid-area: main;
+  }
+  footer {
+    grid-area: footer;
+  }
+}
+
+.Header {
+  /* FF3.6-15 */
+  background: -webkit-linear-gradient(top, black 0%, transparent 100%);
+  /* Chrome10-25,Safari5.1-6 */
+  background: linear-gradient(to bottom, black 0%, transparent 100%);
+  /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a6000000', endColorstr='#00000000',GradientType=0 );
+  /* IE6-9 */
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex;
+  gap: 3rem;
+  padding: 40px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  box-sizing: border-box;
+  z-index: 5;
+
+  .Navigation {
+    flex-grow: 1;
+  }
+
+  .SearchContainer {
+    order: 1; // you would control the order in the feed service
+  }
+  a[href='/profile'] {
+    order: 2; // you would control the order in the feed service
+  }
+}
+
+.Logo {
+  width: 151px;
+  height: 41px;
+  -webkit-transition: margin 0.125s ease;
+  transition: margin 0.125s ease;
+}
+.Logo svg {
+  -webkit-transform: scale(0.5);
+  transform: scale(0.5);
+  -webkit-transform-origin: 0 0;
+  transform-origin: 0 0;
+}
+.Logo svg path {
+  fill: #e50914;
+  -webkit-transition: fill 0.125s ease;
+  transition: fill 0.125s ease;
+}
+.Logo:hover {
+  cursor: pointer;
+  margin-top: 2px;
+}
+.Logo:hover svg path {
+  fill: #ffffff !important;
+}
+
+.Navigation ul {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  height: 37px;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding: 0 10px;
+}
+.Navigation ul li {
+  font-weight: 400;
+  padding: 7px 10px;
+  font-size: 14px;
+  -webkit-transition: background 0.125s ease;
+  transition: background 0.125s ease;
+  border-radius: 3px;
+}
+
+.Navigation ul li a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.Navigation ul li:hover {
+  background: #e50914;
+  cursor: pointer;
+}
+
+.button {
+  background: transparent;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  height: 44px;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #ffffff;
+  padding: 20px;
+  box-sizing: border-box;
+  border: 2px solid rgba(245, 245, 241, 0.2);
+  border-radius: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  -webkit-transition: border 0.125s ease, background 0.125s ease;
+  transition: border 0.125s ease, background 0.125s ease;
+}
+
+.button:hover {
+  border: 2px solid #f5f5f1;
+}
+
+.button[data-primary='true'] {
+  border: 2px solid #e50914;
+}
+
+.button[data-primary='true']:hover {
+  background: #e50914;
+}
+
+footer {
+  padding-bottom: 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100vw - calc(100vw - 100%));
+
+  .text-lightgray {
+    color: #aaa;
+  }
+
+  img#smapiot-logo {
+    position: relative;
+    top: 4px;
+  }
+
+  a:hover {
+    border-bottom: 1px dashed gray;
+  }
+}
+
+@keyframes loadinganim {
+  0% { 
+    transform: rotate(360deg);
+  }
+  100% { 
+    transform: rotate(0deg);
+  }
+}
+
+.loading-wrapper{
+  background: #334;
+  min-height: 300px;
+  color: white;
+  text-align: center;
+  display: table;
+  width: 100%;
+  
+  .loading{
+    display: table-cell;
+    width: 100%;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    vertical-align: middle;
+    font-family: helvetica, sans-serif;
+    
+    .bulletouter{
+      animation: loadinganim 1s infinite; 
+      animation-timing-function: linear;
+      animation-direction: reverse;
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      margin: 0 auto;
+      .bulletinner{
+        position: relative;
+        left: -5px;
+        width: 45px;
+        height: 45px;
+        background: #334;
+        border-radius: 50%;
+        margin: 0 auto;
+      }
+      .mask{
+        position: relative;
+        left: -5px;
+        top: -15px;
+        width: 50px;
+        height: 25px;
+        background: #334;
+        transform: rotate(45deg);
+      }
+      .dot{
+        position: relative;
+        left: 33px;
+        top: -32px;
+        width: 8px;
+        height: 8px;
+        background: white;
+        border-radius: 50%;
+      }
+    }
+    p{
+      padding-top: 23px;
+    }
+  }
+}

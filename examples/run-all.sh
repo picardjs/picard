@@ -21,3 +21,13 @@ cd ..
 cd 05-static-page-with-routing
 npx http-server --port 8085 &
 cd ..
+
+cd 07-spa-tractor
+npm i
+npm start &
+cd ..
+
+cd 08-ssr-tractor
+npm i && npm run build
+npm start &
+cd ..

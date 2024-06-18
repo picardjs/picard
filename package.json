@@ -19,7 +19,9 @@
     "build": "node tools/build-all.mjs",
     "build:server": "node tools/build.mjs server",
     "build:client": "node tools/build.mjs client",
-    "build:native": "node tools/build.mjs native"
+    "build:native": "node tools/build.mjs native",
+    "test": "playwright test --project firefox",
+    "test:all": "playwright test"
   },
   "author": "smapiot",
   "homepage": "https://picard.js.org",
@@ -65,15 +67,18 @@
   },
   "sideEffects": false,
   "devDependencies": {
+    "@playwright/test": "^1.44.1",
+    "@types/http-server": "^0.12.4",
     "@types/node": "^20",
     "@types/systemjs": "^6",
-    "domhandler": "5.0.3",
     "dets": "0.15.0",
+    "domhandler": "5.0.3",
     "esbuild": "0.20.2",
     "htmlparser2": "9.1.0",
+    "http-server": "^14.1.1",
     "prettier": "3.2.5",
-    "typescript": "5.4.3",
     "systemjs": "6.14.3",
+    "typescript": "5.4.3",
     "zustand": "4.5.2"
   }
 }

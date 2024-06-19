@@ -1,7 +1,5 @@
 #!/bin/bash
 
-trap 'kill 0' SIGINT
-
 cd 01-static-page
 npx http-server --port 8081 &
 cd ..
@@ -33,3 +31,6 @@ cd ..
 cd 09-islands-netflix
 npm start & # port is 8089
 cd ..
+
+trap 'kill $(jobs -pr)' INT
+wait

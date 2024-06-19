@@ -2,7 +2,7 @@
   "name": "spa-example",
   "version": "0.0.0",
   "scripts": {
-    "start": "vite"
+    "start": "vite --port 8087"
   },
   "dependencies": {
     "react": "^18",

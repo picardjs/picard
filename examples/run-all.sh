@@ -23,11 +23,13 @@ npx http-server --port 8085 &
 cd ..
 
 cd 07-spa-tractor
-npm i
-npm start &
+npm start & # port is 8087
 cd ..
 
 cd 08-ssr-tractor
-npm i && npm run build
-npm start &
+npm start & # port is 8088
+cd ..
+
+cd 09-islands-netflix
+npm start & # port is 8089
 cd ..

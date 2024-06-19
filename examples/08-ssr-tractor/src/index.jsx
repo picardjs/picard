@@ -19,6 +19,7 @@ const picard = initializePicard({
 app.use(express.static(resolve(__dirname, '../public')));
 
 let count = 0;
+let cache = {};
 
 app.get('/', (_, res) => {
   res.redirect('/products');
@@ -26,13 +27,19 @@ app.get('/', (_, res) => {
 
 app.get('/products/:id?', async (req, res) => {
   const sku = req.params.id;
-  const plainContent = renderToString(<ProductPage sku={sku} count={count} />);
-  const content = await picard.decorate(plainContent);
-  res.send(render({ content }));
+
+  if (!(sku in cache)) {
+    const plainContent = renderToString(<ProductPage sku={sku} count={count} />);
+    const content = await picard.decorate(plainContent);
+    cache[sku] = render({ content });
+  }
+  
+  res.send(cache[sku]);
 });
 
 app.post('/products/:id?', async (req, res) => {
   count++;
+  cache = {};
   res.redirect(req.path);
 });
 

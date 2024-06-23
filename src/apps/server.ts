@@ -12,6 +12,7 @@ export interface PicardOptions {
   componentName?: string;
   fragmentUrl?: string;
   slotName?: string;
+  partName?: string;
   feed?: FeedDefinition;
   state?: any;
   stylesheet?: boolean;
@@ -22,6 +23,7 @@ export interface PicardOptions {
 const defaultOptions = {
   componentName: 'pi-component',
   slotName: 'pi-slot',
+  partName: 'pi-part',
   fragmentUrl: '',
   stylesheet: true,
   services: {},
@@ -54,6 +56,7 @@ export function initializePicard(options?: PicardOptions) {
     fragmentUrl = defaultOptions.fragmentUrl,
     componentName = defaultOptions.componentName,
     slotName = defaultOptions.slotName,
+    partName = defaultOptions.partName,
     stylesheet = defaultOptions.stylesheet,
   } = options || {};
 
@@ -63,6 +66,7 @@ export function initializePicard(options?: PicardOptions) {
       feed,
       state,
       componentName,
+      partName,
       slotName,
       fragmentUrl,
       stylesheet,

@@ -42,11 +42,16 @@
   },
   "exports": {
     ".": {
-      "node": "./dist/server/picard.js",
-      "require": "./dist/server/picard.js",
-      "browser": "./dist/client/picard.js",
-      "import": "./dist/client/picard.mjs",
-      "types": "./dist/server/picard.d.ts"
+      "node": {
+        "require": "./dist/server/picard.js",
+        "import": "./dist/server/picard.mjs",
+        "types": "./dist/server/picard.d.ts"
+      },
+      "browser": {
+        "import": "./dist/client/picard.mjs",
+        "require": "./dist/client/picard.js",
+        "types": "./dist/client/picard.d.ts"
+      }
     },
     "./package.json": "./package.json",
     "./server": {

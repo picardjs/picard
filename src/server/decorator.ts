@@ -28,7 +28,7 @@ async function getChildContent(renderer: RendererService, attribs: Record<string
 }
 
 export function createDecorator(injector: DependencyInjector): DecoratorService {
-  const { slotName, componentName } = injector.get('config');
+  const { slotName, componentName, partName } = injector.get('config');
   const fragments = injector.get('fragments');
   const renderer = injector.get('renderer');
   const queue = injector.get('feed');
@@ -41,10 +41,7 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
         withStartIndices: true,
         withEndIndices: true,
       });
-      const markers: Record<string, Array<[Record<string, string>, number]>> = {
-        [componentName]: [],
-        [slotName]: [],
-      };
+      const markers: Array<[string, Record<string, string>, number, number]> = [];
       traverse(document.childNodes, (m) => {
         if (m.type !== 'tag') {
           return false;
@@ -52,8 +49,12 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
 
         if (m.name === componentName || m.name === slotName) {
           const insert = m.endIndex! - 2 - m.name.length;
-          markers[m.name].push([m.attribs, insert]);
+          markers.push([m.name, m.attribs, insert, 0]);
           return false;
+        } else if (m.name === partName) {
+          const start = m.startIndex!;
+          const end = m.endIndex!;
+          markers.push([m.name, m.attribs, start, end - start]);
         }
 
         return true;
@@ -64,13 +65,21 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
       let previous = 0;
       const parts: Array<string> = [content];
 
-      for (const [attribs, index] of markers[componentName]) {
-        const childContent = await getChildContent(renderer, attribs);
+      for (const [name, attribs, index, length] of markers) {
         parts.pop();
         parts.push(content.substring(previous, index));
-        parts.push(childContent);
-        parts.push(content.substring(index));
-        previous = index;
+
+        if (name === componentName) {
+          const childContent = await getChildContent(renderer, attribs);
+          parts.push(childContent);
+        } else if (name === slotName) {
+
+        } else if (name === partName) {
+          
+        }
+
+        previous = index + length;
+        parts.push(content.substring(previous));
       }
 
       return parts.join('');

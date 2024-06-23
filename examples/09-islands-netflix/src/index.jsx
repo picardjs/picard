@@ -12,6 +12,7 @@ const picard = initializePicard({
   feed: 'https://feed.dev.piral.cloud/api/v1/pilet/netflix-islands-demo',
   componentName: 'piral-component',
   slotName: 'piral-slot',
+  partName: 'piral-part',
   services: {
     'framework.react': reactConverter,
   },

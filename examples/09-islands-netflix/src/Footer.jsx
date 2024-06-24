@@ -12,8 +12,8 @@ const Footer = () => (
       </p>
       <p className="text-lightgray">and</p>
       <p>
-        <a target="_blank" href="https://picardjs.github.io" rel="noopener noreferrer">
-          <img id="piral-logo" title="Picard.js" src="https://picardjs.github.io/picard-logo-mini.png" height="10" />
+        <a target="_blank" href="https://picard.js.org" rel="noopener noreferrer">
+          <img id="piral-logo" title="Picard.js" src="https://picard.js.org/picard-logo-mini.png" height="10" />
           &nbsp;Picard.js
         </a>
       </p>

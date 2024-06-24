@@ -1,6 +1,6 @@
 {
   "name": "picard-js",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A next generation micro frontend orchestrator.",
   "author": "smapiot",
   "keywords": [
@@ -26,6 +26,9 @@
   },
   "homepage": "https://picard.js.org",
   "license": "MIT",
+  "unpkg": "dist/browser/picard.js",
+  "jsdelivr": "dist/browser/picard.js",
+  "browser": "dist/browser/picard.js",
   "module": "dist/server/picard.mjs",
   "main": "dist/server/picard.js",
   "typings": "dist/server/picard.d.ts",
@@ -44,7 +47,6 @@
     ".": {
       "browser": {
         "import": "./dist/client/picard.mjs",
-        "require": "./dist/client/picard.js",
         "types": "./dist/client/picard.d.ts"
       },
       "node": {
@@ -61,7 +63,6 @@
     "./package.json": "./package.json",
     "./browser": "./dist/browser/picard.js",
     "./client": {
-      "require": "./dist/client/picard.js",
       "import": "./dist/client/picard.mjs",
       "types": "./dist/client/picard.d.ts"
     },

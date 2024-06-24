@@ -10,32 +10,43 @@ export async function buildOne(app) {
   };
   const outdir = resolve(process.cwd(), `dist/${app}`);
   const declName = resolve(outdir, 'picard.d.ts');
-  const platform = app === 'client' ? 'browser' : app === 'server' ? 'node' : 'neutral';
+  const platform = app === 'client' || app === 'browser' ? 'browser' : app === 'server' ? 'node' : 'neutral';
+  const minify = app === 'browser';
 
   console.log(`Building "${app}" ...`);
 
-  const esmResult = await build({
-    entryPoints,
-    bundle: true,
-    outdir,
-    // minify: true,
-    // metafile: true,
-    platform,
-    format: 'esm',
-    outExtension: { '.js': '.mjs' },
-  });
+  if (app !== 'browser') {
+    // we always build esm, except for the browser
+    const esmResult = await build({
+      entryPoints,
+      bundle: true,
+      sourcemap: 'linked',
+      outdir,
+      minify,
+      metafile: true,
+      platform,
+      format: 'esm',
+      outExtension: { '.js': '.mjs' },
+    });
 
-  const cjsResult = await build({
-    entryPoints,
-    bundle: true,
-    outdir,
-    // minify: true,
-    // metafile: true,
-    platform,
-    format: 'cjs',
-  });
+    await writeFile(resolve(outdir, 'meta.esm.json'), JSON.stringify(esmResult.metafile), 'utf8');
+  }
 
-  //await writeFile(resolve(outdir, 'meta.json'), JSON.stringify(cjsResult.metafile), 'utf8');
+  if (app !== 'client') {
+    // we always build cjs, except for bundlers (client)
+    const cjsResult = await build({
+      entryPoints,
+      bundle: true,
+      sourcemap: 'linked',
+      outdir,
+      minify,
+      metafile: true,
+      platform,
+      format: 'cjs',
+    });
+
+    await writeFile(resolve(outdir, 'meta.cjs.json'), JSON.stringify(cjsResult.metafile), 'utf8');
+  }
 
   const declText = await generateDeclaration({
     name: 'picard-js',

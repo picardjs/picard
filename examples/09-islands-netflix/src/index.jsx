@@ -2,7 +2,7 @@ import express from 'express';
 import * as React from 'react';
 import { renderToString } from 'react-dom/server';
 import { resolve } from 'path';
-import { initializePicard } from './picard';
+import { initializePicard } from 'picard-js/server';
 import { reactConverter } from './helpers';
 import PageLayout from './PageLayout';
 

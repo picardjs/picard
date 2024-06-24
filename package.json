@@ -42,23 +42,24 @@
   },
   "exports": {
     ".": {
+      "browser": {
+        "import": "./dist/client/picard.mjs",
+        "require": "./dist/client/picard.js",
+        "types": "./dist/client/picard.d.ts"
+      },
       "node": {
         "require": "./dist/server/picard.js",
         "import": "./dist/server/picard.mjs",
         "types": "./dist/server/picard.d.ts"
       },
-      "browser": {
-        "import": "./dist/client/picard.mjs",
-        "require": "./dist/client/picard.js",
-        "types": "./dist/client/picard.d.ts"
+      "electron": {
+        "require": "./dist/native/picard.js",
+        "import": "./dist/native/picard.mjs",
+        "types": "./dist/native/picard.d.ts"
       }
     },
     "./package.json": "./package.json",
-    "./server": {
-      "require": "./dist/server/picard.js",
-      "import": "./dist/server/picard.mjs",
-      "types": "./dist/server/picard.d.ts"
-    },
+    "./browser": "./dist/browser/picard.js",
     "./client": {
       "require": "./dist/client/picard.js",
       "import": "./dist/client/picard.mjs",
@@ -68,6 +69,11 @@
       "require": "./dist/native/picard.js",
       "import": "./dist/native/picard.mjs",
       "types": "./dist/native/picard.d.ts"
+    },
+    "./server": {
+      "require": "./dist/server/picard.js",
+      "import": "./dist/server/picard.mjs",
+      "types": "./dist/server/picard.d.ts"
     }
   },
   "sideEffects": false,

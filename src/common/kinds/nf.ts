@@ -1,10 +1,5 @@
 import { loadJson } from './utils';
-import type {
-  NativeFederationEntry,
-  NativeFederationExposedEntry,
-  ComponentGetter,
-  DependencyInjector,
-} from '@/types';
+import type { NativeFederationEntry, NativeFederationExposedEntry, ComponentGetter, DependencyInjector } from '@/types';
 
 interface NativeFederationManifest {
   name: string;
@@ -35,7 +30,7 @@ export async function withNativeFederation(
 
       if (item) {
         const entryUrl = new URL(item.outFileName, entry.url);
-        const component = await import(entryUrl.href);
+        const component = await import(/* @vite-ignore */ entryUrl.href);
         return component?.default || component;
       }
 

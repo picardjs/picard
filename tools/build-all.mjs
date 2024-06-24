@@ -19,8 +19,6 @@ const demos = {
     '05-static-page-with-routing',
     '06-static-page-single-spa',
   ],
-  server: ['08-ssr-tractor/src'],
-  server: ['09-islands-netflix/src'],
 };
 
 await Promise.all(

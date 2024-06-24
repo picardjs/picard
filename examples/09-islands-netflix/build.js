@@ -7,7 +7,10 @@ esbuild.build({
   minify: true,
   bundle: true,
   platform: 'node',
-  outfile: resolve(__dirname, '../dist/server.js'),
+  alias: {
+    'picard-js/server': resolve(__dirname, '../../dist/server/picard.js'),
+  },
+  outfile: resolve(__dirname, 'dist/server.js'),
   plugins: [
     sassPlugin({
       type: 'css-text',

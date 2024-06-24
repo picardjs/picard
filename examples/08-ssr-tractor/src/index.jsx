@@ -2,7 +2,7 @@ import express from 'express';
 import * as React from 'react';
 import { renderToString } from 'react-dom/server';
 import { resolve } from 'path';
-import { initializePicard } from './picard';
+import { initializePicard } from 'picard-js/server';
 import { render } from './layout';
 import { reactConverter } from './helpers';
 import ProductPage from './product-page';
@@ -33,7 +33,7 @@ app.get('/products/:id?', async (req, res) => {
     const content = await picard.decorate(plainContent);
     cache[sku] = render({ content });
   }
-  
+
   res.send(cache[sku]);
 });
 

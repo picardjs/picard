@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
-import { initializePicard, share } from '../../../src/apps/client';
+import { initializePicard, share } from 'picard-js/client';
 import ProductPage from './product-page';
 import { fromReact, withPiletState } from './helpers';
 import { createContainer } from './store';

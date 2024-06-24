@@ -4,8 +4,9 @@ import { resolve } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 
 export async function buildOne(app) {
+  const root = resolve(process.cwd(), 'src');
   const entryPoints = {
-    picard: resolve(process.cwd(), `src/apps/${app}.ts`),
+    picard: resolve(root, `apps/${app}/index.ts`),
   };
   const outdir = resolve(process.cwd(), `dist/${app}`);
   const declName = resolve(outdir, 'picard.d.ts');

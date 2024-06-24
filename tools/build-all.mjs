@@ -6,16 +6,9 @@ const srcdir = resolve(process.cwd(), `src/apps`);
 const dstdir = resolve(process.cwd(), `dist`);
 const exsdir = resolve(process.cwd(), `examples`);
 
-const files = await readdir(srcdir);
+const apps = await readdir(srcdir);
 
-await Promise.all(
-  files.map(async (file) => {
-    if (file.endsWith('.ts')) {
-      const app = file.replace('.ts', '');
-      await buildOne(app);
-    }
-  }),
-);
+await Promise.all(apps.map(buildOne));
 
 const demos = {
   browser: [
@@ -27,6 +20,7 @@ const demos = {
     '06-static-page-single-spa',
   ],
   server: ['08-ssr-tractor/src'],
+  server: ['09-islands-netflix/src'],
 };
 
 await Promise.all(

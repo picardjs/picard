@@ -1,4 +1,5 @@
 import { createFeed } from './feed';
+import { createRouter } from './router';
 import { createListener } from './events';
 import { createRenderer } from './renderer';
 import { createFragments } from './fragments';
@@ -41,6 +42,7 @@ declare module '@/types/injector' {
     meta?: any;
     fragmentUrl?: string;
     stylesheet: boolean;
+    partName: string;
     slotName: string;
     componentName: string;
     dependencies: Record<string, () => Promise<any>>;
@@ -77,6 +79,7 @@ export function initializePicard(options?: PicardOptions) {
     scope: createPicardScope,
     feed: createFeed,
     renderer: createRenderer,
+    router: createRouter,
     fragments: createFragments,
     loader: createLoader,
     decorator: createDecorator,

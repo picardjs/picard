@@ -1,4 +1,4 @@
-import type { DependencyInjector } from '@/types';
+import type { DependencyInjector, RouterService } from '@/types';
 
 function modifyHistory(type: string) {
   const orig = history[type];
@@ -16,7 +16,7 @@ function navigate(route: string, state: any) {
 
 const pageQualifier = 'page:';
 
-export function createRouter(injector: DependencyInjector) {
+export function createRouter(injector: DependencyInjector): RouterService {
   const scope = injector.get('scope');
   const { slotName } = injector.get('config');
   const routerSlot = `${slotName}[rel=router]`;

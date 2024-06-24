@@ -1,14 +1,22 @@
-import type { EventEmitter } from './events';
+import type { EventSystem } from './events';
+import type { FragmentsService } from './fragments';
 import type { LoaderService } from './loader';
 import type { PiletService } from './pilet';
+import type { RendererService } from './renderer';
+import type { RouterService } from './router';
 import type { PicardStore } from './state';
+import type { LoadingQueue } from './utils';
 
 export interface Services {
   config: Configuration;
-  events: EventEmitter;
+  events: EventSystem;
   scope: PicardStore;
   loader: LoaderService;
   pilet?: PiletService;
+  router: RouterService;
+  renderer: RendererService;
+  fragments: FragmentsService;
+  feed: LoadingQueue;
 }
 
 export interface Configuration {}

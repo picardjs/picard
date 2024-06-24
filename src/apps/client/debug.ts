@@ -1,5 +1,5 @@
 import { decycle } from './decycle';
-import type { DependencyInjector, EventEmitter, Listener, PicardEventMap } from '@/types';
+import type { DependencyInjector, EventSystem, Listener, PicardEventMap } from '@/types';
 
 const selfSource = 'piral-debug-api';
 const debugApiVersion = 'v1';
@@ -308,7 +308,7 @@ function install(options: DebugOptions) {
 }
 
 function attach<TEvent extends keyof PicardEventMap>(
-  events: EventEmitter,
+  events: EventSystem,
   name: TEvent,
   handler: Listener<PicardEventMap[TEvent]>,
 ) {

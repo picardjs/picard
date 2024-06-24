@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["../../*"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "../client/**/*.ts",
+    "../../common/**/*.ts",
+    "../../types/**/*.ts"
+  ]
+}

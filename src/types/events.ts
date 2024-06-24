@@ -115,29 +115,29 @@ export interface Listener<T> {
 /**
  * The emitter for orchestrator events.
  */
-export interface EventEmitter {
+export interface EventSystem {
   /**
    * Attaches a new event listener.
    * @param type The type of the event to listen for.
    * @param callback The callback to trigger.
    */
-  on<K extends keyof PicardEventMap>(type: K, callback: Listener<PicardEventMap[K]>): EventEmitter;
+  on<K extends keyof PicardEventMap>(type: string & K, callback: Listener<PicardEventMap[K]>): EventSystem;
   /**
    * Attaches a new event listener that is removed once the event fired.
    * @param type The type of the event to listen for.
    * @param callback The callback to trigger.
    */
-  once<K extends keyof PicardEventMap>(type: K, callback: Listener<PicardEventMap[K]>): EventEmitter;
+  once<K extends keyof PicardEventMap>(type: string & K, callback: Listener<PicardEventMap[K]>): EventSystem;
   /**
    * Detaches an existing event listener.
    * @param type The type of the event to listen for.
    * @param callback The callback to trigger.
    */
-  off<K extends keyof PicardEventMap>(type: K, callback: Listener<PicardEventMap[K]>): EventEmitter;
+  off<K extends keyof PicardEventMap>(type: string & K, callback: Listener<PicardEventMap[K]>): EventSystem;
   /**
    * Emits a new event with the given type.
    * @param type The type of the event to emit.
    * @param arg The payload of the event.
    */
-  emit<K extends keyof PicardEventMap>(type: K, arg: PicardEventMap[K]): EventEmitter;
+  emit<K extends keyof PicardEventMap>(type: string & K, arg: PicardEventMap[K]): EventSystem;
 }

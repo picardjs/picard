@@ -9,5 +9,6 @@ export type * from './module-federation';
 export type * from './native-federation';
 export type * from './pilet';
 export type * from './renderer';
+export type * from './router';
 export type * from './state';
 export type * from './utils';

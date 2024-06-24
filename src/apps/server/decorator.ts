@@ -1,6 +1,6 @@
 import { parseDocument } from 'htmlparser2';
-import type { ChildNode } from 'domhandler';
-import type { DependencyInjector, RendererService } from '@/types';
+import type { ChildNode, Document } from 'domhandler';
+import type { DependencyInjector } from '@/types';
 
 export interface DecoratorService {
   decorate(content: string): Promise<string>;
@@ -14,24 +14,40 @@ function traverse(nodes: Array<ChildNode>, cb: (node: ChildNode) => boolean) {
   });
 }
 
-async function getChildContent(renderer: RendererService, attribs: Record<string, string>): Promise<string> {
+type ServerComponent = (injector: DependencyInjector, attribs: Record<string, string>, document: Document) => Promise<string>;
+
+async function Component(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
   const data = JSON.parse(attribs.data || '{}');
 
   if ('cid' in attribs) {
+    const renderer = injector.get('renderer');
     return renderer.render(attribs.cid).stringify(data);
   } else if ('name' in attribs) {
+    const renderer = injector.get('renderer');
     await renderer.collect(attribs.name);
     return renderer.render({ name: attribs.name, source: attribs.source }).stringify(data);
-  } else {
-    return '';
   }
+  
+  return '';
+}
+
+async function Slot(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
+  return '';
+}
+
+async function Part(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
+  return '';
 }
 
 export function createDecorator(injector: DependencyInjector): DecoratorService {
   const { slotName, componentName, partName } = injector.get('config');
-  const fragments = injector.get('fragments');
-  const renderer = injector.get('renderer');
   const queue = injector.get('feed');
+
+  const components: Record<string, ServerComponent> = {
+    [slotName]: Slot,
+    [componentName]: Component,
+    [partName]: Part,
+  };
 
   return {
     async decorate(content) {
@@ -60,24 +76,14 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
         return true;
       });
 
-      // for slots use fragments
-
       let previous = 0;
       const parts: Array<string> = [content];
 
       for (const [name, attribs, index, length] of markers) {
+        const render = components[name];
         parts.pop();
         parts.push(content.substring(previous, index));
-
-        if (name === componentName) {
-          const childContent = await getChildContent(renderer, attribs);
-          parts.push(childContent);
-        } else if (name === slotName) {
-
-        } else if (name === partName) {
-          
-        }
-
+        parts.push(await render(injector, attribs, document));
         previous = index + length;
         parts.push(content.substring(previous));
       }

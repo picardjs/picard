@@ -8,7 +8,7 @@ import { createDebug } from './debug';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
-import type { FeedDefinition, FragmentsService, LoadingQueue, RendererService } from '@/types';
+import type { FeedDefinition } from '@/types';
 
 export interface PicardOptions {
   componentName?: string;
@@ -35,12 +35,6 @@ const defaultOptions = {
 
 interface ElementsService {}
 
-interface RouterService {
-  navigate(route: string, state: any): void;
-  findRoutes(): Array<string>;
-  dispose(): void;
-}
-
 interface DebugService {
   dispose(): void;
 }
@@ -48,10 +42,6 @@ interface DebugService {
 declare module '@/types/injector' {
   interface Services {
     elements: ElementsService;
-    router: RouterService;
-    renderer: RendererService;
-    fragments: FragmentsService;
-    feed: LoadingQueue;
     debug: DebugService;
   }
 
@@ -60,6 +50,7 @@ declare module '@/types/injector' {
     state?: any;
     meta?: any;
     fragmentUrl?: string;
+    partName: string;
     stylesheet: boolean;
     slotName: string;
     componentName: string;

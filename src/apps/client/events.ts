@@ -1,4 +1,4 @@
-import type { EventEmitter } from '@/types';
+import type { EventSystem } from '@/types';
 
 type EventListeners = Array<[any, any]>;
 
@@ -23,7 +23,7 @@ function dispatch(name: string | number, args: any) {
  */
 export function createListener() {
   const eventListeners: EventListeners = [];
-  const events: EventEmitter = {
+  const events: EventSystem = {
     on(type, callback) {
       const listener = ({ detail }: CustomEvent) => detail && callback(detail);
       document.body.addEventListener(nameOf(type), listener);

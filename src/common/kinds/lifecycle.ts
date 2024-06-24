@@ -7,7 +7,7 @@ export const emptyLifecycle: ComponentLifecycle = {
   unmount() {},
   update() {},
   stringify() {
-    return '';
+    return Promise.resolve('');
   }
 };
 
@@ -33,8 +33,8 @@ export function createLazyLifecycle(load: () => Promise<any>): ComponentLifecycl
     unload(...args) {
       return impl.unload(...args);
     },
-    stringify() {
-      return '';
+    stringify(...args) {
+      return impl.stringify(...args);
     },
   };
 }

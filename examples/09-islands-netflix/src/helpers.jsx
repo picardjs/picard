@@ -3,10 +3,11 @@ import { renderToString } from 'react-dom/server';
 
 export function reactConverter() {
   return {
-    convert(Component) {
+    convert(lazyComponent, api) {
       return {
-        stringify(params) {
-          return renderToString(<Component {...params} />);
+        async stringify(params) {
+          const { default: Component } = await lazyComponent();
+          return renderToString(<Component {...params} api={api} />);
         },
       };
     },

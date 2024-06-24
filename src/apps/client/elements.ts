@@ -9,6 +9,17 @@ const attrSource = 'source';
 const attrData = 'data';
 const attrCid = 'cid';
 
+function tryJson(content: string, fallback: any) {
+  if (content) {
+    try {
+      return JSON.parse(content);
+    } catch {
+      // empty on purpose
+    }
+  }
+  return fallback;
+}
+
 export function createElements(injector: DependencyInjector) {
   const config = injector.get('config');
   const renderer = injector.get('renderer');
@@ -45,7 +56,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     private get params() {
-      return JSON.parse(this.getAttribute(attrParams) || '{}');
+      return tryJson(this.getAttribute(attrParams), {});
     }
 
     async connectedCallback() {
@@ -152,7 +163,7 @@ export function createElements(injector: DependencyInjector) {
       if (!this._queue) {
         // do nothing
       } else if (name === attrData) {
-        this.data = JSON.parse(value || '{}');
+        this.data = tryJson(value, {});
       } else if (name === attrCid || name === attrName || name === attrSource) {
         this.#reset();
       }
@@ -179,7 +190,7 @@ export function createElements(injector: DependencyInjector) {
         const lc = this._lc;
 
         if (lc) {
-          const data = this._data || JSON.parse(this.getAttribute(attrData) || '{}');
+          const data = this._data || tryJson(this.getAttribute(attrData), {});
           lc.mount(this, data, this._locals);
         }
       });

@@ -1,7 +1,8 @@
 {
   "name": "picard-js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A next generation micro frontend orchestrator.",
+  "author": "smapiot",
   "keywords": [
     "modules",
     "siteless",
@@ -23,7 +24,6 @@
     "test": "playwright test --project firefox",
     "test:all": "playwright test"
   },
-  "author": "smapiot",
   "homepage": "https://picard.js.org",
   "license": "MIT",
   "module": "dist/server/picard.mjs",
@@ -84,6 +84,7 @@
     "@types/systemjs": "^6",
     "dets": "0.15.0",
     "domhandler": "5.0.3",
+    "dom-serializer": "^2.0.0",
     "esbuild": "0.20.2",
     "htmlparser2": "9.1.0",
     "http-server": "^14.1.1",

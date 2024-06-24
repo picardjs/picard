@@ -15,6 +15,33 @@ const picard = initializePicard({
   partName: 'piral-part',
   services: {
     'framework.react': reactConverter,
+    pilet: () => ({
+      extend(api) {
+        const rc = api.registerComponent;
+        Object.assign(api, {
+          registerComponent(name, Component, meta) {
+            rc(name, Component, {
+              ...meta,
+              type: 'react',
+            });
+          },
+          registerPage(path, Component, meta) {
+            api.registerComponent(`page:${path}`, Component, meta);
+          },
+          getStore(name) {
+            return {
+              get() {
+                return {};
+              },
+            }
+          },
+          setStore(name, loader) {},
+        });
+      },
+    }),
+  },
+  dependencies: {
+    'react@18.2.0': () => Promise.resolve(React),
   },
 });
 

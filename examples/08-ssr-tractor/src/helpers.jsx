@@ -5,7 +5,7 @@ export function reactConverter() {
   return {
     convert(Component) {
       return {
-        stringify(params) {
+        async stringify(params) {
           return renderToString(<Component {...params} />);
         },
       };

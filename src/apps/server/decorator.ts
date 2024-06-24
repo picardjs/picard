@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
-import type { ChildNode, Document } from 'domhandler';
+import { render } from 'dom-serializer';
+import type { ChildNode, Document, Element } from 'domhandler';
 import type { DependencyInjector } from '@/types';
 
 export interface DecoratorService {
@@ -14,29 +15,103 @@ function traverse(nodes: Array<ChildNode>, cb: (node: ChildNode) => boolean) {
   });
 }
 
-type ServerComponent = (injector: DependencyInjector, attribs: Record<string, string>, document: Document) => Promise<string>;
+function findById(container: Document | Element, id: string): Element {
+  let result: Element = undefined;
+
+  traverse(container.childNodes, (node) => {
+    if (node.type === 'tag' && node.attribs.id === id) {
+      result = node;
+    }
+
+    return !result;
+  });
+
+  return result;
+}
+
+function findByName(container: Document | Element, name: string): Element {
+  let result: Element = undefined;
+
+  traverse(container.childNodes, (node) => {
+    if (node.type === 'tag' && node.name === name) {
+      result = node;
+    }
+
+    return !result;
+  });
+
+  return result;
+}
+
+function tryJson(content: string, fallback: any) {
+  if (content) {
+    try {
+      return JSON.parse(content);
+    } catch {
+      // empty on purpose
+    }
+  }
+  return fallback;
+}
+
+type ServerComponent = (
+  injector: DependencyInjector,
+  attribs: Record<string, string>,
+  document: Document,
+) => Promise<string>;
 
 async function Component(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
-  const data = JSON.parse(attribs.data || '{}');
+  const data = tryJson(attribs.data, {});
 
   if ('cid' in attribs) {
     const renderer = injector.get('renderer');
-    return renderer.render(attribs.cid).stringify(data);
+    return await renderer.render(attribs.cid).stringify(data);
   } else if ('name' in attribs) {
     const renderer = injector.get('renderer');
     await renderer.collect(attribs.name);
-    return renderer.render({ name: attribs.name, source: attribs.source }).stringify(data);
+    return await renderer.render({ name: attribs.name, source: attribs.source }).stringify(data);
   }
-  
+
   return '';
 }
 
-async function Slot(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
-  return '';
+async function Slot(
+  injector: DependencyInjector,
+  attribs: Record<string, string>,
+  document: Document,
+): Promise<string> {
+  const name = attribs.name;
+  const params = tryJson(attribs.params, {});
+  const fragments = injector.get('fragments');
+  const content = await fragments.load(name, params);
+  const itemTemplateId = attribs['item-template-id'];
+
+  if (itemTemplateId) {
+    const template = findById(document, itemTemplateId);
+    const innerDocument = parseDocument(content);
+
+    if (template) {
+      const frags = innerDocument.childNodes.map((item) => {
+        const copy = template.cloneNode(true);
+        const slot = findByName(copy, 'slot');
+
+        if (slot) {
+          const slotIndex = slot.parent.childNodes.indexOf(slot);
+          slot.parent.childNodes[slotIndex] = item;
+        }
+
+        return render(copy.childNodes);
+      });
+
+      return frags.join('');
+    }
+  }
+
+  return content;
 }
 
 async function Part(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
-  return '';
+  return `<!-- here would be the part for "${attribs.name}" -->`;
 }
 
 export function createDecorator(injector: DependencyInjector): DecoratorService {

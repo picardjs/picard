@@ -50,12 +50,17 @@ export async function withPilet(injector: DependencyInjector, entry: PiletEntry)
         const framework = type && injector.get(`framework.${type}`);
 
         if (framework) {
-          component = framework.convert(component);
+          component = framework.convert(component, api);
         }
 
         components[name] = typeof component === 'function' ? createLazyLifecycle(component) : component;
       },
     };
+
+    if (Array.isArray(app.styles)) {
+      const styleSheets = app.styles.map(style => new URL(style, basePath).href);
+      // integrate style sheets
+    }
 
     plugins.forEach((plugin) => plugin.extend(api));
     await app.setup(api);

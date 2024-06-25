@@ -1,11 +1,11 @@
 import type { EventSystem } from './events';
+import type { FeedService } from './feed';
 import type { FragmentsService } from './fragments';
 import type { LoaderService } from './loader';
 import type { PiletService } from './pilet';
 import type { RendererService } from './renderer';
 import type { RouterService } from './router';
 import type { PicardStore } from './state';
-import type { LoadingQueue } from './utils';
 
 export interface Services {
   config: Configuration;
@@ -16,7 +16,7 @@ export interface Services {
   router: RouterService;
   renderer: RendererService;
   fragments: FragmentsService;
-  feed: LoadingQueue;
+  feed: FeedService;
 }
 
 export interface Configuration {}

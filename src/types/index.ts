@@ -1,6 +1,7 @@
 export type * from './components';
 export type * from './discovery';
 export type * from './events';
+export type * from './feed';
 export type * from './fragments';
 export type * from './injector';
 export type * from './loader';

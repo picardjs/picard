@@ -2,14 +2,14 @@ import type { DependencyInjector, FragmentsService } from '@/types';
 
 export function createFragments(injector: DependencyInjector): FragmentsService {
   const config = injector.get('config');
-  const renderer = injector.get('renderer');
+  const scope = injector.get('scope');
 
   const { fragmentUrl, componentName } = config;
 
   if (!fragmentUrl) {
     return {
       async load(name) {
-        const ids = await renderer.collect(name);
+        const ids = await scope.loadComponents(name);
         const content = ids.map((id) => `<${componentName} cid="${id}"></${componentName}>`);
         return Promise.resolve(content.join(''));
       },

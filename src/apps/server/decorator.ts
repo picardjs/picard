@@ -68,7 +68,6 @@ async function Component(injector: DependencyInjector, attribs: Record<string, s
     return await renderer.render(attribs.cid).stringify(data);
   } else if ('name' in attribs) {
     const renderer = injector.get('renderer');
-    await renderer.collect(attribs.name);
     return await renderer.render({ name: attribs.name, source: attribs.source }).stringify(data);
   }
 
@@ -116,7 +115,6 @@ async function Part(injector: DependencyInjector, attribs: Record<string, string
 
 export function createDecorator(injector: DependencyInjector): DecoratorService {
   const { slotName, componentName, partName } = injector.get('config');
-  const queue = injector.get('feed');
 
   const components: Record<string, ServerComponent> = {
     [slotName]: Slot,
@@ -126,8 +124,6 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
 
   return {
     async decorate(content) {
-      await queue.current;
-
       const document = parseDocument(content, {
         withStartIndices: true,
         withEndIndices: true,

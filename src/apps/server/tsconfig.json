@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "moduleResolution": "bundler",
+    "noEmit": true,
     "paths": {
       "@/*": ["../../*"]
     }

@@ -1,3 +1,5 @@
+import { loadContainer } from './container';
+import { createNewQueue } from './queue';
 import { initializeStore } from './store';
 import { registerComponent, retrieveComponent } from './actions';
 import type { DependencyInjector, PicardStore } from '@/types';
@@ -9,6 +11,7 @@ export function createPicardScope(injector: DependencyInjector) {
   const { state } = injector.get('config');
   const events = injector.get('events');
   const store = initializeStore(state);
+  const queue = createNewQueue();
 
   const scope: PicardStore = {
     saveSnapshot() {
@@ -25,6 +28,37 @@ export function createPicardScope(injector: DependencyInjector) {
     },
     retrieveComponent(id) {
       return retrieveComponent(store, id);
+    },
+    loadMicrofrontends(loader) {
+      return queue.enqueue(async () => {
+        const mfs = await loader;
+        scope.appendMicrofrontends(mfs);
+      });
+    },
+    loadComponents(name) {
+      return queue.enqueue(async () => {
+        const ids: Array<string> = [];
+        const { microfrontends } = store.getState();
+        await Promise.all(
+          microfrontends.map((mf) =>
+            loadContainer(injector, mf).then(async (m) => {
+              const id = mf.components[name];
+
+              if (!id) {
+                const lc = await m.load(name);
+
+                if (lc) {
+                  const component = registerComponent(store, mf, name, lc);
+                  ids.push(component.id);
+                }
+              } else {
+                ids.push(id);
+              }
+            }),
+          ),
+        );
+        return ids;
+      });
     },
     appendMicrofrontend(mf) {
       scope.appendMicrofrontends([mf]);
@@ -67,5 +101,6 @@ export function createPicardScope(injector: DependencyInjector) {
       }));
     },
   };
+
   return scope;
 }

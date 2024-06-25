@@ -11,6 +11,8 @@ export interface PicardStore {
   readState(): PicardState;
   saveSnapshot(): string;
   subscribe(listener: (curr: PicardState, prev: PicardState) => void): Dispose;
+  loadMicrofrontends(loader: Promise<Array<PicardMicrofrontend>>): Promise<void>;
+  loadComponents(name: string): Promise<Array<string>>;
   removeMicrofrontend(name: string): void;
   removeMicrofrontends(names: Array<string>): void;
   updateMicrofrontend(name: string, details: any): void;

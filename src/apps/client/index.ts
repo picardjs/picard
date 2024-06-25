@@ -102,6 +102,7 @@ export function initializePicard(options?: PicardOptions) {
 
   return createInjector(serviceDefinitions)
     .instantiate('loader')
+    .instantiate('feed')
     .instantiate('elements')
     .instantiate('router')
     .instantiate('debug')

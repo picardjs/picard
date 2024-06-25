@@ -3,11 +3,10 @@ import type {
   DiscoveryResponse,
   FeedDefinition,
   PicardMicrofrontend,
-  PicardStore,
   PiletDefinition,
   StaticFeed,
-  LoadingQueue,
   DependencyInjector,
+  FeedService,
 } from '@/types';
 
 function fromPilet(pilet: PiletDefinition): PicardMicrofrontend {
@@ -94,35 +93,29 @@ function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofrontend> {
     });
 }
 
-async function loadFeed(scope: PicardStore, feed: FeedDefinition | undefined) {
+async function loadFeed(feed: FeedDefinition | undefined): Promise<Array<PicardMicrofrontend>> {
   if (typeof feed === 'string') {
     const doc = await loadJson<StaticFeed>(feed);
-    await loadFeed(scope, doc);
+    return await loadFeed(doc);
   } else if (typeof feed === 'function') {
     const doc = await feed();
-    await loadFeed(scope, doc);
+    return await loadFeed(doc);
   } else if (Array.isArray(feed)) {
-    scope.appendMicrofrontends(feed.map(fromPilet));
+    return feed.map(fromPilet);
   } else if (!feed || typeof feed !== 'object') {
     // We maybe should emit an error here.
   } else if ('items' in feed && Array.isArray(feed.items)) {
-    scope.appendMicrofrontends(feed.items.map(fromPilet));
+    return feed.items.map(fromPilet);
   } else if ('microFrontends' in feed) {
-    scope.appendMicrofrontends(fromDiscovery(feed));
+    return fromDiscovery(feed);
   }
+
+  return [];
 }
 
-export function createFeed(injector: DependencyInjector): LoadingQueue {
+export function createFeed(injector: DependencyInjector): FeedService {
   const { feed } = injector.get('config');
   const scope = injector.get('scope');
-
-  const queue: LoadingQueue = {
-    current: loadFeed(scope, feed),
-    async enqueue(cb) {
-      const next = queue.current.then(cb);
-      queue.current = next.then(() => {});
-      return await next;
-    },
-  };
-  return queue;
+  scope.loadMicrofrontends(loadFeed(feed));
+  return {};
 }

@@ -104,34 +104,8 @@ function createMicrofrontend(source: string): PicardMicrofrontend {
 
 export function createRenderer(injector: DependencyInjector) {
   const scope = injector.get('scope');
-  const queue = injector.get('feed');
 
   return {
-    collect(name: string) {
-      return queue.enqueue(async () => {
-        const ids: Array<string> = [];
-        const { microfrontends } = scope.readState();
-        await Promise.all(
-          microfrontends.map((mf) =>
-            loadContainer(injector, mf).then(async (m) => {
-              const id = mf.components[name];
-
-              if (!id) {
-                const lc = await m.load(name);
-
-                if (lc) {
-                  const component = scope.registerComponent(mf, name, lc);
-                  ids.push(component.id);
-                }
-              } else {
-                ids.push(id);
-              }
-            }),
-          ),
-        );
-        return ids;
-      });
-    },
     render(component: ComponentRef) {
       if (typeof component === 'string') {
         // look up if we have this component via its ID.

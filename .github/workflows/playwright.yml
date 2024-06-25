@@ -15,6 +15,12 @@ jobs:
         node-version: lts/*
     - name: Install dependencies
       run: npm ci
+    - name: Build solution
+      run: npm run build
+    - name: Prepare examples
+      run: |
+        cd examples
+        ./prepare-all.sh
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests

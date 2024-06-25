@@ -1,10 +1,10 @@
 import { createFeed } from './feed';
-import { createElements } from './elements';
 import { createFragments } from './fragments';
-import { createListener } from './events';
 import { createRenderer } from './renderer';
-import { createRouter } from './router';
-import { createDebug } from './debug';
+import { createRouter } from '@/common/browser/router';
+import { createElements } from '@/common/browser/elements';
+import { createListener } from '@/common/browser/events';
+import { createDebug } from '@/common/browser/debug';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';

@@ -12,6 +12,8 @@ The next generation of micro frontend orchestrators.
 
 > A micro frontend *orchestrator* is a library that helps you loading, mounting, and unmounting micro frontends incl. their exposed functionality such as components.
 
+What Picard.js allows you to do is to include micro frontends in any web application that you create - from server-side pages rendered with PHP to progressive web applications using Next.js.
+
 ## Getting Started
 
 Include a script in your website:
@@ -31,7 +33,7 @@ Now start creating regions for the components of the micro frontends you'd like 
 ```html
 <pi-component
   name="column"
-  source="mf:simplehtml@https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js">
+  source="mf:simplehtml@https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/mf-simple-html/">
 </pi-component>
 ```
 
@@ -42,7 +44,7 @@ For Native Federation a similar syntax is used:
 ```html
 <pi-component
   name="column"
-  source="nf:https://assets.piral.cloud/pilets/picard-demos/nfsimplehtml/1.0.0/remoteEntry.json">
+  source="nf:https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/nfsimplehtml/">
 </pi-component>
 ```
 

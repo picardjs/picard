@@ -8,6 +8,9 @@ export async function buildOne(app) {
   const entryPoints = {
     picard: resolve(root, `apps/${app}/index.ts`),
   };
+  const logOverride = {
+    'package.json': 'verbose',
+  };
   const outdir = resolve(process.cwd(), `dist/${app}`);
   const declName = resolve(outdir, 'picard.d.ts');
   const platform = app === 'client' || app === 'browser' ? 'browser' : app === 'server' ? 'node' : 'neutral';
@@ -25,6 +28,7 @@ export async function buildOne(app) {
       minify,
       metafile: true,
       platform,
+      logOverride,
       format: 'esm',
       outExtension: { '.js': '.mjs' },
     });
@@ -42,6 +46,7 @@ export async function buildOne(app) {
       minify,
       metafile: true,
       platform,
+      logOverride,
       format: 'cjs',
     });
 

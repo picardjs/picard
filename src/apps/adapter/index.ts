@@ -1,9 +1,16 @@
-import { initializePicard } from '../client';
+import { createFragments } from './fragments';
+import { createRouter } from '@/common/browser/router';
+import { createElements } from '@/common/browser/elements';
+import { createListener } from '@/common/browser/events';
+import { createDebug } from '@/common/browser/debug';
+import { createPicardScope } from '@/common/state';
+import { createLoader } from '@/common/loader';
+import { createInjector } from '@/common/injector';
 import type { PicardStore } from '@/types';
 
-function deserializeState() {
-  // we obtain the serialized state
-  const element = document.querySelector('script[type=pi-state]');
+function deserializeConfig() {
+  // we obtain the serialized config
+  const element = document.querySelector('script[type=pi-config]');
 
   if (element) {
     return JSON.parse(element.textContent || '{}');
@@ -22,11 +29,24 @@ declare global {
 }
 
 const resumePicard = () => {
-  const state = deserializeState();
-  const scope = initializePicard({
-    state,
-  });
-  window.picard = scope;
+  const config = deserializeConfig();  
+  const serviceDefinitions = {
+    config: () => config,
+    events: createListener,
+    scope: createPicardScope,
+    fragments: createFragments,
+    loader: createLoader,
+    elements: createElements,
+    router: createRouter,
+    debug: createDebug,
+  };
+
+  window.picard = createInjector(serviceDefinitions)
+    .instantiate('loader')
+    .instantiate('elements')
+    .instantiate('router')
+    .instantiate('debug')
+    .get('scope');
 };
 
 if (document.readyState === 'loading') {

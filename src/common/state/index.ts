@@ -47,9 +47,11 @@ export function createPicardScope(injector: DependencyInjector) {
           const lc = getExistingLifecycle(scope, component);
 
           if (!lc) {
+            const name = component.name;
             const mf = createMicrofrontend(component);
             const container = await loadContainer(injector, mf);
-            const lifecycle = await container.load(component.name);
+            const lifecycle = await container.load(name);
+            registerComponent(store, mf, name, lifecycle);
             scope.appendMicrofrontend(mf);
             return lifecycle;
           }
@@ -68,15 +70,15 @@ export function createPicardScope(injector: DependencyInjector) {
         const { microfrontends } = store.getState();
         await Promise.all(
           microfrontends.map((mf) =>
-            loadContainer(injector, mf).then(async (m) => {
+            loadContainer(injector, mf).then(async (container) => {
               const id = mf.components[name];
 
               if (!id) {
-                const lc = await m.load(name);
+                const lc = await container.load(name);
 
                 if (lc) {
-                  const component = registerComponent(store, mf, name, lc);
-                  ids.push(component.id);
+                  const c = registerComponent(store, mf, name, lc);
+                  ids.push(c.id);
                 }
               } else {
                 ids.push(id);

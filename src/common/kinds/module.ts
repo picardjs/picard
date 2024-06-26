@@ -66,8 +66,8 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
       return {
         async load(name) {
           try {
-            const key = `./${name}`;
-            const factory = await container.get(key);
+            // const key = `./${name}`;
+            const factory = await container.get(name);
             const component = factory();
             return component.default || component;
           } catch {

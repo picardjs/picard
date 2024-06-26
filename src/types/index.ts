@@ -1,4 +1,6 @@
 export type * from './components';
+export type * from './container';
+export type * from './converter';
 export type * from './discovery';
 export type * from './events';
 export type * from './feed';

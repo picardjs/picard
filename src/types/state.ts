@@ -1,5 +1,5 @@
 import type { PicardMicrofrontend } from './microfrontend';
-import type { ComponentLifecycle, PicardComponent } from './components';
+import type { ComponentLifecycle, ComponentRef, PicardComponent } from './components';
 import type { Dispose } from './utils';
 
 export interface PicardState {
@@ -12,6 +12,7 @@ export interface PicardStore {
   saveSnapshot(): string;
   subscribe(listener: (curr: PicardState, prev: PicardState) => void): Dispose;
   loadMicrofrontends(loader: Promise<Array<PicardMicrofrontend>>): Promise<void>;
+  loadLifecycle(component: ComponentRef): ComponentLifecycle;
   loadComponents(name: string): Promise<Array<string>>;
   removeMicrofrontend(name: string): void;
   removeMicrofrontends(names: Array<string>): void;
@@ -20,4 +21,5 @@ export interface PicardStore {
   appendMicrofrontends(mfs: Array<PicardMicrofrontend>): void;
   registerComponent(mf: PicardMicrofrontend, name: string, lifecycle: ComponentLifecycle): PicardComponent;
   retrieveComponent(id: string): PicardComponent | undefined;
+  retrieveLifecycle(id: string): ComponentLifecycle;
 }

@@ -1,16 +1,17 @@
 import { loadContainer } from './container';
 import { createNewQueue } from './queue';
 import { initializeStore } from './store';
-import { registerComponent, retrieveComponent } from './actions';
+import { registerComponent, retrieveComponent, createMicrofrontend, getExistingLifecycle } from './actions';
+import { createLazyLifecycle, emptyLifecycle } from '../kinds/lifecycle';
 import type { DependencyInjector, PicardStore } from '@/types';
 
 /**
  * Creates a new scope for obtaining MF information.
  */
 export function createPicardScope(injector: DependencyInjector) {
-  const { state } = injector.get('config');
+  const { state: initialState } = injector.get('config');
   const events = injector.get('events');
-  const store = initializeStore(state);
+  const store = initializeStore(initialState);
   const queue = createNewQueue();
 
   const scope: PicardStore = {
@@ -29,11 +30,37 @@ export function createPicardScope(injector: DependencyInjector) {
     retrieveComponent(id) {
       return retrieveComponent(store, id);
     },
+    retrieveLifecycle(id) {
+      return scope.retrieveComponent(id)?.render || emptyLifecycle;
+    },
     loadMicrofrontends(loader) {
       return queue.enqueue(async () => {
         const mfs = await loader;
         scope.appendMicrofrontends(mfs);
       });
+    },
+    loadLifecycle(component) {
+      const lc = getExistingLifecycle(scope, component);
+
+      if (!lc) {
+        const promise = queue.enqueue(async () => {
+          const lc = getExistingLifecycle(scope, component);
+
+          if (!lc) {
+            const mf = createMicrofrontend(component);
+            const container = await loadContainer(injector, mf);
+            const lifecycle = await container.load(component.name);
+            scope.appendMicrofrontend(mf);
+            return lifecycle;
+          }
+
+          return lc;
+        });
+
+        return createLazyLifecycle(() => promise);
+      }
+
+      return lc;
     },
     loadComponents(name) {
       return queue.enqueue(async () => {

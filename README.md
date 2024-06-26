@@ -33,22 +33,27 @@ Now start creating regions for the components of the micro frontends you'd like 
 ```html
 <pi-component
   name="column"
-  source="mf:simplehtml@https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/mf-simple-html/">
+  source="https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/mf-simple-html/"
+  kind="module"
+  container="simplehtml">
 </pi-component>
 ```
 
-The `name` denotes the name of the exposed component, while the `source` is used to tell Picard where the micro frontend resides. In the previous example we tell Picard that we want to use a micro frontend using Module Federation (`mf:`) with a container (`simplehtml@`) from a script (`https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js`).
+The `name` denotes the name of the exposed component, while the `source` is used to tell Picard where the micro frontend resides. In the previous example we tell Picard that we want to use a micro frontend using Module Federation (`kind` attribute set to `module`) with the container named `simplehtml`.
 
 For Native Federation a similar syntax is used:
 
 ```html
 <pi-component
   name="column"
-  source="nf:https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/nfsimplehtml/">
+  source="https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/nfsimplehtml/"
+  kind="native">
 </pi-component>
 ```
 
-Note: Here we don't need to know any container.
+The major difference is that the `kind` is set to `native` for Native Federation.
+
+Note: Here we don't need to know any `container`.
 
 ## Further Information
 

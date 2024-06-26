@@ -1,0 +1,38 @@
+#reco {
+  grid-area: reco;
+}
+
+@media only screen and (max-width: 999px) {
+  #reco {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin-top: 20px;
+    padding-top: 20px;
+  }
+}
+
+@media only screen and (min-width: 1000px) {
+  #reco {
+    justify-content: stretch;
+    text-align: center;
+    width: 100%;
+  }
+}
+
+#reco h3 {
+  font-weight: 400;
+}
+
+#reco img {
+  display: inline-block;
+  height: 180px;
+  width: 180px;
+}
+
+.green-recos {
+  display: block;
+  outline: 3px dashed forestgreen;
+  width: 100%;
+}

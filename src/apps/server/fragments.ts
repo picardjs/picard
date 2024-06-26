@@ -9,9 +9,9 @@ export function createFragments(injector: DependencyInjector): FragmentsService 
 
   return {
     async load(name, parameters) {
-      const ids = await scope.loadComponents(name);
-      const parts = await Promise.all(ids.map((id) => renderer.render(id).stringify(parameters)));
-      return ids.map((id, i) => `<${componentName} cid="${id}">${parts[i]}</${componentName}>`).join('');
+      const cids = await scope.loadComponents(name);
+      const parts = await Promise.all(cids.map((cid) => renderer.render({ cid }).stringify(parameters)));
+      return cids.map((id, i) => `<${componentName} cid="${id}">${parts[i]}</${componentName}>`).join('');
     },
   };
 }

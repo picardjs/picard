@@ -1,0 +1,17 @@
+{
+  "name": "sspa-example-mf-blue",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "rspack serve --port 6003",
+    "build": "rspack build --mode production"
+  },
+  "dependencies": {
+    "react": "^18",
+    "react-dom": "^18",
+    "single-spa-react": "^6.0.1"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^0.7.5",
+    "@rspack/core": "^0.7.5"
+  }
+}

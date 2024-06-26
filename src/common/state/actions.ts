@@ -1,6 +1,6 @@
 import type { StoreApi } from 'zustand/vanilla';
 import { emptyLifecycle } from '@/common/kinds/lifecycle';
-import type { ComponentLifecycle, PicardMicrofrontend, PicardState } from '@/types';
+import type { ComponentLifecycle, ComponentRef, PicardMicrofrontend, PicardState, PicardStore } from '@/types';
 
 function generateUID() {
   const a = (Math.random() * 46656) | 0;
@@ -50,4 +50,53 @@ export function retrieveComponent(store: StoreApi<PicardState>, id: string) {
   }
 
   return undefined;
+}
+
+export function getExistingLifecycle(scope: PicardStore, component: ComponentRef) {  
+  const source = component.source;
+  const mf = scope.readState().microfrontends.find((m) => m.name === source);
+
+  if (mf) {
+    const id = mf.components[component.name];
+    return scope.retrieveLifecycle(id);
+  }
+
+  return undefined;
+}
+
+export function createMicrofrontend(component: ComponentRef): PicardMicrofrontend {
+  const { source, kind, container } = component;
+
+  if (kind === 'module') {
+    return {
+      kind,
+      name: source,
+      details: {
+        id: container,
+        url: source,
+      },
+      source,
+      components: {},
+    };
+  } else if (kind === 'native') {
+    return {
+      kind,
+      name: source,
+      details: {
+        url: source,
+      },
+      source,
+      components: {},
+    };
+  } else {
+    return {
+      kind: 'pilet',
+      name: source,
+      details: {
+        url: source,
+      },
+      source,
+      components: {},
+    };
+  }
 }

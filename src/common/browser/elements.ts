@@ -6,6 +6,9 @@ const attrFallback = 'fallback';
 const attrParams = 'params';
 const attrTemplateId = 'item-template-id';
 const attrSource = 'source';
+const attrKind = 'kind';
+const attrContainer = 'container';
+const attrFramework = 'framework';
 const attrData = 'data';
 const attrCid = 'cid';
 
@@ -214,14 +217,17 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #bootstrap() {
-      const componentId = this.getAttribute(attrCid);
+      const cid = this.getAttribute(attrCid);
       const name = this.getAttribute(attrName);
 
-      if (componentId) {
-        this._lc = renderer.render(componentId);
+      if (cid) {
+        this._lc = renderer.render({ cid });
       } else if (name) {
-        const source = this.getAttribute(attrSource) || undefined;
-        this._lc = renderer.render({ name, source });
+        const source = this.getAttribute(attrSource);
+        const container = this.getAttribute(attrContainer);
+        const kind = this.getAttribute(attrKind);
+        const framework = this.getAttribute(attrFramework);
+        this._lc = renderer.render({ name, source, container, kind, framework });
       }
 
       this.#enqueue(() => this._lc?.bootstrap());

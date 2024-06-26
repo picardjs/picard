@@ -1,0 +1,96 @@
+#store {
+  font-weight: 400;
+  grid-area: store;
+  margin-top: 5px;
+}
+
+#image {
+  grid-area: image;
+  width: 100%;
+}
+
+#image > div {
+  padding-top: 100%;
+  position: relative;
+}
+
+#image img {
+  bottom: 0;
+  left: 0;
+  max-width: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+#name {
+  font-weight: 400;
+  grid-area: name;
+  height: 3em;
+}
+
+#name small {
+  font-size: 1em;
+  font-weight: 200;
+}
+
+#options {
+  align-self: center;
+  display: flex;
+  grid-area: options;
+}
+
+#options a {
+  border: none;
+  border-bottom: 2px solid white;
+  cursor: pointer;
+  display: block;
+  margin: 2px;
+  outline: none;
+  padding: 0;
+}
+
+#options a.active,
+#options a:hover {
+  border-bottom-color: seagreen;
+}
+
+#options img {
+  display: block;
+  max-width: 100%;
+}
+
+.product-page-grid {
+  display: grid;
+  grid-column-gap: 20px;
+  grid-gap: 20px;
+  grid-row-gap: 10px;
+  margin: 20px auto;
+  min-width: 500px;
+  outline: 3px dashed orangered;
+  padding: 15px;
+}
+
+@media only screen and (max-width: 999px) {
+  .product-page-grid {
+    grid-template-areas:
+      "store basket"
+      "image name"
+      "image options"
+      "image buy"
+      "reco reco";
+    grid-template-columns: 4fr 3fr;
+  }
+}
+
+@media only screen and (min-width: 1000px) {
+  .product-page-grid {
+    grid-template-areas:
+      "store basket  reco"
+      "image name    reco"
+      "image options reco"
+      "image buy     reco";
+    grid-template-columns: 4fr 3fr 200px;
+    width: 1000px;
+  }
+}

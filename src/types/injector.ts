@@ -1,3 +1,5 @@
+import type { ContainerService } from './container';
+import type { ConverterService } from './converter';
 import type { EventSystem } from './events';
 import type { FeedService } from './feed';
 import type { FragmentsService } from './fragments';
@@ -17,6 +19,8 @@ export interface Services {
   renderer: RendererService;
   fragments: FragmentsService;
   feed: FeedService;
+  [framework: `framework.${string}`]: ConverterService;
+  [kind: `kind.${string}`]: ContainerService;
 }
 
 export interface Configuration {}

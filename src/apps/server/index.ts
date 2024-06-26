@@ -1,12 +1,15 @@
-import { createFeed } from './feed';
 import { createRouter } from './router';
 import { createListener } from './events';
-import { createRenderer } from './renderer';
 import { createFragments } from './fragments';
 import { DecoratorService, createDecorator } from './decorator';
+import { createFeed } from '@/common/feed';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
+import { createRenderer } from '@/common/renderer';
+import { createModuleFederation } from '@/common/kinds/module';
+import { createNativeFederation } from '@/common/kinds/native';
+import { createPilet } from '@/common/kinds/pilet';
 import type { FeedDefinition } from '@/types';
 
 export interface PicardOptions {
@@ -83,6 +86,9 @@ export function initializePicard(options?: PicardOptions) {
     fragments: createFragments,
     loader: createLoader,
     decorator: createDecorator,
+    'kind.module': createModuleFederation,
+    'kind.native': createNativeFederation,
+    'kind.pilet': createPilet,
   };
 
   return createInjector(serviceDefinitions).instantiate('loader').get('decorator');

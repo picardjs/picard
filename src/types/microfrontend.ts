@@ -23,12 +23,12 @@ export interface PiletPicardMicrofrontend extends BasePicardMicrofrontend {
 }
 
 export interface ModuleFederationPicardMicrofrontend extends BasePicardMicrofrontend {
-  kind: 'mf';
+  kind: 'module';
   details: ModuleFederationEntry;
 }
 
 export interface NativeFederationPicardMicrofrontend extends BasePicardMicrofrontend {
-  kind: 'nf';
+  kind: 'native';
   details: NativeFederationEntry;
 }
 

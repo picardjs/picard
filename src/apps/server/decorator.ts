@@ -65,10 +65,10 @@ async function Component(injector: DependencyInjector, attribs: Record<string, s
 
   if ('cid' in attribs) {
     const renderer = injector.get('renderer');
-    return await renderer.render(attribs.cid).stringify(data);
+    return await renderer.render(attribs).stringify(data);
   } else if ('name' in attribs) {
     const renderer = injector.get('renderer');
-    return await renderer.render({ name: attribs.name, source: attribs.source }).stringify(data);
+    return await renderer.render(attribs).stringify(data);
   }
 
   return '';

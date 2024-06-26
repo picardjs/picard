@@ -3,11 +3,11 @@ import type {
   ModuleFederationEntry,
   ModuleFederationContainer,
   ModuleFederationFactoryScope,
-  ComponentGetter,
   DependencyInjector,
   LoaderService,
   ModuleResolver,
   DependencyModule,
+  ContainerService,
 } from '@/types';
 
 const appShell = 'app';
@@ -56,27 +56,25 @@ function loadFactory(loader: LoaderService, name: string) {
   return container;
 }
 
-/**
- * Loads the micro frontend from module federation.
- * @param entry The module federation entry to fully load.
- * @returns The factory to retrieve exposed components.
- */
-export async function withModuleFederation(
-  injector: DependencyInjector,
-  entry: ModuleFederationEntry,
-): Promise<ComponentGetter> {
+export function createModuleFederation(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
-  await loadScript(entry.url);
-  const container = loadFactory(loader, entry.id);
+
   return {
-    async load(name) {
-      try {
-        const factory = await container.get(name);
-        const component = factory();
-        return component.default || component;
-      } catch {
-        return undefined;
-      }
+    async createContainer(entry: ModuleFederationEntry) {
+      await loadScript(entry.url);
+      const container = loadFactory(loader, entry.id);
+      return {
+        async load(name) {
+          try {
+            const key = `./${name}`;
+            const factory = await container.get(key);
+            const component = factory();
+            return component.default || component;
+          } catch {
+            return undefined;
+          }
+        },
+      };
     },
   };
 }

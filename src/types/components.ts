@@ -11,12 +11,14 @@ export interface ComponentLifecycle {
   stringify(params: any): Promise<string>;
 }
 
-export type ComponentRef =
-  | string
-  | {
-      name: string;
-      source?: string;
-    };
+export interface ComponentRef {
+  cid?: string;
+  name?: string;
+  source?: string;
+  kind?: string;
+  container?: string;
+  framework?: string;
+}
 
 export interface PicardComponent {
   /**

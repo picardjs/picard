@@ -1,0 +1,27 @@
+#basket {
+  align-self: baseline;
+  grid-area: basket;
+  justify-self: end;
+  margin-top: 11px;
+}
+
+#basket .empty,
+#basket .filled {
+  border-radius: 5px;
+  color: white;
+  padding: 5px 10px;
+}
+
+#basket .empty {
+  background-color: gray;
+}
+
+#basket .filled {
+  background-color: seagreen;
+}
+
+.blue-basket {
+  display: block;
+  outline: 3px dashed royalblue;
+  padding: 5px;
+}

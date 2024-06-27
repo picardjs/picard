@@ -73,9 +73,12 @@ export function createPicardScope(injector: DependencyInjector) {
             const mf = existing || createMicrofrontend(component);
             const name = component.name;
             const container = await loadContainer(injector, mf, containers);
-            const lc = await container.load(name);
+            let lc = await container.load(name);
 
             if (lc) {
+              const type = component.framework;
+              const framework = type && injector.get(`framework.${type}`);
+              lc = framework ? framework.convert(lc, {}) : lc;
               registerComponent(store, mf, name, lc);
             }
 

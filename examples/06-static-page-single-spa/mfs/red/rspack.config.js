@@ -41,7 +41,7 @@ module.exports = {
       name: 'red',
       filename: 'remoteEntry.js',
       exposes: {
-        './Products': './src/remote.jsx',
+        'Products': './src/remote.jsx',
       },
       shared: ['react', 'react-dom'],
     }),

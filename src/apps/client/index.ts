@@ -65,6 +65,39 @@ export function share(exports: any) {
   return () => Promise.resolve(exports);
 }
 
+function createSingleSpa() {
+  return {
+    convert(component) {
+      return {
+        bootstrap() {
+          return component.bootstrap();
+        },
+        mount(container, props, locals) {
+          locals.container = container;
+          component.mount({
+            ...props,
+            domElement: container,
+          });
+        },
+        unmount(container) {
+          component.unmount({
+            domElement: container,
+          });
+        },
+        update(props, locals) {
+          component.update?.({ ...props, domElement: locals.container });
+        },
+        unload() {
+          return Promise.resolve();
+        },
+        stringify() {
+          return Promise.resolve('');
+        },
+      };
+    },
+  };
+}
+
 export function initializePicard(options?: PicardOptions) {
   const {
     feed,
@@ -104,6 +137,7 @@ export function initializePicard(options?: PicardOptions) {
     'kind.module': createModuleFederation,
     'kind.native': createNativeFederation,
     'kind.pilet': createPilet,
+    'framework.single-spa': createSingleSpa,
   };
 
   return createInjector(serviceDefinitions)

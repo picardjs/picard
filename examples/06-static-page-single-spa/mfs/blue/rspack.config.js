@@ -41,8 +41,8 @@ module.exports = {
       name: 'blue',
       filename: 'remoteEntry.js',
       exposes: {
-        './BasketInfo': './src/basket/remote.jsx',
-        './BuyButton': './src/buy/remote.jsx',
+        'BasketInfo': './src/basket/remote.jsx',
+        'BuyButton': './src/buy/remote.jsx',
       },
       shared: ['react', 'react-dom'],
     }),

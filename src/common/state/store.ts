@@ -5,6 +5,9 @@ export function initializeStore(initialState: any = {}) {
   return createStore<PicardState>(() => ({
     ...initialState,
     microfrontends: [...(initialState.microfrontends || [])],
+    assets: {
+      ...(initialState.assets || {}),
+    },
     components: {
       ...(initialState.components || {}),
     },

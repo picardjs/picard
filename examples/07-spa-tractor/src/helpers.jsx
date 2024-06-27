@@ -3,15 +3,15 @@ import { createRoot } from 'react-dom/client';
 
 export function fromReact(Component, api) {
   return {
-    mount(container, params, locals) {
+    mount(container, props, locals) {
       locals.root = createRoot(container);
-      locals.root.render(<Component params={params} piral={api} />);
+      locals.root.render(<Component params={props} piral={api} />);
     },
     unmount(container, locals) {
       locals.root.unmount();
     },
-    update(params, locals) {
-      locals.root.render(<Component params={params} piral={api} />);
+    update(props, locals) {
+      locals.root.render(<Component params={props} piral={api} />);
     },
   };
 }

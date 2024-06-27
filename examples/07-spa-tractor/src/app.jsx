@@ -19,6 +19,7 @@ initializePicard({
           registerExtension(name, Component) {
             api.registerComponent(name, fromReact(Component, api));
           },
+          registerPage() {},
         });
       },
     }),

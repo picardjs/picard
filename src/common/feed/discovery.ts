@@ -1,3 +1,4 @@
+import { createEmptyMicrofrontend } from './utils';
 import type { DiscoveryResponse, PicardMicrofrontend } from '@/types';
 
 export function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofrontend> {
@@ -10,39 +11,21 @@ export function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofronten
       const kind = definition.extras?.pilet.spec;
 
       if (kind === undefined || kind === 'mf') {
-        return {
-          components: {},
-          details: {
-            id: definition.extras?.id || name,
-            url: definition.url,
-          },
-          kind: 'module',
-          name,
-          source: definition.url,
-        };
+        return createEmptyMicrofrontend(name, 'module', definition.url, {
+          id: definition.extras?.id || name,
+          url: definition.url,
+        });
       } else if (kind === 'nf') {
-        return {
-          components: {},
-          details: {
-            url: definition.url,
-            exposes: definition.extras?.exposes,
-          },
-          kind: 'native',
-          name,
-          source: definition.url,
-        };
+        return createEmptyMicrofrontend(name, 'native', definition.url, {
+          url: definition.url,
+          exposes: definition.extras?.exposes,
+        });
       } else {
-        return {
-          components: {},
-          details: {
-            name,
-            link: definition.url,
-            url: definition.url,
-          },
-          kind: 'pilet',
+        return createEmptyMicrofrontend(name, 'pilet', definition.url, {
           name,
-          source: definition.url,
-        };
+          link: definition.url,
+          url: definition.url,
+        });
       }
     });
 }

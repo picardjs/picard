@@ -12,6 +12,10 @@ export interface BasePicardMicrofrontend {
    */
   components: Record<string, string>;
   /**
+   * The list of asset IDs.
+   */
+  assets: Array<string>;
+  /**
    * The source link for the micro frontend.
    */
   source: string;

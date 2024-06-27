@@ -1,3 +1,4 @@
+export type * from './assets';
 export type * from './components';
 export type * from './container';
 export type * from './converter';

@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand/vanilla';
 import { emptyLifecycle } from '@/common/kinds/lifecycle';
+import { createEmptyMicrofrontend } from '@/common/feed/utils';
 import type { ComponentLifecycle, ComponentRef, PicardMicrofrontend, PicardState, PicardStore } from '@/types';
 
 function generateUID() {
@@ -8,6 +9,26 @@ function generateUID() {
   const first = ('000' + a.toString(36)).slice(-3);
   const second = ('000' + b.toString(36)).slice(-3);
   return first + second;
+}
+
+export function registerAsset(store: StoreApi<PicardState>, origin: PicardMicrofrontend, url: string, type: string) {
+  const id = generateUID();
+  const asset = {
+    id,
+    url,
+    origin,
+    type,
+  };
+
+  store.setState((state) => ({
+    assets: {
+      ...state.assets,
+      [type]: [...(state.assets[type] || []), asset],
+    },
+  }));
+
+  origin.assets.push(id);
+  return asset;
 }
 
 export function registerComponent(
@@ -36,6 +57,22 @@ export function registerComponent(
 
   origin.components[name] = id;
   return component;
+}
+
+export function retrieveaAsset(store: StoreApi<PicardState>, id: string) {
+  if (typeof id === 'string') {
+    const { assets } = store.getState();
+
+    for (const list of Object.values(assets)) {
+      const asset = list.find((m) => m.id === id);
+
+      if (asset) {
+        return asset;
+      }
+    }
+  }
+
+  return undefined;
 }
 
 export function retrieveComponent(store: StoreApi<PicardState>, id: string) {
@@ -74,35 +111,17 @@ export function createMicrofrontend(component: ComponentRef): PicardMicrofronten
   const { source, kind, container } = component;
 
   if (kind === 'module') {
-    return {
-      kind,
-      name: source,
-      details: {
-        id: container,
-        url: source,
-      },
-      source,
-      components: {},
-    };
+    return createEmptyMicrofrontend(source, kind, source, {
+      id: container,
+      url: source,
+    });
   } else if (kind === 'native') {
-    return {
-      kind,
-      name: source,
-      details: {
-        url: source,
-      },
-      source,
-      components: {},
-    };
+    return createEmptyMicrofrontend(source, kind, source, {
+      url: source,
+    });
   } else {
-    return {
-      kind: 'pilet',
-      name: source,
-      details: {
-        url: source,
-      },
-      source,
-      components: {},
-    };
+    return createEmptyMicrofrontend(source, 'pilet', source, {
+      url: source,
+    });
   }
 }

@@ -34,7 +34,7 @@ export default function ({ route }) {
               </div>
               <piral-slot name="header-items" />
             </header>
-            <pi-slot rel="router" name={`page:${route}`} />
+            <piral-slot rel="router" name={`page:${route}`} />
           </div>
           <Footer />
         </div>

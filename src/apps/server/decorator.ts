@@ -3,8 +3,12 @@ import { render } from 'dom-serializer';
 import type { ChildNode, Document, Element } from 'domhandler';
 import type { DependencyInjector } from '@/types';
 
+interface Decorator {
+  (content: string): Promise<string>;
+}
+
 export interface DecoratorService {
-  decorate(content: string): Promise<string>;
+  decorate: Decorator;
 }
 
 function traverse(nodes: Array<ChildNode>, cb: (node: ChildNode) => boolean) {
@@ -60,6 +64,20 @@ type ServerComponent = (
   document: Document,
 ) => Promise<string>;
 
+function escapeHtml(str: string) {
+  return str.replace(
+    /[&<>'"]/g,
+    (tag) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;',
+      })[tag],
+  );
+}
+
 async function Component(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
   const data = tryJson(attribs.data, {});
 
@@ -79,9 +97,17 @@ async function Slot(
   document: Document,
 ): Promise<string> {
   const name = attribs.name;
-  const params = tryJson(attribs.params, {});
-  const fragments = injector.get('fragments');
-  const content = await fragments.load(name, params);
+  const data = tryJson(attribs.data, {});
+  const { componentName } = injector.get('config');
+  const scope = injector.get('scope');
+  const cids = await scope.loadComponents(name);
+
+  const content = cids
+    .map(
+      (id, i) =>
+        `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"></${componentName}>`,
+    )
+    .join('');
   const itemTemplateId = attribs['item-template-id'];
 
   if (itemTemplateId) {
@@ -109,6 +135,26 @@ async function Slot(
 }
 
 async function Part(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
+  if (attribs.name === 'style') {
+    const scope = injector.get('scope');
+    const { slotName, componentName, partName } = injector.get('config');
+
+    const assets = await scope.loadAssets('css');
+
+    const internals = `<style>${slotName} { display: contents; } ${componentName} { display: contents; } ${partName} { display: contents; }</style>`;
+
+    const externals = assets
+      .map((id) => scope.retrieveAsset(id))
+      .filter(Boolean)
+      .map(
+        (asset) =>
+          `<link rel="stylesheet" href=${JSON.stringify(asset.url)} data-origin=${JSON.stringify(asset.origin.name)} data-ref-id=${JSON.stringify(asset.id)}>`,
+      )
+      .join('');
+
+    return `${internals}${externals}`;
+  }
+
   return `<!-- here would be the part for "${attribs.name}" -->`;
 }
 
@@ -121,44 +167,53 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
     [partName]: Part,
   };
 
-  return {
-    async decorate(content) {
-      const document = parseDocument(content, {
-        withStartIndices: true,
-        withEndIndices: true,
-      });
-      const markers: Array<[string, Record<string, string>, number, number]> = [];
-      traverse(document.childNodes, (m) => {
-        if (m.type !== 'tag') {
-          return false;
-        }
+  const decorate = async (content: string, count = 0) => {
+    if (count === 10) {
+      console.warn('Reached maximum recursion in decorator. Returning content.');
+      return content;
+    }
 
-        if (m.name === componentName || m.name === slotName) {
-          const insert = m.endIndex! - 2 - m.name.length;
-          markers.push([m.name, m.attribs, insert, 0]);
-          return false;
-        } else if (m.name === partName) {
-          const start = m.startIndex!;
-          const end = m.endIndex!;
-          markers.push([m.name, m.attribs, start, end - start]);
-        }
-
-        return true;
-      });
-
-      let previous = 0;
-      const parts: Array<string> = [content];
-
-      for (const [name, attribs, index, length] of markers) {
-        const render = components[name];
-        parts.pop();
-        parts.push(content.substring(previous, index));
-        parts.push(await render(injector, attribs, document));
-        previous = index + length;
-        parts.push(content.substring(previous));
+    const document = parseDocument(content, {
+      withStartIndices: true,
+      withEndIndices: true,
+    });
+    const markers: Array<[string, Record<string, string>, number, number]> = [];
+    traverse(document.childNodes, (m) => {
+      if (m.type !== 'tag') {
+        return false;
       }
 
-      return parts.join('');
-    },
+      if (m.name === componentName || m.name === slotName) {
+        const insert = m.endIndex! - 2 - m.name.length;
+        markers.push([m.name, m.attribs, insert, 0]);
+        return false;
+      } else if (m.name === partName) {
+        const start = m.startIndex!;
+        const end = m.endIndex!;
+        markers.push([m.name, m.attribs, start, end - start + 1]);
+      }
+
+      return true;
+    });
+
+    let previous = 0;
+    const parts: Array<string> = [content];
+
+    for (const [name, attribs, index, length] of markers) {
+      const render = components[name];
+      parts.pop();
+      parts.push(content.substring(previous, index));
+      const replacement = await render(injector, attribs, document);
+      const result = await decorate(replacement, count + 1);
+      parts.push(result);
+      previous = index + length;
+      parts.push(content.substring(previous));
+    }
+
+    return parts.join('');
+  };
+
+  return {
+    decorate,
   };
 }

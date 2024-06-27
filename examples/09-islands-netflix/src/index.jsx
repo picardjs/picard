@@ -19,6 +19,9 @@ const picard = initializePicard({
       extend(api) {
         const rc = api.registerComponent;
         Object.assign(api, {
+          Component(props) {
+            return <piral-slot name={props.name} data={JSON.stringify(props.params)} />;
+          },
           registerComponent(name, Component, meta) {
             rc(name, Component, {
               ...meta,

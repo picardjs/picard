@@ -31,6 +31,9 @@ export function createNativeFederation(): ContainerService {
 
           return undefined;
         },
+        getAssets() {
+          return [];
+        },
       };
     },
   };

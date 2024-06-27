@@ -3,7 +3,6 @@ import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent
 const attrName = 'name';
 const attrGroup = 'group';
 const attrFallback = 'fallback';
-const attrParams = 'params';
 const attrTemplateId = 'item-template-id';
 const attrSource = 'source';
 const attrKind = 'kind';
@@ -84,8 +83,8 @@ export function createElements(injector: DependencyInjector) {
       this.setAttribute(attrFallback, value);
     }
 
-    private get params() {
-      return tryJson(this.getAttribute(attrParams), {});
+    private get data() {
+      return tryJson(this.getAttribute(attrData), {});
     }
 
     async connectedCallback() {
@@ -103,8 +102,8 @@ export function createElements(injector: DependencyInjector) {
         // empty on purpose - just do nothing
       } else if (name === attrTemplateId && newValue !== oldValue) {
         this.#reset();
-      } else if (name === attrParams) {
-        this.dispatchEvent(new CustomEvent('params-changed', { detail: this.params }));
+      } else if (name === attrData) {
+        this.dispatchEvent(new CustomEvent('data-changed', { detail: this.data }));
       } else if (name === attrName && newValue !== oldValue) {
         this.#reset();
       } else if (name === attrFallback && newValue !== oldValue && this._empty) {
@@ -130,7 +129,7 @@ export function createElements(injector: DependencyInjector) {
 
     async #setupChildren() {
       this._queue.enqueue(() => {
-        return fragments.load(this.name, this.params);
+        return fragments.load(this.name, this.data);
       });
 
       this._queue.enqueue((content: string) => {
@@ -156,7 +155,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     static get observedAttributes() {
-      return [attrName, attrParams, attrGroup, attrTemplateId, attrFallback];
+      return [attrName, attrData, attrGroup, attrTemplateId, attrFallback];
     }
   }
 

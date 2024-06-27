@@ -5,8 +5,8 @@ export function createFragments(injector: DependencyInjector): FragmentsService 
   const { fragmentUrl } = config;
 
   return {
-    async load(name, params) {
-      const query = Object.entries(params || {})
+    async load(name, data) {
+      const query = Object.entries(data || {})
         .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(value as string)}`)
         .join('&');
 

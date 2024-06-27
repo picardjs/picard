@@ -4,11 +4,11 @@ export interface ComponentLifecycle {
   bootstrap(): Promise<void>;
   unload(): Promise<void>;
 
-  mount(container: HTMLElement, params: any, locals: any): void;
+  mount(container: HTMLElement, props: any, locals: any): void;
   unmount(container: HTMLElement, locals: any): void;
-  update(params: any, locals: any): void;
+  update(props: any, locals: any): void;
 
-  stringify(params: any): Promise<string>;
+  stringify(props: any): Promise<string>;
 }
 
 export interface ComponentRef {
@@ -41,4 +41,5 @@ export interface PicardComponent {
 
 export interface ComponentGetter {
   load(name: string): Promise<any>;
+  getAssets(): Array<{ url: string; type: string }>;
 }

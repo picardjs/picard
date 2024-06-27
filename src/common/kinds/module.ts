@@ -74,6 +74,9 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
             return undefined;
           }
         },
+        getAssets() {
+          return [];
+        },
       };
     },
   };

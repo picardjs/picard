@@ -63,12 +63,11 @@ type ServerComponent = (
 async function Component(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
   const data = tryJson(attribs.data, {});
 
-  if ('cid' in attribs) {
+  if ('cid' in attribs || 'name' in attribs) {
     const renderer = injector.get('renderer');
-    return await renderer.render(attribs).stringify(data);
-  } else if ('name' in attribs) {
-    const renderer = injector.get('renderer');
-    return await renderer.render(attribs).stringify(data);
+    const lc = renderer.render(attribs);
+    await lc.bootstrap();
+    return await lc.stringify(data);
   }
 
   return '';

@@ -12,6 +12,30 @@ const attrFramework = 'framework';
 const attrData = 'data';
 const attrCid = 'cid';
 
+interface ElementQueue {
+  enqueue<T>(cb: (prev: any) => T | Promise<T>): void;
+  reset(): void;
+}
+
+function createQueue(): ElementQueue {
+  const queue: Array<(rev: any) => any> = [];
+  const process = (prev: any) => {
+    const cb = queue.shift();
+    return cb?.(prev);
+  };
+  let current = Promise.resolve();
+
+  return {
+    enqueue(cb) {
+      queue.push(cb);
+      current = current.then(process);
+    },
+    reset() {
+      queue.splice(0, queue.length);
+    },
+  };
+}
+
 function tryJson(content: string, fallback: any) {
   if (content) {
     try {
@@ -29,10 +53,12 @@ export function createElements(injector: DependencyInjector) {
   const fragments = injector.get('fragments');
   const events = injector.get('events');
 
-  const { componentName, slotName, stylesheet } = config;
+  const { componentName, slotName, stylesheet, partName } = config;
 
   class PiSlot extends HTMLElement {
     private _empty = false;
+    private _ready = false;
+    private _queue = createQueue();
 
     get name() {
       return this.getAttribute(attrName) || '';
@@ -63,59 +89,70 @@ export function createElements(injector: DependencyInjector) {
     }
 
     async connectedCallback() {
-      const prepared = !this.group.startsWith('client-');
-
-      if (!prepared) {
-        await this.#setupChildren();
-      }
+      this._ready = true;
+      this.#start();
     }
 
     disconnectedCallback() {
-      // just make sure to remove everything
-      this.innerHTML = '';
+      this._ready = false;
+      this.#clean();
     }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-      if (name === attrTemplateId && newValue !== oldValue) {
-        this.#rerender();
+      if (!this._ready) {
+        // empty on purpose - just do nothing
+      } else if (name === attrTemplateId && newValue !== oldValue) {
+        this.#reset();
       } else if (name === attrParams) {
         this.dispatchEvent(new CustomEvent('params-changed', { detail: this.params }));
       } else if (name === attrName && newValue !== oldValue) {
-        this.#rerender();
+        this.#reset();
       } else if (name === attrFallback && newValue !== oldValue && this._empty) {
-        this.#rerender();
+        this.#reset();
       }
     }
 
-    async #rerender() {
-      // this is a worst-case scenario, we need to throw away everything
-      this.innerHTML = '';
+    #reset() {
+      this.#clean();
+      this.#start();
+    }
 
+    #start() {
       if (this.name) {
-        await this.#setupChildren();
+        this.#setupChildren();
       }
+    }
+
+    #clean() {
+      this._queue.reset();
+      this.innerHTML = '';
     }
 
     async #setupChildren() {
-      const fragment = document.createElement('template');
-      const itemTemplate = document.getElementById(this.getAttribute(attrTemplateId) || '');
-      const content = await fragments.load(this.name, this.params);
-      this._empty = !!content;
-      fragment.innerHTML = content || this.fallback || '';
-      this.innerHTML = '';
+      this._queue.enqueue(() => {
+        return fragments.load(this.name, this.params);
+      });
 
-      if (itemTemplate instanceof HTMLTemplateElement) {
-        const template = itemTemplate.content;
-        fragment.content.childNodes.forEach((node) => {
-          const clonedNode = node.cloneNode(true);
-          const item = template.cloneNode(true) as DocumentFragment;
-          const slot = item.querySelector('slot');
-          slot?.replaceWith(clonedNode);
-          this.appendChild(item);
-        });
-      } else {
-        this.appendChild(fragment.content);
-      }
+      this._queue.enqueue((content: string) => {
+        const fragment = document.createElement('template');
+        const itemTemplate = document.getElementById(this.getAttribute(attrTemplateId) || '');
+        this._empty = !!content;
+        fragment.innerHTML = content || this.fallback || '';
+        this.innerHTML = '';
+
+        if (itemTemplate instanceof HTMLTemplateElement) {
+          const template = itemTemplate.content;
+          fragment.content.childNodes.forEach((node) => {
+            const clonedNode = node.cloneNode(true);
+            const item = template.cloneNode(true) as DocumentFragment;
+            const slot = item.querySelector('slot');
+            slot?.replaceWith(clonedNode);
+            this.appendChild(item);
+          });
+        } else {
+          this.appendChild(fragment.content);
+        }
+      });
     }
 
     static get observedAttributes() {
@@ -127,7 +164,8 @@ export function createElements(injector: DependencyInjector) {
     private _lc: ComponentLifecycle | undefined;
     private _locals: any = {};
     private _data: any;
-    private _queue: Promise<any> | undefined;
+    private _queue = createQueue();
+    private _ready = false;
     private handleUpdate = (ev: UpdatedMicrofrontendsEvent) => {
       const source = this.getAttribute(attrSource) || undefined;
 
@@ -150,12 +188,14 @@ export function createElements(injector: DependencyInjector) {
     }
 
     connectedCallback() {
+      this._ready = true;
       events.on('updated-microfrontends', this.handleUpdate);
       this.#start();
       events.emit('mounted-component', { element: this });
     }
 
     disconnectedCallback() {
+      this._ready = false;
       // just make sure to remove everything
       events.off('updated-microfrontends', this.handleUpdate);
       this.#clean();
@@ -163,8 +203,8 @@ export function createElements(injector: DependencyInjector) {
     }
 
     attributeChangedCallback(name: string, _prev: string, value: string) {
-      if (!this._queue) {
-        // do nothing
+      if (!this._ready) {
+        // empty on purpose - just do nothing
       } else if (name === attrData) {
         this.data = tryJson(value, {});
       } else if (name === attrCid || name === attrName || name === attrSource) {
@@ -178,31 +218,22 @@ export function createElements(injector: DependencyInjector) {
 
     #clean() {
       const lc = this._lc;
+      this._queue.reset();
       lc?.unmount(this, this._locals);
       this._lc = undefined;
       this._locals = {};
-      this._queue = undefined;
       this.innerHTML = '';
     }
 
     #start() {
-      this._queue = Promise.resolve();
       this.#bootstrap();
 
-      this.#enqueue(() => {
+      this._queue.enqueue(() => {
         const lc = this._lc;
 
         if (lc) {
           const data = this._data || tryJson(this.getAttribute(attrData), {});
           lc.mount(this, data, this._locals);
-        }
-      });
-    }
-
-    #enqueue(cb: () => void | Promise<void>) {
-      this._queue = this._queue?.then(() => {
-        if (this.isConnected) {
-          return cb();
         }
       });
     }
@@ -213,7 +244,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #rerender() {
-      this.#enqueue(() => this._lc?.update(this._data, this._locals));
+      this._queue.enqueue(() => this._lc?.update(this._data, this._locals));
     }
 
     #bootstrap() {
@@ -230,7 +261,7 @@ export function createElements(injector: DependencyInjector) {
         this._lc = renderer.render({ name, source, container, kind, framework });
       }
 
-      this.#enqueue(() => this._lc?.bootstrap());
+      this._queue.enqueue(() => this._lc?.bootstrap());
     }
   }
 
@@ -239,6 +270,7 @@ export function createElements(injector: DependencyInjector) {
     style.textContent = `
       ${slotName} { display: contents; }
       ${componentName} { display: contents; }
+      ${partName} { display: contents; }
     `;
     document.head.appendChild(style);
   }

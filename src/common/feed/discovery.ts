@@ -9,7 +9,7 @@ export function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofronten
       const [definition] = definitions;
       const kind = definition.extras?.pilet.spec;
 
-      if (kind === undefined || kind === 'module') {
+      if (kind === undefined || kind === 'mf') {
         return {
           components: {},
           details: {

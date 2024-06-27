@@ -1,5 +1,21 @@
 #!/bin/bash
 
+cd 06-static-page-single-spa/mfs
+cd blue
+npm i
+npm run build
+cd ..
+cd green
+npm i
+npm run build
+cd ..
+cd red
+npm i
+npm run build
+cd ..
+cd ../..
+
+
 cd 07-spa-tractor
 npm i
 cd ..

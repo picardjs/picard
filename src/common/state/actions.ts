@@ -39,25 +39,31 @@ export function registerComponent(
 }
 
 export function retrieveComponent(store: StoreApi<PicardState>, id: string) {
-  const { components } = store.getState();
+  if (typeof id === 'string') {
+    const { components } = store.getState();
 
-  for (const list of Object.values(components)) {
-    const component = list.find((m) => m.id === id);
+    for (const list of Object.values(components)) {
+      const component = list.find((m) => m.id === id);
 
-    if (component) {
-      return component;
+      if (component) {
+        return component;
+      }
     }
   }
 
   return undefined;
 }
 
-export function getExistingLifecycle(scope: PicardStore, component: ComponentRef) {  
+export function findMicrofrontend(scope: PicardStore, component: ComponentRef) {
   const source = component.source;
-  const mf = scope.readState().microfrontends.find((m) => m.name === source);
+  return scope.readState().microfrontends.find((m) => m.name === source);
+}
 
-  if (mf) {
-    const id = mf.components[component.name];
+export function getExistingLifecycle(scope: PicardStore, component: ComponentRef) {
+  const mf = findMicrofrontend(scope, component);
+  const id = mf?.components[component.name];
+
+  if (id) {
     return scope.retrieveLifecycle(id);
   }
 

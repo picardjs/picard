@@ -91,5 +91,5 @@ export function initializePicard(options?: PicardOptions) {
     'kind.pilet': createPilet,
   };
 
-  return createInjector(serviceDefinitions).instantiate('loader').get('decorator');
+  return createInjector(serviceDefinitions).instantiate('loader').instantiate('feed').get('decorator');
 }

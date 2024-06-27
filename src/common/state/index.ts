@@ -1,7 +1,13 @@
 import { loadContainer } from './container';
 import { createNewQueue } from './queue';
 import { initializeStore } from './store';
-import { registerComponent, retrieveComponent, createMicrofrontend, getExistingLifecycle } from './actions';
+import {
+  registerComponent,
+  retrieveComponent,
+  createMicrofrontend,
+  getExistingLifecycle,
+  findMicrofrontend,
+} from './actions';
 import { createLazyLifecycle, emptyLifecycle } from '../kinds/lifecycle';
 import type { DependencyInjector, PicardStore } from '@/types';
 
@@ -47,13 +53,21 @@ export function createPicardScope(injector: DependencyInjector) {
           const lc = getExistingLifecycle(scope, component);
 
           if (!lc) {
+            const existing = findMicrofrontend(scope, component);
+            const mf = existing || createMicrofrontend(component);
             const name = component.name;
-            const mf = createMicrofrontend(component);
             const container = await loadContainer(injector, mf);
-            const lifecycle = await container.load(name);
-            registerComponent(store, mf, name, lifecycle);
-            scope.appendMicrofrontend(mf);
-            return lifecycle;
+            const lc = await container.load(name);
+
+            if (lc) {
+              registerComponent(store, mf, name, lc);
+            }
+
+            if (!existing) {
+              scope.appendMicrofrontend(mf);
+            }
+
+            return lc || emptyLifecycle;
           }
 
           return lc;
@@ -93,29 +107,33 @@ export function createPicardScope(injector: DependencyInjector) {
       scope.appendMicrofrontends([mf]);
     },
     appendMicrofrontends(mfs) {
-      store.setState((state) => ({
-        ...state,
-        microfrontends: [...state.microfrontends, ...mfs],
-      }));
+      if (mfs.length > 0) {
+        store.setState((state) => ({
+          ...state,
+          microfrontends: [...state.microfrontends, ...mfs],
+        }));
 
-      events.emit('updated-microfrontends', {
-        added: mfs.map((m) => m.name),
-        removed: [],
-      });
+        events.emit('updated-microfrontends', {
+          added: mfs.map((m) => m.name),
+          removed: [],
+        });
+      }
     },
     removeMicrofrontend(name) {
       scope.removeMicrofrontends([name]);
     },
     removeMicrofrontends(names) {
-      store.setState((state) => ({
-        ...state,
-        microfrontends: state.microfrontends.filter((m) => !names.includes(m.name)),
-      }));
+      if (names.length > 0) {
+        store.setState((state) => ({
+          ...state,
+          microfrontends: state.microfrontends.filter((m) => !names.includes(m.name)),
+        }));
 
-      events.emit('updated-microfrontends', {
-        added: [],
-        removed: names,
-      });
+        events.emit('updated-microfrontends', {
+          added: [],
+          removed: names,
+        });
+      }
     },
     updateMicrofrontend(name, details) {
       store.setState((state) => ({

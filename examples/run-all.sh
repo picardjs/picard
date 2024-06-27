@@ -20,6 +20,10 @@ cd 05-static-page-with-routing
 npx http-server --port 8085 &
 cd ..
 
+cd 06-static-page-single-spa
+npx http-server --port 8086 &
+cd ..
+
 cd 07-spa-tractor
 npm start & # port is 8087
 cd ..

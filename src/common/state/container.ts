@@ -5,24 +5,39 @@ export async function loadContainer(
   mf: PicardMicrofrontend,
   containers: Record<string, Promise<ComponentGetter>>,
 ) {
-  let container = containers[mf.name];
+  const { name, kind, details } = mf;
+  let container = containers[name];
 
   if (!container) {
-    const service = injector.get(`kind.${mf.kind}`);
-    container = service.createContainer(mf.details);
-    containers[mf.name] = container.then((c) => {
-      const assets = c.getAssets();
+    const service = injector.get(`kind.${kind}`);
+    container = service.createContainer(details).then(
+      (c) => {
+        const assets = c.getAssets();
 
-      if (assets.length > 0) {
-        const scope = injector.get('scope');
+        if (assets.length > 0) {
+          const scope = injector.get('scope');
 
-        assets.forEach((asset) => {
-          scope.registerAsset(mf, asset.url, asset.type);
-        });
-      }
+          assets.forEach((asset) => {
+            scope.registerAsset(mf, asset.url, asset.type);
+          });
+        }
 
-      return c;
-    });
+        return c;
+      },
+      (ex) => {
+        console.warn('Failed to load micro frontend %s:', name, ex);
+
+        return {
+          getAssets() {
+            return [];
+          },
+          load() {
+            return undefined;
+          },
+        };
+      },
+    );
+    containers[name] = container;
   }
 
   return await container;

@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "ESNext",
     "moduleResolution": "bundler",
+    "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["../../*"]
     }
   },
   "include": [
-    "./src/**/*.ts",
+    "./**/*.ts"
   ]
 }

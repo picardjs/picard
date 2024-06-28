@@ -1,0 +1,8 @@
+{
+  "name": "picard",
+  "platform": "node",
+  "minify": false,
+  "entry": "index.ts",
+  "formats": ["cjs", "esm"],
+  "outDirs": ["server"]
+}

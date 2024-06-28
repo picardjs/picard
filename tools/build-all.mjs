@@ -1,4 +1,4 @@
-import { readdir, copyFile } from 'node:fs/promises';
+import { readdir, cp } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { buildOne } from './build-one.mjs';
 
@@ -24,7 +24,7 @@ const demos = {
 await Promise.all(
   Object.entries(demos).map(([type, targets]) =>
     Promise.all(
-      targets.map((target) => copyFile(resolve(dstdir, type, 'picard.js'), resolve(exsdir, target, 'picard.js'))),
+      targets.map((target) => cp(resolve(dstdir, type), resolve(exsdir, target, 'dist'), { recursive: true })),
     ),
   ),
 );

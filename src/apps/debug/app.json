@@ -1,0 +1,8 @@
+{
+  "name": "picard-debug",
+  "platform": "browser",
+  "minify": true,
+  "entry": "index.ts",
+  "formats": ["esm"],
+  "outDirs": ["browser", "client", "server"]
+}

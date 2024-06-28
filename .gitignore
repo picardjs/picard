@@ -21,7 +21,6 @@ coverage
 .cache
 .nyc_output
 
-examples/**/*/picard.js
 /test-results/
 /playwright-report/
 /blob-report/

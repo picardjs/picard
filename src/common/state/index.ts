@@ -10,7 +10,7 @@ import {
   registerAsset,
   retrieveaAsset,
 } from './actions';
-import { createLazyLifecycle, emptyLifecycle } from '../kinds/lifecycle';
+import { createLazyLifecycle } from '../kinds/lifecycle';
 import type { ComponentGetter, DependencyInjector, PicardStore } from '@/types';
 
 /**
@@ -43,7 +43,7 @@ export function createPicardScope(injector: DependencyInjector) {
       return retrieveComponent(store, id);
     },
     retrieveLifecycle(id) {
-      return scope.retrieveComponent(id)?.render || emptyLifecycle;
+      return scope.retrieveComponent(id)?.render;
     },
     retrieveAsset(id) {
       return retrieveaAsset(store, id);
@@ -65,13 +65,13 @@ export function createPicardScope(injector: DependencyInjector) {
       const lc = getExistingLifecycle(scope, component);
 
       if (!lc) {
+        const name = component.name;
         const promise = queue.enqueue(async () => {
           const lc = getExistingLifecycle(scope, component);
 
           if (!lc) {
             const existing = findMicrofrontend(scope, component);
             const mf = existing || createMicrofrontend(component);
-            const name = component.name;
             const container = await loadContainer(injector, mf, containers);
             let lc = await container.load(name);
 
@@ -86,13 +86,13 @@ export function createPicardScope(injector: DependencyInjector) {
               scope.appendMicrofrontend(mf);
             }
 
-            return lc || emptyLifecycle;
+            return lc;
           }
 
           return lc;
         });
 
-        return createLazyLifecycle(() => promise);
+        return createLazyLifecycle(() => promise, name);
       }
 
       return lc;

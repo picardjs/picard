@@ -78,6 +78,15 @@ const Product = () => {
             <img src={variant.thumb} alt={variant.name} />
           </a>
         ))}
+        <pi-component
+          name="Reviews"
+          source="/mfs/purple/dist/remoteEntry.js"
+          data={data}
+          kind="module"
+          container="purple"
+          fallback-template-id="reviews-fallback"
+          framework="single-spa"
+        />
       </div>
       <pi-component
         name="BuyButton"
@@ -95,6 +104,9 @@ const Product = () => {
         container="green"
         framework="single-spa"
       />
+      <template id="reviews-fallback">
+        <div>The reviews module is currently not available.</div>
+      </template>
     </div>
   );
 };

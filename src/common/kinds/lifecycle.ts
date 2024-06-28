@@ -1,6 +1,6 @@
 import type { ComponentLifecycle } from '@/types';
 
-export const emptyLifecycle: ComponentLifecycle = {
+const emptyLifecycle: ComponentLifecycle = {
   async bootstrap() {},
   async unload() {},
   mount() {},
@@ -8,17 +8,22 @@ export const emptyLifecycle: ComponentLifecycle = {
   update() {},
   stringify() {
     return Promise.resolve('');
-  }
+  },
 };
 
-export function createLazyLifecycle(load: () => Promise<any>): ComponentLifecycle {
+export function createLazyLifecycle(load: () => Promise<any>, name: string): ComponentLifecycle {
   const impl = {
     ...emptyLifecycle,
   };
   return {
     async bootstrap(...args) {
-      const component = await load();
-      Object.assign(impl, component?.default || component);
+      const lc = await load();
+
+      if (!lc) {
+        throw new Error(`The component "${name}" could not be loaded.`);
+      }
+
+      Object.assign(impl, lc.default || lc);
       return await impl.bootstrap(...args);
     },
     mount(...args) {

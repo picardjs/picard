@@ -84,8 +84,12 @@ async function Component(injector: DependencyInjector, attribs: Record<string, s
   if ('cid' in attribs || 'name' in attribs) {
     const renderer = injector.get('renderer');
     const lc = renderer.render(attribs);
-    await lc.bootstrap();
-    return await lc.stringify(data);
+
+    if (lc) {
+      //TODO fallback?!
+      await lc.bootstrap?.();
+      return await lc.stringify?.(data);
+    }
   }
 
   return '';

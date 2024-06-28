@@ -34,6 +34,10 @@ function createQueue(): ElementQueue {
   };
 }
 
+function createFragment() {
+  return document.createDocumentFragment();
+}
+
 function tryJson(content: string, fallback: any) {
   if (content) {
     try {
@@ -45,10 +49,22 @@ function tryJson(content: string, fallback: any) {
   return fallback;
 }
 
+function getFragment(template: HTMLTemplateElement) {
+  if (!template.content?.hasChildNodes()) {
+    // this is mostly a workaround for React, where
+    // <template> is unfortunately used uincorrectly
+    const fragment = createFragment();
+    fragment.append(...template.childNodes);
+    return fragment;
+  }
+
+  return template.content;
+}
+
 function fillTemplate(fragment: DocumentFragment, template: HTMLElement, items: Array<any>) {
   if (template instanceof HTMLTemplateElement) {
-    const collector = document.createDocumentFragment();
-    const templateContent = template.content;
+    const collector = createFragment();
+    const templateContent = getFragment(template);
     fragment.childNodes.forEach((node) => {
       const clonedNode = node.cloneNode(true);
       const item = templateContent.cloneNode(true) as DocumentFragment;
@@ -108,18 +124,16 @@ export function createElements(injector: DependencyInjector) {
     }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-      if (!this._ready) {
+      if (!this._ready || oldValue === newValue) {
         // empty on purpose - just do nothing
-      } else if (name === attrItemTemplateId && newValue !== oldValue) {
+      } else if (name === attrItemTemplateId) {
         this.#reset();
       } else if (name === attrData) {
         const data = this.data;
-        this._components.forEach((m) => {
-          m.data = data;
-        });
-      } else if (name === attrName && newValue !== oldValue) {
+        this._components.forEach((m) => m.data = data);
+      } else if (name === attrName) {
         this.#reset();
-      } else if (name === attrFallbackTemplateId && newValue !== oldValue && this._empty) {
+      } else if (name === attrFallbackTemplateId && this._empty) {
         this.#reset();
       }
     }
@@ -154,12 +168,12 @@ export function createElements(injector: DependencyInjector) {
         if (content) {
           const fragment = document.createElement('template');
           fragment.innerHTML = content;
-          this.appendChild(fillTemplate(fragment.content, itemTemplate, this._components));
+          this.appendChild(fillTemplate(getFragment(fragment), itemTemplate, this._components));
         } else {
           const fallbackTemplate = document.getElementById(this.getAttribute(attrFallbackTemplateId) || '');
 
           if (fallbackTemplate instanceof HTMLTemplateElement) {
-            this.appendChild(fallbackTemplate.content.cloneNode(true));
+            this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
           }
         }
       });
@@ -209,14 +223,15 @@ export function createElements(injector: DependencyInjector) {
       events.emit('unmounted-component', { element: this });
     }
 
-    attributeChangedCallback(name: string, _prev: string, value: string) {
-      if (!this._ready) {
+    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+      if (!this._ready || newValue === oldValue) {
         // empty on purpose - just do nothing
       } else if (name === attrData) {
         this.#update();
       } else if (name === attrCid || name === attrName || name === attrSource) {
         this.#reset();
-      } else if (name === attrFallbackTemplateId) {
+      } else if (name === attrFallbackTemplateId && !this._lc) {
+        this.#reset();
       }
     }
 
@@ -231,7 +246,13 @@ export function createElements(injector: DependencyInjector) {
         const lc = this._lc;
 
         if (lc) {
-          lc.mount(this, this.data, this._locals);
+          lc.mount?.(this, this.data, this._locals);
+        } else {
+          const fallbackTemplate = document.getElementById(this.getAttribute(attrFallbackTemplateId) || '');
+
+          if (fallbackTemplate instanceof HTMLTemplateElement) {
+            this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
+          }
         }
       });
     }
@@ -239,7 +260,7 @@ export function createElements(injector: DependencyInjector) {
     #clean() {
       const lc = this._lc;
       this._queue.reset();
-      lc?.unmount(this, this._locals);
+      lc?.unmount?.(this, this._locals);
       this._lc = undefined;
       this._locals = {};
       this.innerHTML = '';
@@ -249,9 +270,9 @@ export function createElements(injector: DependencyInjector) {
       this.#clean();
       this.#start();
     }
-    s;
+
     #update() {
-      this._queue.enqueue(() => this._lc?.update(this.data, this._locals));
+      this._queue.enqueue(() => this._lc?.update?.(this.data, this._locals));
     }
 
     #bootstrap() {
@@ -268,7 +289,11 @@ export function createElements(injector: DependencyInjector) {
         this._lc = renderer.render({ name, source, container, kind, framework });
       }
 
-      this._queue.enqueue(() => this._lc?.bootstrap());
+      this._queue.enqueue(() =>
+        this._lc?.bootstrap?.().catch(() => {
+          this._lc = undefined;
+        }),
+      );
     }
   }
 

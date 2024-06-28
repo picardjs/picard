@@ -48,7 +48,7 @@ export function createPilet(injector: DependencyInjector): ContainerService {
             const { type = '', ...rest } = opts;
             const framework = type && injector.get(`framework.${type}`);
             const lc = framework ? framework.convert(component, { ...rest, api }) : component;
-            components[name] = typeof lc === 'function' ? createLazyLifecycle(lc) : lc;
+            components[name] = typeof lc === 'function' ? createLazyLifecycle(lc, name) : lc;
           },
         };
 

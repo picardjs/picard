@@ -1,5 +1,4 @@
 import type { StoreApi } from 'zustand/vanilla';
-import { emptyLifecycle } from '@/common/kinds/lifecycle';
 import { createEmptyMicrofrontend } from '@/common/feed/utils';
 import type { ComponentLifecycle, ComponentRef, PicardMicrofrontend, PicardState, PicardStore } from '@/types';
 
@@ -42,10 +41,7 @@ export function registerComponent(
     id,
     name,
     origin,
-    render: {
-      ...emptyLifecycle,
-      ...render,
-    },
+    render,
   };
 
   store.setState((state) => ({

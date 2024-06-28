@@ -37,6 +37,7 @@
 #options {
   align-self: center;
   display: flex;
+  flex-wrap: wrap;
   grid-area: options;
 }
 
@@ -48,6 +49,7 @@
   margin: 2px;
   outline: none;
   padding: 0;
+  flex: 2rem;
 }
 
 #options a.active,

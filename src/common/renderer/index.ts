@@ -1,4 +1,3 @@
-import { emptyLifecycle } from '../kinds/lifecycle';
 import type { ComponentRef, DependencyInjector } from '@/types';
 
 export function createRenderer(injector: DependencyInjector) {
@@ -14,7 +13,7 @@ export function createRenderer(injector: DependencyInjector) {
       }
 
       // Fallback; render nothing
-      return emptyLifecycle;
+      return undefined;
     },
   };
 }

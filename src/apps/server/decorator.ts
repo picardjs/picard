@@ -78,7 +78,26 @@ function escapeHtml(str: string) {
   );
 }
 
-async function Component(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
+function renderFallback(attribs: Record<string, string>, document: Document) {
+  const fallbackTemplateId = attribs['fallback-template-id'];
+
+  if (fallbackTemplateId) {
+    const template = findById(document, fallbackTemplateId);
+
+    if (template) {
+      const copy = template.cloneNode(true);
+      return render(copy.childNodes);
+    }
+  }
+
+  return '';
+}
+
+async function Component(
+  injector: DependencyInjector,
+  attribs: Record<string, string>,
+  document: Document,
+): Promise<string> {
   const data = tryJson(attribs.data, {});
 
   if ('cid' in attribs || 'name' in attribs) {
@@ -86,13 +105,16 @@ async function Component(injector: DependencyInjector, attribs: Record<string, s
     const lc = renderer.render(attribs);
 
     if (lc) {
-      //TODO fallback?!
-      await lc.bootstrap?.();
-      return await lc.stringify?.(data);
+      try {
+        await lc.bootstrap?.();
+        return await lc.stringify?.(data);
+      } catch {
+        console.warn('Could not render the component "%s"', attribs.cid || attribs.name);
+      }
     }
   }
 
-  return '';
+  return renderFallback(attribs, document);
 }
 
 async function Slot(
@@ -106,36 +128,39 @@ async function Slot(
   const scope = injector.get('scope');
   const cids = await scope.loadComponents(name);
 
-  const content = cids
-    .map(
-      (id, i) =>
-        `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"></${componentName}>`,
-    )
-    .join('');
-  const itemTemplateId = attribs['item-template-id'];
+  const components = cids.map(
+    (id) =>
+      `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"></${componentName}>`,
+  );
 
-  if (itemTemplateId) {
-    const template = findById(document, itemTemplateId);
-    const innerDocument = parseDocument(content);
+  if (components.length > 0) {
+    const itemTemplateId = attribs['item-template-id'];
 
-    if (template) {
-      const frags = innerDocument.childNodes.map((item) => {
-        const copy = template.cloneNode(true);
-        const slot = findByName(copy, 'slot');
+    if (itemTemplateId) {
+      const template = findById(document, itemTemplateId);
 
-        if (slot) {
-          const slotIndex = slot.parent.childNodes.indexOf(slot);
-          slot.parent.childNodes[slotIndex] = item;
-        }
+      if (template) {
+        const innerDocument = parseDocument(components.join(''));
+        const frags = innerDocument.childNodes.map((item) => {
+          const copy = template.cloneNode(true);
+          const slot = findByName(copy, 'slot');
 
-        return render(copy.childNodes);
-      });
+          if (slot) {
+            const slotIndex = slot.parent.childNodes.indexOf(slot);
+            slot.parent.childNodes[slotIndex] = item;
+          }
 
-      return frags.join('');
+          return render(copy.childNodes);
+        });
+
+        return frags.join('');
+      }
     }
+
+    return components.join('');
   }
 
-  return content;
+  return renderFallback(attribs, document);
 }
 
 async function Part(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {

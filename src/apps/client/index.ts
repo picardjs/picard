@@ -8,6 +8,7 @@ import { createRouter } from '@/common/browser/router';
 import { createElements } from '@/common/browser/elements';
 import { createListener } from '@/common/browser/events';
 import { createDebug } from '@/common/browser/debug';
+import { createSheet } from '@/common/browser/sheet';
 import { createPilet } from '@/common/kinds/pilet';
 import { createModuleFederation } from '@/common/kinds/module';
 import { createNativeFederation } from '@/common/kinds/native';
@@ -55,7 +56,6 @@ declare module '@/types/injector' {
     meta?: any;
     fragmentUrl?: string;
     partName: string;
-    stylesheet: boolean;
     slotName: string;
     componentName: string;
     dependencies: Record<string, () => Promise<any>>;
@@ -98,6 +98,7 @@ export function initializePicard(options?: PicardOptions) {
     feed: createFeed,
     renderer: createRenderer,
     fragments: createFragments,
+    sheet: createSheet,
     loader: createLoader,
     elements: createElements,
     router: createRouter,

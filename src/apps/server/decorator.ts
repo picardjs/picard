@@ -137,11 +137,10 @@ async function Slot(
 async function Part(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
   if (attribs.name === 'style') {
     const scope = injector.get('scope');
-    const { slotName, componentName, partName } = injector.get('config');
-
+    const sheet = injector.get('sheet');
     const assets = await scope.loadAssets('css');
 
-    const internals = `<style>${slotName} { display: contents; } ${componentName} { display: contents; } ${partName} { display: contents; }</style>`;
+    const internals = `<style>${sheet?.content}</style>`;
 
     const externals = assets
       .map((id) => scope.retrieveAsset(id))

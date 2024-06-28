@@ -1,9 +1,8 @@
 import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent } from '@/types';
 
 const attrName = 'name';
-const attrGroup = 'group';
-const attrFallback = 'fallback';
-const attrTemplateId = 'item-template-id';
+const attrFallbackTemplateId = 'fallback-template-id';
+const attrItemTemplateId = 'item-template-id';
 const attrSource = 'source';
 const attrKind = 'kind';
 const attrContainer = 'container';
@@ -46,18 +45,39 @@ function tryJson(content: string, fallback: any) {
   return fallback;
 }
 
+function fillTemplate(fragment: DocumentFragment, template: HTMLElement, items: Array<any>) {
+  if (template instanceof HTMLTemplateElement) {
+    const collector = document.createDocumentFragment();
+    const templateContent = template.content;
+    fragment.childNodes.forEach((node) => {
+      const clonedNode = node.cloneNode(true);
+      const item = templateContent.cloneNode(true) as DocumentFragment;
+      const slot = item.querySelector('slot');
+      slot?.replaceWith(clonedNode);
+      items.push(clonedNode);
+      collector.appendChild(item);
+    });
+    return collector;
+  }
+
+  fragment.childNodes.forEach((node) => items.push(node));
+  return fragment;
+}
+
 export function createElements(injector: DependencyInjector) {
   const config = injector.get('config');
   const renderer = injector.get('renderer');
   const fragments = injector.get('fragments');
   const events = injector.get('events');
+  const sheet = injector.get('sheet');
 
-  const { componentName, slotName, stylesheet, partName } = config;
+  const { componentName, slotName } = config;
 
   class PiSlot extends HTMLElement {
     private _empty = false;
     private _ready = false;
     private _queue = createQueue();
+    private _components: Array<PiComponent> = [];
 
     get name() {
       return this.getAttribute(attrName) || '';
@@ -67,53 +87,41 @@ export function createElements(injector: DependencyInjector) {
       this.setAttribute(attrName, value);
     }
 
-    get group() {
-      return this.getAttribute(attrGroup) || '';
-    }
-
-    set group(value: string) {
-      this.setAttribute(attrGroup, value);
-    }
-
-    get fallback() {
-      return this.getAttribute(attrFallback) || '';
-    }
-
-    set fallback(value: string) {
-      this.setAttribute(attrFallback, value);
-    }
-
-    private get data() {
+    get data() {
       return tryJson(this.getAttribute(attrData), {});
+    }
+
+    set data(value: any) {
+      this.setAttribute(attrData, JSON.stringify(value));
     }
 
     async connectedCallback() {
       this._ready = true;
       this.#start();
+      events.emit('mounted-slot', { element: this });
     }
 
     disconnectedCallback() {
       this._ready = false;
       this.#clean();
+      events.emit('unmounted-slot', { element: this });
     }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
       if (!this._ready) {
         // empty on purpose - just do nothing
-      } else if (name === attrTemplateId && newValue !== oldValue) {
+      } else if (name === attrItemTemplateId && newValue !== oldValue) {
         this.#reset();
       } else if (name === attrData) {
-        this.dispatchEvent(new CustomEvent('data-changed', { detail: this.data }));
+        const data = this.data;
+        this._components.forEach((m) => {
+          m.data = data;
+        });
       } else if (name === attrName && newValue !== oldValue) {
         this.#reset();
-      } else if (name === attrFallback && newValue !== oldValue && this._empty) {
+      } else if (name === attrFallbackTemplateId && newValue !== oldValue && this._empty) {
         this.#reset();
       }
-    }
-
-    #reset() {
-      this.#clean();
-      this.#start();
     }
 
     #start() {
@@ -127,42 +135,44 @@ export function createElements(injector: DependencyInjector) {
       this.innerHTML = '';
     }
 
+    #reset() {
+      this.#clean();
+      this.#start();
+    }
+
     async #setupChildren() {
       this._queue.enqueue(() => {
         return fragments.load(this.name, this.data);
       });
 
       this._queue.enqueue((content: string) => {
-        const fragment = document.createElement('template');
-        const itemTemplate = document.getElementById(this.getAttribute(attrTemplateId) || '');
+        const itemTemplate = document.getElementById(this.getAttribute(attrItemTemplateId) || '');
         this._empty = !!content;
-        fragment.innerHTML = content || this.fallback || '';
         this.innerHTML = '';
+        this._components = [];
 
-        if (itemTemplate instanceof HTMLTemplateElement) {
-          const template = itemTemplate.content;
-          fragment.content.childNodes.forEach((node) => {
-            const clonedNode = node.cloneNode(true);
-            const item = template.cloneNode(true) as DocumentFragment;
-            const slot = item.querySelector('slot');
-            slot?.replaceWith(clonedNode);
-            this.appendChild(item);
-          });
+        if (content) {
+          const fragment = document.createElement('template');
+          fragment.innerHTML = content;
+          this.appendChild(fillTemplate(fragment.content, itemTemplate, this._components));
         } else {
-          this.appendChild(fragment.content);
+          const fallbackTemplate = document.getElementById(this.getAttribute(attrFallbackTemplateId) || '');
+
+          if (fallbackTemplate instanceof HTMLTemplateElement) {
+            this.appendChild(fallbackTemplate.content.cloneNode(true));
+          }
         }
       });
     }
 
     static get observedAttributes() {
-      return [attrName, attrData, attrGroup, attrTemplateId, attrFallback];
+      return [attrName, attrData, attrItemTemplateId, attrFallbackTemplateId];
     }
   }
 
   class PiComponent extends HTMLElement {
     private _lc: ComponentLifecycle | undefined;
     private _locals: any = {};
-    private _data: any;
     private _queue = createQueue();
     private _ready = false;
     private handleUpdate = (ev: UpdatedMicrofrontendsEvent) => {
@@ -178,12 +188,11 @@ export function createElements(injector: DependencyInjector) {
     };
 
     get data() {
-      return this._data;
+      return tryJson(this.getAttribute(attrData), {});
     }
 
     set data(value: any) {
-      this._data = value;
-      this.#rerender();
+      this.setAttribute(attrData, JSON.stringify(value));
     }
 
     connectedCallback() {
@@ -195,7 +204,6 @@ export function createElements(injector: DependencyInjector) {
 
     disconnectedCallback() {
       this._ready = false;
-      // just make sure to remove everything
       events.off('updated-microfrontends', this.handleUpdate);
       this.#clean();
       events.emit('unmounted-component', { element: this });
@@ -205,14 +213,27 @@ export function createElements(injector: DependencyInjector) {
       if (!this._ready) {
         // empty on purpose - just do nothing
       } else if (name === attrData) {
-        this.data = tryJson(value, {});
+        this.#update();
       } else if (name === attrCid || name === attrName || name === attrSource) {
         this.#reset();
+      } else if (name === attrFallbackTemplateId) {
       }
     }
 
     static get observedAttributes() {
-      return [attrCid, attrData, attrName, attrSource];
+      return [attrCid, attrData, attrName, attrKind, attrContainer, attrSource, attrFallbackTemplateId];
+    }
+
+    #start() {
+      this.#bootstrap();
+
+      this._queue.enqueue(() => {
+        const lc = this._lc;
+
+        if (lc) {
+          lc.mount(this, this.data, this._locals);
+        }
+      });
     }
 
     #clean() {
@@ -224,26 +245,13 @@ export function createElements(injector: DependencyInjector) {
       this.innerHTML = '';
     }
 
-    #start() {
-      this.#bootstrap();
-
-      this._queue.enqueue(() => {
-        const lc = this._lc;
-
-        if (lc) {
-          const data = this._data || tryJson(this.getAttribute(attrData), {});
-          lc.mount(this, data, this._locals);
-        }
-      });
-    }
-
     #reset() {
       this.#clean();
       this.#start();
     }
-
-    #rerender() {
-      this._queue.enqueue(() => this._lc?.update(this._data, this._locals));
+    s;
+    #update() {
+      this._queue.enqueue(() => this._lc?.update(this.data, this._locals));
     }
 
     #bootstrap() {
@@ -264,13 +272,9 @@ export function createElements(injector: DependencyInjector) {
     }
   }
 
-  if (stylesheet) {
+  if (sheet) {
     const style = document.createElement('style');
-    style.textContent = `
-      ${slotName} { display: contents; }
-      ${componentName} { display: contents; }
-      ${partName} { display: contents; }
-    `;
+    style.textContent = sheet.content;
     document.head.appendChild(style);
   }
 

@@ -7,6 +7,7 @@ import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
 import { createRenderer } from '@/common/renderer';
+import { createSheet } from '@/common/browser/sheet';
 import { createModuleFederation } from '@/common/kinds/module';
 import { createNativeFederation } from '@/common/kinds/native';
 import { createPilet } from '@/common/kinds/pilet';
@@ -19,7 +20,6 @@ export interface PicardOptions {
   partName?: string;
   feed?: FeedDefinition;
   state?: any;
-  stylesheet?: boolean;
   services?: Record<string, any>;
   dependencies?: Record<string, () => Promise<any>>;
 }
@@ -29,7 +29,6 @@ const defaultOptions = {
   slotName: 'pi-slot',
   partName: 'pi-part',
   fragmentUrl: '',
-  stylesheet: true,
   services: {},
   dependencies: {},
 };
@@ -44,7 +43,6 @@ declare module '@/types/injector' {
     state?: any;
     meta?: any;
     fragmentUrl?: string;
-    stylesheet: boolean;
     partName: string;
     slotName: string;
     componentName: string;
@@ -62,7 +60,6 @@ export function initializePicard(options?: PicardOptions) {
     componentName = defaultOptions.componentName,
     slotName = defaultOptions.slotName,
     partName = defaultOptions.partName,
-    stylesheet = defaultOptions.stylesheet,
   } = options || {};
 
   const serviceDefinitions = {
@@ -74,7 +71,6 @@ export function initializePicard(options?: PicardOptions) {
       partName,
       slotName,
       fragmentUrl,
-      stylesheet,
       dependencies,
       services,
     }),
@@ -86,6 +82,7 @@ export function initializePicard(options?: PicardOptions) {
     fragments: createFragments,
     loader: createLoader,
     decorator: createDecorator,
+    sheet: createSheet,
     'kind.module': createModuleFederation,
     'kind.native': createNativeFederation,
     'kind.pilet': createPilet,

@@ -12,6 +12,7 @@ import PageLayout from './PageLayout';
 const port = 8089;
 const app = express();
 const context = new AsyncLocalStorage();
+const stores = {};
 const picard = initializePicard({
   feed: 'https://feed.dev.piral.cloud/api/v1/pilet/netflix-islands-demo',
   componentName: 'piral-component',
@@ -38,14 +39,17 @@ const picard = initializePicard({
           getStore(name) {
             return {
               get() {
-                const store = context.getStore();
-                return {
-                  [name]: store?.[name],
-                };
+                const store = stores[name];
+                const data = context.getStore();
+                return store(api, data).get();
               },
             };
           },
-          setStore(name, loader) {},
+          setStore(name, loader) {
+            loader().then((store) => {
+              stores[name] = store.default;
+            });
+          },
         });
       },
     }),
@@ -71,10 +75,14 @@ app.use(
 
 app.post('/', (req, res) => {
   const { store, item } = req.body;
+  const handler = stores[store];
   req.session.store = {
     ...req.session.store,
     [store]: item ? JSON.parse(item) : null,
   };
+
+  const data = context.getStore();
+  return store(api, data).update(item);
   return res.redirect('/browse');
 });
 

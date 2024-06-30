@@ -1,7 +1,6 @@
 import { createRouter } from './router';
 import { createListener } from './events';
-import { createFragments } from './fragments';
-import { DecoratorService, createDecorator } from './decorator';
+import { createDecorator } from './decorator';
 import { createFeed } from '@/common/feed';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
@@ -11,7 +10,7 @@ import { createSheet } from '@/common/styles';
 import { createModuleFederation } from '@/common/kinds/module';
 import { createNativeFederation } from '@/common/kinds/native';
 import { createPilet } from '@/common/kinds/pilet';
-import type { FeedDefinition } from '@/types';
+import type { DecoratorService, FeedDefinition, FeedService } from '@/types';
 
 export interface PicardOptions {
   componentName?: string;
@@ -36,6 +35,7 @@ const defaultOptions = {
 declare module '@/types/injector' {
   interface Services {
     decorator: DecoratorService;
+    feed: FeedService;
   }
 
   interface Configuration {
@@ -79,7 +79,6 @@ export function initializePicard(options?: PicardOptions) {
     feed: createFeed,
     renderer: createRenderer,
     router: createRouter,
-    fragments: createFragments,
     loader: createLoader,
     decorator: createDecorator,
     sheet: createSheet,

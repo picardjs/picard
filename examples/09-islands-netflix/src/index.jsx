@@ -1,13 +1,17 @@
 import express from 'express';
-import * as React from 'react';
+import cookieSession from 'cookie-session';
+import bodyParser from 'body-parser';
+import { AsyncLocalStorage } from 'async_hooks';
+import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { resolve } from 'path';
 import { initializePicard } from 'picard-js/server';
-import { reactConverter } from './helpers';
+import { reactConverter, getParams } from './helpers';
 import PageLayout from './PageLayout';
 
 const port = 8089;
 const app = express();
+const context = new AsyncLocalStorage();
 const picard = initializePicard({
   feed: 'https://feed.dev.piral.cloud/api/v1/pilet/netflix-islands-demo',
   componentName: 'piral-component',
@@ -34,9 +38,12 @@ const picard = initializePicard({
           getStore(name) {
             return {
               get() {
-                return {};
+                const store = context.getStore();
+                return {
+                  [name]: store?.[name],
+                };
               },
-            }
+            };
           },
           setStore(name, loader) {},
         });
@@ -48,18 +55,47 @@ const picard = initializePicard({
   },
 });
 
+app.set('trust proxy', 1);
+
 app.use(express.static(resolve(__dirname, '../public')));
+
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(
+  cookieSession({
+    name: 'sid',
+    keys: ['unsafe-example-key'],
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  }),
+);
+
+app.post('/', (req, res) => {
+  const { store, item } = req.body;
+  req.session.store = {
+    ...req.session.store,
+    [store]: item ? JSON.parse(item) : null,
+  };
+  return res.redirect('/browse');
+});
+
+app.get('/', (_, res) => {
+  return res.redirect('/browse');
+});
 
 app.get('/fragment/:id', async (req, res) => {
   const { id } = req.params;
   const name = Buffer.from(id, 'base64').toString('utf8');
-  const fragment = await picard.renderFragment(name);
+  const params = getParams(req.query);
+  const fragment = await context.run(req.session.store, () => picard.render(name, params));
   res.send(fragment);
 });
 
 app.get('*', async (req, res) => {
-  const content = renderToString(<PageLayout route={req.path} />);
-  const html = await picard.decorate(content);
+  const route = req.path;
+  const html = await context.run(req.session.store, () => {
+    const content = renderToString(<PageLayout route={route} />);
+    return picard.decorate(content);
+  });
   res.send(html);
 });
 

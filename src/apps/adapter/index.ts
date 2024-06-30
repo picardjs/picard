@@ -6,7 +6,8 @@ import { createDebug } from '@/common/browser/debug';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
-import type { PicardStore } from '@/types';
+import { createRenderer } from './renderer';
+import type { PicardStore, FragmentsService, ElementsService, DebugService } from '@/types';
 
 function deserializeConfig() {
   // we obtain the serialized config
@@ -28,14 +29,23 @@ declare global {
   }
 }
 
+declare module '@/types/injector' {
+  interface Services {
+    elements: ElementsService;
+    fragments: FragmentsService;
+    debug: DebugService;
+  }
+}
+
 const resumePicard = () => {
-  const config = deserializeConfig();  
+  const config = deserializeConfig();
   const serviceDefinitions = {
     config: () => config,
     events: createListener,
     scope: createPicardScope,
     fragments: createFragments,
     loader: createLoader,
+    renderer: createRenderer,
     elements: createElements,
     router: createRouter,
     debug: createDebug,

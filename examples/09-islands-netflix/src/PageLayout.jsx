@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import cssText from './style.scss';
 import Logo from './Logo';
 import Footer from './Footer';

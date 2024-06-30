@@ -13,7 +13,7 @@ import { createPilet } from '@/common/kinds/pilet';
 import { createModuleFederation } from '@/common/kinds/module';
 import { createNativeFederation } from '@/common/kinds/native';
 import { createSingleSpa } from '@/common/frameworks/single-spa';
-import type { FeedDefinition } from '@/types';
+import type { DebugService, ElementsService, FeedDefinition, FeedService, FragmentsService } from '@/types';
 
 export interface PicardOptions {
   componentName?: string;
@@ -32,21 +32,16 @@ const defaultOptions = {
   componentName: 'pi-component',
   slotName: 'pi-slot',
   partName: 'pi-part',
-  fragmentUrl: '',
   stylesheet: true,
   services: {},
   dependencies: {},
 };
 
-interface ElementsService {}
-
-interface DebugService {
-  dispose(): void;
-}
-
 declare module '@/types/injector' {
   interface Services {
     elements: ElementsService;
+    fragments: FragmentsService;
+    feed: FeedService;
     debug: DebugService;
   }
 
@@ -54,7 +49,6 @@ declare module '@/types/injector' {
     feed?: FeedDefinition;
     state?: any;
     meta?: any;
-    fragmentUrl?: string;
     partName: string;
     slotName: string;
     componentName: string;
@@ -73,7 +67,6 @@ export function initializePicard(options?: PicardOptions) {
     meta,
     services = defaultOptions.services,
     dependencies = defaultOptions.dependencies,
-    fragmentUrl = defaultOptions.fragmentUrl,
     componentName = defaultOptions.componentName,
     partName = defaultOptions.partName,
     slotName = defaultOptions.slotName,
@@ -89,7 +82,6 @@ export function initializePicard(options?: PicardOptions) {
       componentName,
       partName,
       slotName,
-      fragmentUrl,
       stylesheet,
       dependencies,
     }),

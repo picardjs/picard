@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { renderToString } from 'react-dom/server';
 
 export function reactConverter() {
@@ -21,4 +21,18 @@ export function reactConverter() {
       };
     },
   };
+}
+
+export function getParams(query) {
+  const data = query.data;
+
+  if (typeof data === 'string' && data) {
+    try {
+      return JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
+    } catch {
+      // do nothing
+    }
+  }
+
+  return {};
 }

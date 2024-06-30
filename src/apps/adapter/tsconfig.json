@@ -9,7 +9,6 @@
   },
   "include": [
     "./**/*.ts",
-    "../client/**/*.ts",
     "../../common/**/*.ts",
     "../../types/**/*.ts"
   ]

@@ -1,15 +1,7 @@
 import { parseDocument } from 'htmlparser2';
 import { render } from 'dom-serializer';
 import type { ChildNode, Document, Element } from 'domhandler';
-import type { DependencyInjector } from '@/types';
-
-interface Decorator {
-  (content: string): Promise<string>;
-}
-
-export interface DecoratorService {
-  decorate: Decorator;
-}
+import type { DecoratorService, DependencyInjector } from '@/types';
 
 function traverse(nodes: Array<ChildNode>, cb: (node: ChildNode) => boolean) {
   nodes.forEach((node) => {
@@ -109,6 +101,17 @@ function getSlotParameters(injector: DependencyInjector, attribs: Record<string,
   return [name, data];
 }
 
+async function renderComponents(injector: DependencyInjector, name: string, data: any) {
+  const { componentName } = injector.get('config');
+  const scope = injector.get('scope');
+  const cids = await scope.loadComponents(name);
+
+  return cids.map(
+    (id) =>
+      `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"></${componentName}>`,
+  );
+}
+
 async function Component(
   injector: DependencyInjector,
   attribs: Record<string, string>,
@@ -139,14 +142,7 @@ async function Slot(
   document: Document,
 ): Promise<string> {
   const [name, data] = getSlotParameters(injector, attribs);
-  const { componentName } = injector.get('config');
-  const scope = injector.get('scope');
-  const cids = await scope.loadComponents(name);
-
-  const components = cids.map(
-    (id) =>
-      `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"></${componentName}>`,
-  );
+  const components = await renderComponents(injector, name, data);
 
   if (components.length > 0) {
     const itemTemplateId = attribs['item-template-id'];
@@ -257,6 +253,11 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
   };
 
   return {
+    async render(name, data) {
+      const components = await renderComponents(injector, name, data);
+      const content = components.join('');
+      return await decorate(content);
+    },
     decorate,
   };
 }

@@ -1,9 +1,7 @@
 import type { ContainerService } from './container';
 import type { ConverterService } from './converter';
 import type { EventSystem } from './events';
-import type { FeedService } from './feed';
 import type { SheetService } from './sheet';
-import type { FragmentsService } from './fragments';
 import type { LoaderService } from './loader';
 import type { PiletService } from './pilet';
 import type { RendererService } from './renderer';
@@ -18,9 +16,7 @@ export interface Services {
   pilet?: PiletService;
   router: RouterService;
   renderer: RendererService;
-  fragments: FragmentsService;
   sheet?: SheetService;
-  feed: FeedService;
   [framework: `framework.${string}`]: ConverterService;
   [kind: `kind.${string}`]: ContainerService;
 }

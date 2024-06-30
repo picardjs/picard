@@ -1,5 +1,5 @@
 import type { StoreApi } from 'zustand/vanilla';
-import { createEmptyMicrofrontend } from '@/common/feed/utils';
+import { createEmptyMicrofrontend } from '@/common/utils/dto';
 import type { ComponentLifecycle, ComponentRef, PicardMicrofrontend, PicardState, PicardStore } from '@/types';
 
 function generateUID() {

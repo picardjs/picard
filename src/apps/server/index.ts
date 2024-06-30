@@ -7,7 +7,7 @@ import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
 import { createRenderer } from '@/common/renderer';
-import { createSheet } from '@/common/browser/sheet';
+import { createSheet } from '@/common/styles';
 import { createModuleFederation } from '@/common/kinds/module';
 import { createNativeFederation } from '@/common/kinds/native';
 import { createPilet } from '@/common/kinds/pilet';

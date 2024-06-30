@@ -93,6 +93,22 @@ function renderFallback(attribs: Record<string, string>, document: Document) {
   return '';
 }
 
+function getSlotParameters(injector: DependencyInjector, attribs: Record<string, string>): [string, any] {
+  const name = attribs.name;
+
+  if (attribs.rel === 'router') {
+    const router = injector.get('router');
+    const match = router.matchRoute(name);
+
+    if (match) {
+      return [match.name, match.data];
+    }
+  }
+
+  const data = tryJson(attribs.data, {});
+  return [name, data];
+}
+
 async function Component(
   injector: DependencyInjector,
   attribs: Record<string, string>,
@@ -122,8 +138,7 @@ async function Slot(
   attribs: Record<string, string>,
   document: Document,
 ): Promise<string> {
-  const name = attribs.name;
-  const data = tryJson(attribs.data, {});
+  const [name, data] = getSlotParameters(injector, attribs);
   const { componentName } = injector.get('config');
   const scope = injector.get('scope');
   const cids = await scope.loadComponents(name);

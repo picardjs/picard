@@ -73,6 +73,9 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
             return undefined;
           }
         },
+        getNames() {
+          return [];
+        },
         getAssets() {
           return [];
         },

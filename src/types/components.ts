@@ -41,5 +41,6 @@ export interface PicardComponent {
 
 export interface ComponentGetter {
   load(name: string): Promise<any>;
+  getNames(): Array<string>;
   getAssets(): Array<{ url: string; type: string }>;
 }

@@ -1,3 +1,4 @@
+import { createRouteMatcher } from '@/common/utils/matcher';
 import type { DependencyInjector, RouterService } from '@/types';
 
 function modifyHistory(type: string) {
@@ -52,6 +53,13 @@ export function createRouter(injector: DependencyInjector): RouterService {
     }
   }
 
+  function findRoutes() {
+    const state = scope.readState();
+    return Object.keys(state.components)
+      .filter((m) => m.startsWith(pageQualifier))
+      .map((m) => m.substring(pageQualifier.length));
+  }
+
   history.pushState = modifyHistory('pushState');
   history.replaceState = modifyHistory('replaceState');
 
@@ -62,19 +70,32 @@ export function createRouter(injector: DependencyInjector): RouterService {
 
   onHistory();
 
+  const matcher = createRouteMatcher(findRoutes);
+
   return {
-    navigate,
-    findRoutes() {
-      const state = scope.readState();
-      return Object.keys(state.components)
-        .filter((m) => m.startsWith(pageQualifier))
-        .map((m) => m.substring(pageQualifier.length));
-    },
     dispose() {
       window.removeEventListener('popstate', onHistory);
       window.removeEventListener('pushstate', onHistory);
       window.removeEventListener('replacestate', onHistory);
       document.removeEventListener('click', onClick);
+    },
+    findRoutes,
+    navigate,
+    matchRoute(name) {
+      if (name.startsWith(pageQualifier)) {
+        const route = name.substring(pageQualifier.length);
+        const result = matcher(route);
+
+        if (result) {
+          const [path, data] = result;
+          return {
+            name: `${pageQualifier}${path}`,
+            data,
+          };
+        }
+      }
+
+      return undefined;
     },
   };
 }

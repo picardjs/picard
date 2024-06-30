@@ -1,4 +1,4 @@
-import { createEmptyMicrofrontend } from './utils';
+import { createEmptyMicrofrontend } from '@/common/utils/dto';
 import type { DiscoveryResponse, PicardMicrofrontend } from '@/types';
 
 export function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofrontend> {

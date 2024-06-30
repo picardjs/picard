@@ -1,4 +1,4 @@
-import { createEmptyMicrofrontend } from './utils';
+import { createEmptyMicrofrontend } from '@/common/utils/dto';
 import type { PicardMicrofrontend, PiletDefinition } from '@/types';
 
 export function fromPiral(pilet: PiletDefinition): PicardMicrofrontend {

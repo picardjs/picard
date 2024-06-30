@@ -8,7 +8,7 @@ import { createRouter } from '@/common/browser/router';
 import { createElements } from '@/common/browser/elements';
 import { createListener } from '@/common/browser/events';
 import { createDebug } from '@/common/browser/debug';
-import { createSheet } from '@/common/browser/sheet';
+import { createSheet } from '@/common/styles';
 import { createPilet } from '@/common/kinds/pilet';
 import { createModuleFederation } from '@/common/kinds/module';
 import { createNativeFederation } from '@/common/kinds/native';

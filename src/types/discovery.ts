@@ -1,10 +1,11 @@
 import type { PiletDefinition, PiletResponse } from './pilet';
 
-export type StaticFeed = Array<PiletDefinition> | DiscoveryResponse | PiletResponse;
+export type StaticFeed = Array<PiletDefinition> | DiscoveryResponse | PiletResponse | Record<string, string>;
 
 export type FeedDefinition = string | StaticFeed | (() => Promise<StaticFeed>);
 
 export interface DiscoveryResponse {
+  schema: string;
   microFrontends: {
     [name: string]: Array<MicroFrontendDefinition>;
   };

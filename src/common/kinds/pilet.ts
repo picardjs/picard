@@ -68,6 +68,9 @@ export function createPilet(injector: DependencyInjector): ContainerService {
         async load(name) {
           return components[name];
         },
+        getNames() {
+          return Object.keys(components);
+        },
         getAssets() {
           return assets;
         }

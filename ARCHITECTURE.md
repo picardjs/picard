@@ -19,3 +19,57 @@ Read our [contributing guide](.github/CONTRIBUTING.md) to learn about our develo
 ### Good First Issues
 
 To help you get your feet wet and get you familiar with our contribution process, we have a list of [good first issues](https://github.com/smapiot/piral/labels/good%20first%20issue) that contain bugs which have a relatively limited scope. This is a great place to get started.
+
+## Basic Principles
+
+### Directories
+
+The code base is divided into three primary folders:
+
+- `examples` contains basic examples of the available functionality, which runs against the local code base and is used for the tests, too
+- `src` contains the actual code base - more details below
+- `tests` contains tests for the library; using the `examples` as source
+
+The `src` folder itself is divided into three regions:
+
+- `apps` contains the actual variants of the library, as well as helper modules that should be produced
+- `common` contains functionality that might be reused across the different variants
+- `types` contains the TypeScript type declarations for the whole code base
+
+### App Definitions
+
+Each "app" must be placed as a folder inside the `src/apps` directory. The most important file for the build system is called *app.json*. It contains information that is then used by `esbuild` to produce some output. Example:
+
+```json
+{
+  "name": "picard-ia",
+  "platform": "browser",
+  "minify": true,
+  "entry": "index.ts",
+  "formats": ["cjs"],
+  "outDirs": ["server"]
+}
+```
+
+The `name` remarks how the resulting file should be called. The `platform` tells `esbuild` what the target platform of the file is. `minify` is used to optimize the file for length (good if the file is intended as direct consumption inside a browser - otherwise if another pre-processing tool is supposed to be used with the file this is usually set to `false`). The `entry` property tells `esbuild` which module should be considered for deriving the build inputs. Finally, through `formats` and `outDirs` the actual outputs are steered. Possible formats include `cjs` (CommonJS - will produce `*.js` files) and `esm` (ESModule - will produce `*.mjs` files).
+
+### Dependency Injection
+
+To decouple the code base and allow different functionality to be available in different contexts a system referred to as "dependency injection" (DI) is used - which is not a full dependency injection as known by, e.g., Angular.
+
+One advantage of this system (as compared to working with path aliases in the bundler) is that it allows extensibility out of the box.
+
+The essential definition (inside an app's entry point) looks like this:
+
+```js
+const serviceDefinitions = {
+    config: () => config,
+    events: createListener,
+    scope: createPicardScope,
+    loader: createLoader,
+};
+
+createInjector(serviceDefinitions)
+```
+
+The provided `serviceDefinitions` for the `createInjector` call expect an object with properties resolving to the initializer functions of the different services. An initializer function is a function that will return the service instance - taking one argument: The dependency injector. This way, when initialized a service may use other services (which are then initialized by the DI system).

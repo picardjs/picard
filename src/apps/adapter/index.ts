@@ -35,6 +35,16 @@ declare module '@/types/injector' {
     fragments: FragmentsService;
     debug: DebugService;
   }
+
+  interface Configuration {
+    state?: any;
+    meta?: any;
+    partName: string;
+    slotName: string;
+    fragmentUrl: string;
+    componentName: string;
+    dependencies: Record<string, () => Promise<any>>;
+  }
 }
 
 const resumePicard = () => {

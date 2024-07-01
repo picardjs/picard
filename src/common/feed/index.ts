@@ -20,8 +20,9 @@ async function loadFeed(feed: FeedDefinition | undefined): Promise<Array<PicardM
     return await loadFeed(doc);
   } else if (Array.isArray(feed)) {
     return feed.map(fromPiral);
+  } else if (!feed) {
+    // we just ignore a falsy value (must be 0, empty string, undefined, or null)
   } else if (!feed || typeof feed !== 'object') {
-    // We maybe should emit an error here.
     console.warn(`Cannot handle a "feed" with the following shape:`, feed);
   } else if ('items' in feed && Array.isArray(feed.items)) {
     return feed.items.map(fromPiral);

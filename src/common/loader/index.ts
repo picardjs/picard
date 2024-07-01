@@ -131,7 +131,7 @@ export function createLoader(injector: DependencyInjector): LoaderService {
     list() {
       const dependencies: Array<DependencyModule> = [];
 
-      for (const [entry] of System.entries()) {
+      for (const entry of Object.keys(System.registerRegistry)) {
         const index = entry.lastIndexOf('@');
 
         if (index > 0 && !entry.match(/^https?:\/\//)) {

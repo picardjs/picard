@@ -7,7 +7,9 @@ export interface ModuleFederationFactoryScope {
     [depVersion: string]: {
       from: string;
       eager: boolean;
-      loaded?: number;
+      strategy?: 'loaded-first' | 'version-first';
+      loaded?: number | boolean;
+      version?: string;
       get(): Promise<ModuleFederationFactory>;
     };
   };

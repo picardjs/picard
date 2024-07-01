@@ -10,7 +10,7 @@ import type {
   ContainerService,
 } from '@/types';
 
-const appShell = 'app';
+const root = '__picard__';
 
 function populateKnownDependencies(scope: ModuleFederationFactoryScope, dependencies: Array<DependencyModule>) {
   // SystemJS to MF
@@ -20,8 +20,11 @@ function populateKnownDependencies(scope: ModuleFederationFactoryScope, dependen
     }
 
     scope[name][version] = {
-      from: appShell,
+      from: root,
+      loaded: false,
       eager: false,
+      strategy: 'loaded-first',
+      version,
       get,
     };
   }
@@ -37,7 +40,7 @@ function extractSharedDependencies(scope: ModuleFederationFactoryScope) {
     for (const entryVersion of Object.keys(entries)) {
       const entry = entries[entryVersion];
 
-      if (entry.from !== appShell) {
+      if (entry.from !== root) {
         dependencies[`${entryName}@${entryVersion}`] = () => entry.get().then((factory) => factory());
       }
     }
@@ -50,8 +53,8 @@ function loadFactory(loader: LoaderService, name: string) {
   const varName = name.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
   const container: ModuleFederationContainer = window[varName];
   const scope: ModuleFederationFactoryScope = {};
-  container.init(scope);
   populateKnownDependencies(scope, loader.list());
+  container.init(scope);
   loader.registerResolvers(extractSharedDependencies(scope));
   return container;
 }
@@ -69,7 +72,8 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
             const factory = await container.get(name);
             const component = factory();
             return component.default || component;
-          } catch {
+          } catch (e) {
+            console.log('ERROR', e);
             return undefined;
           }
         },

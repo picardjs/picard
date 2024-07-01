@@ -20,6 +20,16 @@ Read our [contributing guide](.github/CONTRIBUTING.md) to learn about our develo
 
 To help you get your feet wet and get you familiar with our contribution process, we have a list of [good first issues](https://github.com/smapiot/piral/labels/good%20first%20issue) that contain bugs which have a relatively limited scope. This is a great place to get started.
 
+## Prerequisites
+
+To build and run the code you'll need to have at least **Node v22** installed. The repository uses npm as package manager (we recommend using at least **npm v10**).
+
+Before running the tests you need to make sure Playwright is fully installed. Run the following command to establish a working Playwright installation:
+
+```sh
+npx playwright install
+```
+
 ## Basic Principles
 
 ### Directories

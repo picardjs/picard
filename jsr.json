@@ -1,0 +1,25 @@
+{
+  "name": "@picard/js",
+  "version": "0.0.5",
+  "exports": {
+    ".": "./dist/server/picard.mjs",
+    "./package.json": "./package.json",
+    "./browser": "./dist/browser/picard.js",
+    "./client": "./dist/client/picard.mjs",
+    "./native": "./dist/native/picard.mjs",
+    "./server": "./dist/server/picard.mjs"
+  },
+  "publish": {
+    "include": [
+      "LICENSE",
+      "ARCHITECTURE.md",
+      "README.md",
+      "SECURITY.md",
+      "package.json",
+      "dist/**/*"
+    ],
+    "exclude": [
+      "!dist"
+    ]
+  }
+}

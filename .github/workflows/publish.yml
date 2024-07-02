@@ -49,6 +49,10 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
 
     needs: build
 
@@ -65,10 +69,12 @@ jobs:
         run: npm install
       - name: Build Package
         run: npm run build
-      - name: Publish Package
+      - name: Publish Package on npm
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+      - name: Publish Package on jsr
+        run: npx jsr publish
       - name: Create tag for release
         uses: actions/github-script@v3
         with:

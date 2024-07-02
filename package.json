@@ -1,7 +1,7 @@
 {
   "name": "picard-js",
   "version": "0.0.5",
-  "description": "A next generation micro frontends orchestrator. Framework agnostic, any runtime.",
+  "description": "A next generation micro frontends orchestrator. Framework agnostic, multi-runtime compatible.",
   "author": "smapiot",
   "keywords": [
     "modules",

@@ -19,6 +19,10 @@ export interface BasePicardMicrofrontend {
    * The source link for the micro frontend.
    */
   source: string;
+  /**
+   * Indicates if the MF is active (0), disabled (1), or removed (2).
+   */
+  flags: 0 | 1 | 2;
 }
 
 export interface PiletPicardMicrofrontend extends BasePicardMicrofrontend {

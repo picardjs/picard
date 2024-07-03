@@ -11,6 +11,7 @@ export function createEmptyMicrofrontend<T extends PicardMicrofrontend['kind']>(
     name,
     details,
     source,
+    flags: 0,
     assets: [],
     components: {},
   };

@@ -6,15 +6,16 @@ import type {
   DependencyInjector,
   LoaderService,
   ModuleResolver,
-  DependencyModule,
   ContainerService,
 } from '@/types';
 
 const root = '__picard__';
 
-function populateKnownDependencies(scope: ModuleFederationFactoryScope, dependencies: Array<DependencyModule>) {
+function populateKnownDependencies(parent: string, scope: ModuleFederationFactoryScope, loader: LoaderService) {
+  const dependencies = loader.list();
+
   // SystemJS to MF
-  for (const { name, version, get } of dependencies) {
+  for (const { id, name, version } of dependencies) {
     if (!(name in scope)) {
       scope[name] = {};
     }
@@ -25,12 +26,15 @@ function populateKnownDependencies(scope: ModuleFederationFactoryScope, dependen
       eager: false,
       strategy: 'loaded-first',
       version,
-      get,
+      async get() {
+        const result = await loader.import(id, parent);
+        return () => result;
+      },
     };
   }
 }
 
-function extractSharedDependencies(scope: ModuleFederationFactoryScope) {
+function extractSharedDependencies(parent: string, scope: ModuleFederationFactoryScope, loader: LoaderService) {
   const dependencies: Record<string, ModuleResolver> = {};
 
   // MF to SystemJS
@@ -41,21 +45,29 @@ function extractSharedDependencies(scope: ModuleFederationFactoryScope) {
       const entry = entries[entryVersion];
 
       if (entry.from !== root) {
-        dependencies[`${entryName}@${entryVersion}`] = () => entry.get().then((factory) => factory());
+        const id = `${entryName}@${entryVersion}`;
+        const fn = entry.get;
+        entry.get = async () => {
+          const result = await loader.import(id, parent);
+          return () => result;
+        };
+        dependencies[id] = () => fn.call(entry).then((factory) => factory());
       }
     }
   }
 
-  return dependencies;
+  loader.registerResolvers(dependencies);
 }
 
-function loadFactory(loader: LoaderService, name: string) {
-  const varName = name.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
+function loadFactory(loader: LoaderService, entry: ModuleFederationEntry) {
+  const { id, url } = entry;
+  const varName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
   const container: ModuleFederationContainer = window[varName];
   const scope: ModuleFederationFactoryScope = {};
-  populateKnownDependencies(scope, loader.list());
+  loader.registerModule(url, container);
+  populateKnownDependencies(url, scope, loader);
   container.init(scope);
-  loader.registerResolvers(extractSharedDependencies(scope));
+  extractSharedDependencies(url, scope, loader);
   return container;
 }
 
@@ -65,7 +77,7 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
   return {
     async createContainer(entry: ModuleFederationEntry) {
       await loadScript(entry.url);
-      const container = loadFactory(loader, entry.id);
+      const container = loadFactory(loader, entry);
       return {
         async load(name) {
           try {
@@ -73,7 +85,6 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
             const component = factory();
             return component.default || component;
           } catch (e) {
-            console.log('ERROR', e);
             return undefined;
           }
         },

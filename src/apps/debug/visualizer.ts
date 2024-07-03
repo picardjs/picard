@@ -78,6 +78,7 @@ export function attachVisualizer(scope: PicardStore, events: EventSystem, compon
         const vis = this.appendChild(document.createElement('div'));
         const info = vis.appendChild(document.createElement('div'));
         const targetRect = getTarget(element);
+        const color = mfColorMap[mf] || (mfColorMap[mf] = colors[Object.keys(mfColorMap).length % colors.length]);
         vis.style.position = 'absolute';
         vis.style.left = targetRect.left + 'px';
         vis.style.top = targetRect.top + 'px';
@@ -85,15 +86,19 @@ export function attachVisualizer(scope: PicardStore, events: EventSystem, compon
         vis.style.height = targetRect.height + 'px';
         vis.style.pointerEvents = 'none';
         vis.style.zIndex = '99999999999';
-        vis.style.border = '1px solid #ccc';
+        vis.style.border = `1px dashed ${color}`;
         info.style.color = 'white';
         info.textContent = mf;
+        info.style.textOverflow = 'ellipsis';
         info.style.position = 'absolute';
+        info.style.overflow = 'hidden';
+        info.style.whiteSpace = 'nowrap';
         info.style.right = '0';
+        info.style.left = '0';
         info.style.top = '0';
+        info.style.padding = '4px';
         info.style.fontSize = '8px';
-        info.style.background =
-          mfColorMap[mf] || (mfColorMap[mf] = colors[Object.keys(mfColorMap).length % colors.length]);
+        info.style.background = color;
       });
     };
 

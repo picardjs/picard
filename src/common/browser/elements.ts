@@ -195,7 +195,7 @@ export function createElements(injector: DependencyInjector) {
       if (source) {
         if (ev.removed.includes(source)) {
           this.#reset();
-        } else if (ev.added.includes(source) && this._lc !== undefined) {
+        } else if (ev.added.includes(source)) {
           this.#reset();
         }
       }

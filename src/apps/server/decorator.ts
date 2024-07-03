@@ -187,7 +187,7 @@ async function Part(injector: DependencyInjector, attribs: Record<string, string
       .filter(Boolean)
       .map(
         (asset) =>
-          `<link rel="stylesheet" href=${JSON.stringify(asset.url)} data-origin=${JSON.stringify(asset.origin.name)} data-ref-id=${JSON.stringify(asset.id)}>`,
+          `<link rel="stylesheet" href=${JSON.stringify(asset.url)} data-origin=${JSON.stringify(asset.origin)} data-ref-id=${JSON.stringify(asset.id)}>`,
       )
       .join('');
 

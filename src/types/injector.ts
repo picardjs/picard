@@ -21,7 +21,12 @@ export interface Services {
   [kind: `kind.${string}`]: ContainerService;
 }
 
-export interface Configuration {}
+export interface Configuration {
+  partName: string;
+  slotName: string;
+  componentName: string;
+  meta?: any;
+}
 
 export type ServiceCreator<TService extends keyof Services> = (injector: DependencyInjector) => Services[TService];
 

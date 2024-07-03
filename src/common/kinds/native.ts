@@ -28,7 +28,7 @@ export function createNativeFederation(): ContainerService {
         exposes = manifest.exposes;
       }
 
-      const names = Object.keys(exposes).map((m) => m.substring(2));
+      const names = exposes.map((m) => m.key.substring(2));
 
       return {
         async load(name: string) {

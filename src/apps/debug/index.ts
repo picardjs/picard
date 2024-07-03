@@ -105,34 +105,29 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
 
   const getMicrofrontends = () => {
     const state = scope.readState();
-    return state.microfrontends.map((m) => ({
-      name: m.name,
-      version: '0.0.0',
-      root: m.source,
-      url: m.source,
-      disabled: false,
-    }));
+    return state.microfrontends
+      .filter((m) => m.flags !== 2)
+      .map((m) => ({
+        name: m.name,
+        version: '0.0.0',
+        root: m.source,
+        url: m.details.url || m.source,
+        disabled: m.flags === 1,
+      }));
   };
 
   const getDependencies = () => {
     const result: DependencyMap = {};
-
-    const mfs = getMicrofrontends()
-      .map((mf) => ({
-        name: mf.name,
-        link: mf.url,
-        base: mf.root,
-      }))
-      .filter((m) => m.link);
+    const mfs = getMicrofrontends().filter((m) => m.url);
 
     Object.keys(depMap).forEach((url) => {
       const dependencies = depMap[url];
-      const mf = mfs.find((p) => p.link === url);
+      const mf = mfs.find((p) => p.url === url);
 
       if (mf) {
         addDeps(result, mf.name, dependencies);
       } else if (!mf) {
-        const parent = mfs.find((p) => url.startsWith(p.base));
+        const parent = mfs.find((p) => url.startsWith(p.root));
 
         if (parent) {
           addDeps(result, parent.name, dependencies);
@@ -149,36 +144,29 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
       kind: 'pilet',
       components: {},
       assets: [],
-      details: {
-        ...meta,
-      },
+      details: meta,
       source: meta.name,
+      flags: 0,
     });
-  };
-
-  const updateMicrofrontend = (name: string, disabled: boolean) => {
-    scope.updateMicrofrontend(name, { disabled });
   };
 
   const getSlotNames = () => {
     const state = scope.readState();
-    return Object.keys(state.components);
+    return Object.entries(state.components)
+      .filter(([, v]) => v.length)
+      .map(([k]) => k);
   };
 
   const unsubscribe = scope.subscribe((current, previous) => {
     sendMessage({
       type: 'container',
-      container: scope.readState(),
+      container: current,
     });
 
     if (current.microfrontends !== previous.microfrontends) {
       sendMessage({
         type: 'pilets',
-        pilets: getMicrofrontends().map((mf) => ({
-          name: mf.name,
-          version: '0.0.0',
-          disabled: !!mf.disabled,
-        })),
+        pilets: getMicrofrontends(),
       });
     }
 
@@ -199,13 +187,6 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
     extensionCatalogue: true,
     viewOrigins: true,
   };
-
-  const retrieveMicrofrontends = () =>
-    getMicrofrontends().map((mf) => ({
-      name: mf.name,
-      version: '0.0.0',
-      disabled: mf.disabled,
-    }));
 
   const inspectorSettings = {
     viewOrigins: {
@@ -283,26 +264,8 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
     });
   };
 
-  const toggleMicrofrontend = (name: string) => {
-    const mf = getMicrofrontends().find((m) => m.name === name);
-
-    if (!mf) {
-      // nothing to do, obviously invalid call
-      return;
-    }
-
-    const disabled = !mf.disabled;
-    mf.disabled = disabled;
-    updateMicrofrontend(name, disabled);
-
-    sendMessage({
-      type: 'pilets',
-      pilets: retrieveMicrofrontends(),
-    });
-  };
-
   const app = {
-    name: config.meta?.name || document.querySelector('meta[name=app-name]')?.getAttribute('content') || document.title,
+    name: config.meta?.name || document.querySelector('meta[name=app-name]')?.getAttribute('content') || 'App',
     version: config.meta?.version || document.querySelector('meta[name=app-version]')?.getAttribute('content') || '-',
   };
 
@@ -329,7 +292,7 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
       ...details,
       state: {
         routes: router.findRoutes(),
-        pilets: retrieveMicrofrontends(),
+        pilets: getMicrofrontends(),
         container: scope.readState(),
         settings: getSettings(),
         events: eventList,
@@ -355,8 +318,10 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
     });
   };
 
-  return {
-    forward(content: any) {
+  const handler = (event: MessageEvent) => {
+    const { source, version, content } = event.data;
+
+    if (source !== selfSource && version === debugApiVersion) {
       switch (content.type) {
         case 'init':
           return start();
@@ -371,7 +336,7 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
         case 'remove-pilet':
           return scope.removeMicrofrontend(content.name);
         case 'toggle-pilet':
-          return toggleMicrofrontend(content.name);
+          return scope.toggleMicrofrontend(content.name);
         case 'emit-event':
           return events.emit(content.name, content.args);
         case 'goto-route':
@@ -379,8 +344,18 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
         case 'visualize-all':
           return visualizer.toggle();
       }
-    },
+    }
+  };
+
+  window.addEventListener('message', handler);
+
+  const disconnect = () => {
+    window.removeEventListener('message', handler);
+  };
+
+  return {
     dispose() {
+      disconnect();
       detachResolved();
       detachAll();
       unsubscribe();

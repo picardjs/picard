@@ -14,7 +14,7 @@ export interface PicardAsset {
    */
   type: string;
   /**
-   * The originating micro frontend.
+   * The name of the originating micro frontend.
    */
-  origin: PicardMicrofrontend;
+  origin: string;
 }

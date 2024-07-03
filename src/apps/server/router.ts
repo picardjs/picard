@@ -8,9 +8,9 @@ export function createRouter(injector: DependencyInjector): RouterService {
 
   const findRoutes = () => {
     const state = scope.readState();
-    return Object.keys(state.components)
-      .filter((m) => m.startsWith(pageQualifier))
-      .map((m) => m.substring(pageQualifier.length));
+    return Object.entries(state.components)
+      .filter(([k, v]) => v.length && k.startsWith(pageQualifier))
+      .map(([k]) => k.substring(pageQualifier.length));
   };
 
   const matcher = createRouteMatcher(findRoutes);

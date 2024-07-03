@@ -10,12 +10,21 @@ function generateUID() {
   return first + second;
 }
 
+function getUrl(source: string) {
+  if (typeof location !== 'undefined') {
+    const url = new URL(source, location.href);
+    return url.href;
+  }
+
+  return source;
+}
+
 export function registerAsset(store: StoreApi<PicardState>, origin: PicardMicrofrontend, url: string, type: string) {
   const id = generateUID();
   const asset = {
     id,
     url,
-    origin,
+    origin: origin.name,
     type,
   };
 
@@ -40,7 +49,7 @@ export function registerComponent(
   const component = {
     id,
     name,
-    origin,
+    origin: origin.name,
     render,
   };
 
@@ -109,15 +118,15 @@ export function createMicrofrontend(component: ComponentRef): PicardMicrofronten
   if (kind === 'module') {
     return createEmptyMicrofrontend(source, kind, source, {
       id: container,
-      url: source,
+      url: getUrl(source),
     });
   } else if (kind === 'native') {
     return createEmptyMicrofrontend(source, kind, source, {
-      url: source,
+      url: getUrl(source),
     });
   } else {
     return createEmptyMicrofrontend(source, 'pilet', source, {
-      url: source,
+      url: getUrl(source),
     });
   }
 }

@@ -30,9 +30,9 @@ export interface PicardComponent {
    */
   name: string;
   /**
-   * The originating micro frontend.
+   * The name of the originating micro frontend.
    */
-  origin: PicardMicrofrontend;
+  origin: string;
   /**
    * The component's lifecycle for rendering.
    */

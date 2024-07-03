@@ -41,11 +41,7 @@ declare module '@/types/injector' {
   interface Configuration {
     feed?: FeedDefinition;
     state?: any;
-    meta?: any;
     fragmentUrl?: string;
-    partName: string;
-    slotName: string;
-    componentName: string;
     dependencies: Record<string, () => Promise<any>>;
   }
 }

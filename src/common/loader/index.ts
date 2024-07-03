@@ -6,8 +6,10 @@ import type { DependencyInjector, DependencyModule, LoaderService } from '@/type
 
 declare const System: {
   registerRegistry: Record<string, any>;
+  set(url: string, content: any): void;
   entries(): Iterable<[string, System.Module]>;
-  import(name: string): Promise<System.Module>;
+  resolve(name: string, parent?: string): string;
+  import(name: string, parent?: string): Promise<System.Module>;
 };
 
 function isPrimitiveExport(content: any) {
@@ -125,23 +127,29 @@ export function createLoader(injector: DependencyInjector): LoaderService {
     registerResolvers(dependencies) {
       registerDependencyResolvers(dependencies);
     },
+    registerModule(url, content) {
+      System.set(url, content);
+    },
     load(url) {
       return loadModule(url);
+    },
+    import(entry, parent) {
+      return System.import(entry, parent);
     },
     list() {
       const dependencies: Array<DependencyModule> = [];
 
-      for (const entry of Object.keys(System.registerRegistry)) {
-        const index = entry.lastIndexOf('@');
+      for (const id of Object.keys(System.registerRegistry)) {
+        const index = id.lastIndexOf('@');
 
-        if (index > 0 && !entry.match(/^https?:\/\//)) {
-          const name = entry.substring(0, index);
-          const version = entry.substring(index + 1);
+        if (index > 0 && !id.match(/^https?:\/\//)) {
+          const name = id.substring(0, index);
+          const version = id.substring(index + 1);
 
           dependencies.push({
+            id,
             name,
             version,
-            get: () => System.import(entry).then((result) => () => result),
           });
         }
       }

@@ -4,7 +4,7 @@ import type { PicardMicrofrontend, PiletDefinition } from '@/types';
 export function fromPiral(pilet: PiletDefinition): PicardMicrofrontend {
   if (pilet.spec === 'mf') {
     return createEmptyMicrofrontend(pilet.name, 'module', pilet.link, {
-      id: pilet.custom?.id,
+      id: pilet.custom?.id || pilet.name,
       url: pilet.link,
     });
   } else if (pilet.spec === 'nf') {

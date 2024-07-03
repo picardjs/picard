@@ -10,6 +10,7 @@ export interface PicardState {
 }
 
 export interface PicardStore {
+  dispose(): void;
   readState(): PicardState;
   saveSnapshot(): string;
   subscribe(listener: (curr: PicardState, prev: PicardState) => void): Dispose;
@@ -19,9 +20,10 @@ export interface PicardStore {
   loadAssets(type: string): Promise<Array<string>>;
   removeMicrofrontend(name: string): void;
   removeMicrofrontends(names: Array<string>): void;
-  updateMicrofrontend(name: string, details: any): void;
+  updateMicrofrontend(name: string, details: Partial<PicardMicrofrontend>): void;
   appendMicrofrontend(mf: PicardMicrofrontend): void;
   appendMicrofrontends(mfs: Array<PicardMicrofrontend>): void;
+  toggleMicrofrontend(name: string): void;
   registerComponent(mf: PicardMicrofrontend, name: string, lifecycle: ComponentLifecycle): PicardComponent;
   registerAsset(mf: PicardMicrofrontend, url: string, type: string): PicardAsset;
   retrieveComponent(id: string): PicardComponent | undefined;

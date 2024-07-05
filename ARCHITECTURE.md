@@ -73,10 +73,10 @@ The essential definition (inside an app's entry point) looks like this:
 
 ```js
 const serviceDefinitions = {
-    config: () => config,
-    events: createListener,
-    scope: createPicardScope,
-    loader: createLoader,
+  config: () => config,
+  events: createListener,
+  scope: createPicardScope,
+  loader: createLoader,
 };
 
 createInjector(serviceDefinitions)

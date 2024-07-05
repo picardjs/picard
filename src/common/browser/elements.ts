@@ -1,3 +1,4 @@
+import type { PiComponentProps, PiSlotProps } from '@/types/browser';
 import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent } from '@/types';
 
 const attrName = 'name';
@@ -89,7 +90,7 @@ export function createElements(injector: DependencyInjector) {
 
   const { componentName, slotName } = config;
 
-  class PiSlot extends HTMLElement {
+  class PiSlot extends HTMLElement implements PiSlotProps {
     private _empty = false;
     private _ready = false;
     private _queue = createQueue();
@@ -184,13 +185,13 @@ export function createElements(injector: DependencyInjector) {
     }
   }
 
-  class PiComponent extends HTMLElement {
+  class PiComponent extends HTMLElement implements PiComponentProps {
     private _lc: ComponentLifecycle | undefined;
     private _locals: any = {};
     private _queue = createQueue();
     private _ready = false;
     private handleUpdate = (ev: UpdatedMicrofrontendsEvent) => {
-      const source = this.getAttribute(attrSource) || undefined;
+      const source = this.getAttribute(attrSource);
 
       if (source) {
         if (ev.removed.includes(source)) {
@@ -200,6 +201,14 @@ export function createElements(injector: DependencyInjector) {
         }
       }
     };
+
+    get name() {
+      return this.getAttribute(attrName);
+    }
+
+    set name(value: string) {
+      this.setAttribute(attrName, value);
+    }
 
     get data() {
       return tryJson(this.getAttribute(attrData), {});

@@ -74,7 +74,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
       - name: Publish Package on jsr
-        run: npx jsr publish
+        run: npx jsr publish --allow-dirty
       - name: Create tag for release
         uses: actions/github-script@v3
         with:

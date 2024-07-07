@@ -90,6 +90,11 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
   return {
     async createContainer(entry: ModuleFederationEntry) {
       const remote = await loadRemote(platform, entry);
+
+      if (!remote) {
+        throw new Error(`The remote "${entry.id}" was not found in "${entry.url}".`);
+      }
+
       const container = await loadFactory(loader, remote, entry);
 
       return {

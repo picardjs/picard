@@ -23,7 +23,7 @@ function loadScript(url: string, integrity?: string, crossOrigin?: string) {
 }
 
 function loadModule(url: string) {
-  return import(url);
+  return import(/* @vite-ignore */ /* webpackIgnore:true */ url);
 }
 
 async function loadJson<T = any>(url: string) {

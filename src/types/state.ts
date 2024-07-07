@@ -18,6 +18,7 @@ export interface PicardStore {
   loadLifecycle(component: ComponentRef): ComponentLifecycle;
   loadComponents(name: string): Promise<Array<string>>;
   loadAssets(type: string): Promise<Array<string>>;
+  getExport(component: ComponentRef): Promise<any>;
   removeMicrofrontend(name: string): void;
   removeMicrofrontends(names: Array<string>): void;
   updateMicrofrontend(name: string, details: Partial<PicardMicrofrontend>): void;

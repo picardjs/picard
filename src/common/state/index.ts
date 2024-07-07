@@ -117,6 +117,25 @@ export function createPicardScope(injector: DependencyInjector) {
         scope.appendMicrofrontends(mfs);
       });
     },
+    getExport(component) {
+      return queue.enqueue(async () => {
+        const existing = findMicrofrontend(scope, component.source);
+        const mf = existing || createMicrofrontend(component);
+
+        if (!mf.flags) {
+          const container = await loadContainer(injector, mf, containers);
+          const result = await container.load(component.name);
+
+          if (!existing) {
+            scope.appendMicrofrontend(mf);
+          }
+
+          return result;
+        }
+
+        return undefined;
+      });
+    },
     loadLifecycle(component) {
       const lc = getExistingLifecycle(scope, component);
       const type = component.framework;
@@ -127,7 +146,7 @@ export function createPicardScope(injector: DependencyInjector) {
           let lc = getExistingLifecycle(scope, component);
 
           if (!lc) {
-            const existing = findMicrofrontend(scope, component);
+            const existing = findMicrofrontend(scope, component.source);
             const mf = existing || createMicrofrontend(component);
 
             if (!mf.flags) {

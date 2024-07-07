@@ -96,13 +96,12 @@ export function retrieveComponent(store: StoreApi<PicardState>, id: string) {
   return undefined;
 }
 
-export function findMicrofrontend(scope: PicardStore, component: ComponentRef) {
-  const source = component.source;
+export function findMicrofrontend(scope: PicardStore, source: string) {
   return scope.readState().microfrontends.find((m) => m.name === source);
 }
 
 export function getExistingLifecycle(scope: PicardStore, component: ComponentRef) {
-  const mf = findMicrofrontend(scope, component);
+  const mf = findMicrofrontend(scope, component.source);
   const id = mf?.components[component.name];
 
   if (id) {

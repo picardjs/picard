@@ -1,5 +1,3 @@
-import type { PicardMicrofrontend } from './microfrontend';
-
 export interface ComponentLifecycle {
   bootstrap(): Promise<void>;
   unload(): Promise<void>;

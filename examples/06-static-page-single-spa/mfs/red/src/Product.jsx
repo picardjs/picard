@@ -54,7 +54,7 @@ const Product = () => {
         source="/mfs/blue/dist/remoteEntry.js"
         data={data}
         kind="module"
-        container="blue"
+        remote-name="blue"
         framework="single-spa"
       />
       <div id="image">
@@ -83,7 +83,7 @@ const Product = () => {
           source="/mfs/purple/dist/remoteEntry.js"
           data={data}
           kind="module"
-          container="purple"
+          remote-name="purple"
           fallback-template-id="reviews-fallback"
           framework="single-spa"
         />
@@ -93,7 +93,7 @@ const Product = () => {
         source="/mfs/blue/dist/remoteEntry.js"
         data={data}
         kind="module"
-        container="blue"
+        remote-name="blue"
         framework="single-spa"
       />
       <pi-component
@@ -101,7 +101,7 @@ const Product = () => {
         source="/mfs/green/dist/remoteEntry.js"
         data={data}
         kind="module"
-        container="green"
+        remote-name="green"
         framework="single-spa"
       />
       <template id="reviews-fallback">

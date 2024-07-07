@@ -35,11 +35,11 @@ Now start creating regions for the components of the micro frontends you'd like 
   name="column"
   source="https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/mf-simple-html/"
   kind="module"
-  container="simplehtml">
+  remote-name="simplehtml">
 </pi-component>
 ```
 
-The `name` denotes the name of the exposed component, while the `source` is used to tell Picard where the micro frontend resides. In the previous example we tell Picard that we want to use a micro frontend using Module Federation (`kind` attribute set to `module`) with the container named `simplehtml`.
+The `name` denotes the name of the exposed component, while the `source` is used to tell Picard where the micro frontend resides. In the previous example we tell Picard that we want to use a micro frontend using Module Federation (`kind` attribute set to `module`) with the remote named `simplehtml`.
 
 For Native Federation a similar syntax is used:
 
@@ -53,7 +53,7 @@ For Native Federation a similar syntax is used:
 
 The major difference is that the `kind` is set to `native` for Native Federation.
 
-Note: Here we don't need to know any `container`.
+Note: Here we don't need to know any `remote-name` as this is fully defined by the referenced JSON file.
 
 ## Further Information
 

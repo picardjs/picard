@@ -1,4 +1,3 @@
-import { loadScript } from './utils';
 import type {
   ModuleFederationEntry,
   ModuleFederationContainer,
@@ -7,6 +6,7 @@ import type {
   LoaderService,
   ModuleResolver,
   ContainerService,
+  PlatformService,
 } from '@/types';
 
 const root = '__picard__';
@@ -59,25 +59,39 @@ function extractSharedDependencies(parent: string, scope: ModuleFederationFactor
   loader.registerResolvers(dependencies);
 }
 
-function loadFactory(loader: LoaderService, entry: ModuleFederationEntry) {
-  const { id, url } = entry;
+async function loadRemote(platform: PlatformService, entry: ModuleFederationEntry): Promise<ModuleFederationContainer> {
+  const { id, url, type } = entry;
   const varName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
-  const container: ModuleFederationContainer = window[varName];
+
+  switch (type) {
+    case 'esm':
+      return await platform.loadModule(url);
+    case 'var':
+    default:
+      await platform.loadScript(url);
+      return window[varName];
+  }
+}
+
+async function loadFactory(loader: LoaderService, remote: ModuleFederationContainer, entry: ModuleFederationEntry) {
+  const { url } = entry;
   const scope: ModuleFederationFactoryScope = {};
-  loader.registerModule(url, container);
+  loader.registerModule(url, remote);
   populateKnownDependencies(url, scope, loader);
-  container.init(scope);
+  remote.init(scope);
   extractSharedDependencies(url, scope, loader);
-  return container;
+  return remote;
 }
 
 export function createModuleFederation(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
+  const platform = injector.get('platform');
 
   return {
     async createContainer(entry: ModuleFederationEntry) {
-      await loadScript(entry.url);
-      const container = loadFactory(loader, entry);
+      const remote = await loadRemote(platform, entry);
+      const container = await loadFactory(loader, remote, entry);
+
       return {
         async load(name) {
           try {

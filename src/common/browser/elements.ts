@@ -4,9 +4,10 @@ import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent
 const attrName = 'name';
 const attrFallbackTemplateId = 'fallback-template-id';
 const attrItemTemplateId = 'item-template-id';
+const attrRemoteName = 'remote-name';
+const attrRemoteType = 'remote-type';
 const attrSource = 'source';
 const attrKind = 'kind';
-const attrContainer = 'container';
 const attrFramework = 'framework';
 const attrData = 'data';
 const attrCid = 'cid';
@@ -245,7 +246,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     static get observedAttributes() {
-      return [attrCid, attrData, attrName, attrKind, attrContainer, attrSource, attrFallbackTemplateId];
+      return [attrCid, attrData, attrName, attrKind, attrSource, attrFallbackTemplateId, attrRemoteName, attrRemoteType];
     }
 
     #start() {
@@ -292,10 +293,11 @@ export function createElements(injector: DependencyInjector) {
         this._lc = renderer.render({ cid });
       } else if (name) {
         const source = this.getAttribute(attrSource);
-        const container = this.getAttribute(attrContainer);
+        const remoteName = this.getAttribute(attrRemoteName);
+        const remoteType = this.getAttribute(attrRemoteType);
         const kind = this.getAttribute(attrKind);
         const framework = this.getAttribute(attrFramework);
-        this._lc = renderer.render({ name, source, container, kind, framework });
+        this._lc = renderer.render({ name, source, remoteName, remoteType, kind, framework });
       }
 
       this._queue.enqueue(() =>

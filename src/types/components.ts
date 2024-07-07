@@ -16,8 +16,9 @@ export interface ComponentRef {
   name?: string;
   source?: string;
   kind?: string;
-  container?: string;
   framework?: string;
+  remoteName?: string;
+  remoteType?: string;
 }
 
 export interface PicardComponent {

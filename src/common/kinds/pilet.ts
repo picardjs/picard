@@ -1,4 +1,3 @@
-import { loadJson } from './utils';
 import { createLazyLifecycle } from './lifecycle';
 import type { ContainerService, DependencyInjector, PiletApi, PiletEntry } from '@/types';
 
@@ -19,6 +18,7 @@ interface PiletManifest {
 export function createPilet(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
   const plugins = injector.getAll('pilet');
+  const platform = injector.get('platform');
 
   return {
     async createContainer(entry: PiletEntry) {
@@ -27,7 +27,7 @@ export function createPilet(injector: DependencyInjector): ContainerService {
       let link = entry.url;
 
       if (!entry.name) {
-        const manifest = await loadJson<PiletManifest>(entry.url);
+        const manifest = await platform.loadJson<PiletManifest>(entry.url);
         const { main, dependencies = {} } = manifest;
         link = new URL(main, entry.url).href;
         loader.registerUrls(dependencies);

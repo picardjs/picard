@@ -6,7 +6,15 @@ import { writeFile, readFile } from 'node:fs/promises';
 export async function buildOne(app) {
   const root = resolve(process.cwd(), 'src');
   const info = resolve(root, `apps/${app}/app.json`);
-  const { name, platform, minify, entry, formats, outDirs } = JSON.parse(await readFile(info, 'utf8'));
+  const {
+    name,
+    platform,
+    minify,
+    entry,
+    formats,
+    outDirs,
+    globalName,
+  } = JSON.parse(await readFile(info, 'utf8'));
 
   const entryPoints = {
     [name]: resolve(root, `apps/${app}`, entry),
@@ -23,7 +31,7 @@ export async function buildOne(app) {
     const outdir = resolve(process.cwd(), `dist`, dir);
 
     for (const format of formats) {
-      const ext = format === 'cjs' ? '.js' : '.mjs';
+      const ext = format !== 'esm' ? '.js' : '.mjs';
 
       const result = await build({
         entryPoints,
@@ -35,6 +43,7 @@ export async function buildOne(app) {
         platform,
         logOverride,
         format,
+        globalName,
         outExtension: { '.js': ext },
       });
 

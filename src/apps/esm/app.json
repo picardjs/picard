@@ -1,0 +1,9 @@
+{
+  "name": "picard-esm",
+  "platform": "neutral",
+  "minify": true,
+  "entry": "index.ts",
+  "globalName": "__shimport__",
+  "formats": ["iife"],
+  "outDirs": ["browser", "client", "native", "server"]
+}

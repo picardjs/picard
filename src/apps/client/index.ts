@@ -7,6 +7,7 @@ import { createInjector } from '@/common/injector';
 import { createRouter } from '@/common/browser/router';
 import { createElements } from '@/common/browser/elements';
 import { createListener } from '@/common/browser/events';
+import { createPlatform } from '@/common/browser/platform';
 import { createDebug } from '@/common/browser/debug';
 import { createSheet } from '@/common/styles';
 import { createPilet } from '@/common/kinds/pilet';
@@ -86,6 +87,7 @@ export function initializePicard(options?: PicardOptions) {
     feed: createFeed,
     renderer: createRenderer,
     fragments: createFragments,
+    platform: createPlatform,
     sheet: createSheet,
     loader: createLoader,
     elements: createElements,

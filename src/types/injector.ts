@@ -3,6 +3,7 @@ import type { ConverterService } from './converter';
 import type { EventSystem } from './events';
 import type { SheetService } from './sheet';
 import type { LoaderService } from './loader';
+import type { PlatformService } from './platform';
 import type { PiletService } from './pilet';
 import type { RendererService } from './renderer';
 import type { RouterService } from './router';
@@ -15,6 +16,7 @@ export interface Services {
   loader: LoaderService;
   pilet?: PiletService;
   router: RouterService;
+  platform: PlatformService;
   renderer: RendererService;
   sheet?: SheetService;
   [framework: `framework.${string}`]: ConverterService;

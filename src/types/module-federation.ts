@@ -23,4 +23,5 @@ export interface ModuleFederationContainer {
 export interface ModuleFederationEntry {
   id: string;
   url: string;
+  type?: 'var' | 'esm';
 }

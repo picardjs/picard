@@ -1,4 +1,3 @@
-import { loadJson } from '@/common/kinds/utils';
 import { fromPiral } from './piral';
 import { fromDiscovery } from './discovery';
 import { fromManifest } from './manifest';
@@ -9,15 +8,16 @@ import type {
   DependencyInjector,
   FeedService,
   DiscoveryResponse,
+  PlatformService,
 } from '@/types';
 
-async function loadFeed(feed: FeedDefinition | undefined): Promise<Array<PicardMicrofrontend>> {
+async function loadFeed(platform: PlatformService, feed: FeedDefinition | undefined): Promise<Array<PicardMicrofrontend>> {
   if (typeof feed === 'string') {
-    const doc = await loadJson<StaticFeed>(feed);
-    return await loadFeed(doc);
+    const doc = await platform.loadJson<StaticFeed>(feed);
+    return await loadFeed(platform, doc);
   } else if (typeof feed === 'function') {
     const doc = await feed();
-    return await loadFeed(doc);
+    return await loadFeed(platform, doc);
   } else if (Array.isArray(feed)) {
     return feed.map(fromPiral);
   } else if (!feed) {
@@ -38,6 +38,7 @@ async function loadFeed(feed: FeedDefinition | undefined): Promise<Array<PicardM
 export function createFeed(injector: DependencyInjector): FeedService {
   const { feed } = injector.get('config');
   const scope = injector.get('scope');
-  scope.loadMicrofrontends(loadFeed(feed));
+  const platform = injector.get('platform');
+  scope.loadMicrofrontends(loadFeed(platform, feed));
   return {};
 }

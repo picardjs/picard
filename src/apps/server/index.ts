@@ -1,6 +1,7 @@
 import { createRouter } from './router';
 import { createListener } from './events';
 import { createDecorator } from './decorator';
+import { createPlatform } from './platform';
 import { createFeed } from '@/common/feed';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
@@ -75,6 +76,7 @@ export function initializePicard(options?: PicardOptions) {
     feed: createFeed,
     renderer: createRenderer,
     router: createRouter,
+    platform: createPlatform,
     loader: createLoader,
     decorator: createDecorator,
     sheet: createSheet,

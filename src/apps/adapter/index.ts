@@ -2,6 +2,7 @@ import { createFragments } from './fragments';
 import { createRouter } from '@/common/browser/router';
 import { createElements } from '@/common/browser/elements';
 import { createListener } from '@/common/browser/events';
+import { createPlatform } from '@/common/browser/platform';
 import { createDebug } from '@/common/browser/debug';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
@@ -52,6 +53,7 @@ const resumePicard = () => {
     fragments: createFragments,
     loader: createLoader,
     renderer: createRenderer,
+    platform: createPlatform,
     elements: createElements,
     router: createRouter,
     debug: createDebug,

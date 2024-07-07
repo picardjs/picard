@@ -2,7 +2,7 @@
 
 # [Picard.js](https://picard.js.org) &middot; [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/picardjs/picard/blob/main/LICENSE)
 
-[![Build Status](https://github.com/picardjs/picard/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/picardjs/picard/actions)
+[![Build Status](https://github.com/picardjs/picard/actions/workflows/publish.yml/badge.svg)](https://github.com/picardjs/picard/actions)
 [![npm](https://img.shields.io/npm/v/picard-js.svg)](https://www.npmjs.com/package/picard-js)
 [![GitHub tag](https://img.shields.io/github/tag/picardjs/picard.svg)](https://github.com/picardjs/picard/releases)
 [![GitHub issues](https://img.shields.io/github/issues/picardjs/picard.svg)](https://github.com/picardjs/picard/issues)

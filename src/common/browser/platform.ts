@@ -14,10 +14,10 @@ function createScript(url: string, integrity?: string, crossOrigin?: string) {
 }
 
 function loadScript(url: string, integrity?: string, crossOrigin?: string) {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     const s = createScript(url, integrity, crossOrigin);
-    s.onload = resolve;
-    s.onerror = reject;
+    s.onload = () => resolve();
+    s.onerror = (e) => reject(e);
     document.body.appendChild(s);
   });
 }

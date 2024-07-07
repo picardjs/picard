@@ -1,9 +1,18 @@
-import type { ConverterService } from "@/types";
+import { emptyLifecycle } from '@/common/utils/lifecycle';
+import type { ConverterService } from '@/types';
 
-export function createSingleSpa(): ConverterService {
+interface SingleSpaParcel {
+  bootstrap(): Promise<void>;
+  mount(props: any): void;
+  unmount(props: any): void;
+  update(props: any): void;
+}
+
+export function createSingleSpaConverter(): ConverterService {
   return {
-    convert(component) {
+    convert(component: SingleSpaParcel) {
       return {
+        ...emptyLifecycle,
         bootstrap() {
           return component.bootstrap();
         },
@@ -21,12 +30,6 @@ export function createSingleSpa(): ConverterService {
         },
         update(props, locals) {
           component.update?.({ ...props, domElement: locals.container });
-        },
-        unload() {
-          return Promise.resolve();
-        },
-        stringify() {
-          return Promise.resolve('');
         },
       };
     },

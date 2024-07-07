@@ -13,7 +13,10 @@ import { createSheet } from '@/common/styles';
 import { createPilet } from '@/common/kinds/pilet';
 import { createModuleFederation } from '@/common/kinds/module';
 import { createNativeFederation } from '@/common/kinds/native';
-import { createSingleSpa } from '@/common/frameworks/single-spa';
+import { createDefaultConverter } from '@/common/frameworks/default';
+import { createHtmlConverter } from '@/common/frameworks/html';
+import { createSingleSpaConverter } from '@/common/frameworks/single-spa';
+import { createWebComponentConverter } from '@/common/frameworks/web-component';
 import type { DebugService, ElementsService, FeedDefinition, FeedService, FragmentsService } from '@/types';
 
 export interface PicardOptions {
@@ -96,7 +99,10 @@ export function initializePicard(options?: PicardOptions) {
     'kind.module': createModuleFederation,
     'kind.native': createNativeFederation,
     'kind.pilet': createPilet,
-    'framework.single-spa': createSingleSpa,
+    'framework.single-spa': createSingleSpaConverter,
+    'framework.default': createDefaultConverter,
+    'framework.html': createHtmlConverter,
+    'framework.web-component': createWebComponentConverter,
   };
 
   return createInjector(serviceDefinitions)

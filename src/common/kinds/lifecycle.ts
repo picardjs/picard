@@ -1,15 +1,5 @@
+import { emptyLifecycle } from '@/common/utils/lifecycle';
 import type { ComponentLifecycle } from '@/types';
-
-const emptyLifecycle: ComponentLifecycle = {
-  async bootstrap() {},
-  async unload() {},
-  mount() {},
-  unmount() {},
-  update() {},
-  stringify() {
-    return Promise.resolve('');
-  },
-};
 
 export function createLazyLifecycle(load: () => Promise<any>, name: string): ComponentLifecycle {
   const impl = {

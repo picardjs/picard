@@ -18,6 +18,7 @@ const demos = {
     '04-static-page-initial-state',
     '05-static-page-with-routing',
     '06-static-page-single-spa',
+    '10-dependencies-sharing',
   ],
 };
 

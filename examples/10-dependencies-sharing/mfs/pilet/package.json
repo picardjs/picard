@@ -1,0 +1,35 @@
+{
+  "name": "pilet",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [
+    "pilet"
+  ],
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "source": "src/index.tsx",
+  "scripts": {
+    "start": "pilet debug",
+    "build": "pilet build",
+    "upgrade": "pilet upgrade"
+  },
+  "importmap": {
+    "imports": {
+      "emojis-list": ""
+    },
+    "inherit": []
+  },
+  "dependencies": {
+    "emojis-list": "3.0.0"
+  },
+  "devDependencies": {
+    "empty-piral": "1.5.6",
+    "@types/node": "latest",
+    "piral-cli": "1.5.6",
+    "piral-cli-esbuild": "latest",
+    "tslib": "2.5.2",
+    "typescript": "latest"
+  }
+}

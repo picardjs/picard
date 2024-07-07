@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Picard.js Dependency Sharing Example</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+  ul.examples {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-direction: column;
+  }
+</style>
+<script src="./dist/picard.js"></script>
+</head>
+<body>
+  <div class="jumbotron text-center">
+    <h1>Dependency Sharing</h1>
+    <p>This example illustrates the capabilities to share dependencies across different modules and technologies.</p>
+  </div>
+  <div class="container">
+    <ul class="examples">
+      <li><pi-component name="example" source="/mfs/wp-mod-fed/dist/remoteEntry.js" container="test1" kind="module"></pi-component></li>
+      <li><pi-component name="example" source="/mfs/rp-mod-fed/dist/remoteEntry.js" container="test2" kind="module"></pi-component></li>
+      <li><pi-component name="example" source="/mfs/nat-fed-1/dist/remoteEntry.json" kind="native"></pi-component></li>
+      <li><pi-component name="example" source="/mfs/nat-fed-2/dist/remoteEntry.json" kind="native"></pi-component></li>
+      <li><pi-component name="example" source="/mfs/pilet/index.meta.json" kind="pilet"></pi-component></li>
+    </ul>
+  </div>
+</body>
+</html>

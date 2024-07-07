@@ -1,0 +1,9 @@
+{
+  "name": "pilet",
+  "version": "1.0.0",
+  "dependencies": {
+    "emojis-list@3.0.0": "dist/emojis-list.js"
+  },
+  "main": "dist/index.js",
+  "spec": "v2"
+}

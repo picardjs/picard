@@ -1,0 +1,16 @@
+{
+  "name": "rp-mod-fed",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "rspack serve --port 6003",
+    "build": "rspack build --mode production"
+  },
+  "dependencies": {
+    "emojis-list": "3.0.0",
+    "fireworks-js": "^2.10.7"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^0.7.5",
+    "@rspack/core": "^0.7.5"
+  }
+}

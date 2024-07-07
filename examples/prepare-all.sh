@@ -1,20 +1,8 @@
 #!/bin/bash
 
 cd 06-static-page-single-spa/mfs
-cd blue
-npm i
-npm run build
-cd ..
-cd green
-npm i
-npm run build
-cd ..
-cd red
-npm i
-npm run build
-cd ..
+./prepare-mfs.sh
 cd ../..
-
 
 cd 07-spa-tractor
 npm i
@@ -29,3 +17,7 @@ cd 09-islands-netflix
 npm i
 npm run build
 cd ..
+
+cd 10-dependencies-sharing/mfs
+./prepare-mfs.sh
+cd ../..

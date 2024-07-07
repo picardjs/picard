@@ -1,0 +1,15 @@
+{
+  "name": "wp-mod-fed",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "webpack serve --port 6002",
+    "build": "webpack build --mode production"
+  },
+  "dependencies": {
+    "emojis-list": "3.0.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^5.1.4",
+    "webpack": "^5.92.1"
+  }
+}

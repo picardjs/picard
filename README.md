@@ -41,6 +41,20 @@ Now start creating regions for the components of the micro frontends you'd like 
 
 The `name` denotes the name of the exposed component, while the `source` is used to tell Picard where the micro frontend resides. In the previous example we tell Picard that we want to use a micro frontend using Module Federation (`kind` attribute set to `module`) with the remote named `simplehtml`.
 
+In case your Module Federation-built micro frontend is actually using a `library.type` being set to `module`, you'd also need to specify `remote-type`:
+
+```html
+<pi-component
+  name="column"
+  source="https://feed.piral.cloud/api/v1/pilet/picard-demos/latest/mf-simple-html/"
+  kind="module"
+  remote-name="simplehtml"
+  remote-type="esm">
+</pi-component>
+```
+
+The two remote types are `var` (refers to a normal script) and `esm` (refers to a script with type set to `module`).
+
 For Native Federation a similar syntax is used:
 
 ```html

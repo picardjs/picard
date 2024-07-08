@@ -36,5 +36,13 @@ cd 09-islands-netflix
 npm start & # port is 8089
 cd ..
 
+cd 10-dependencies-sharing
+npx http-server --port 8090
+cd ..
+
+cd 11-ssr-native-tractor
+npm start & # port is 8091
+cd ..
+
 trap 'kill $(jobs -pr)' INT
 wait

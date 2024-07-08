@@ -21,3 +21,8 @@ cd ..
 cd 10-dependencies-sharing/mfs
 ./prepare-mfs.sh
 cd ../..
+
+cd 11-ssr-native-tractor
+npm i
+npm run build
+cd ..

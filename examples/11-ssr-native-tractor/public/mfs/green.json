@@ -1,0 +1,19 @@
+{
+  "name": "green",
+  "shared": [
+    {
+      "packageName": "react",
+      "outFileName": "https://esm.sh/react@18.3.1",
+      "requiredVersion": "^18",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "18.3.1"
+    }
+  ],
+  "exposes": [
+    {
+      "key": "./Recommendations",
+      "outFileName": "./dist/recommendations.js"
+    }
+  ]
+}

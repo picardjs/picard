@@ -1,0 +1,23 @@
+{
+  "name": "ssr-nf-example",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "node --experimental-vm-modules dist/server.js",
+    "build": "npm run build:app && npm run build:red && npm run build:green && npm run build:blue",
+    "build:app": "esbuild src/app/index.js --platform=node --bundle --outfile=dist/server.js --alias:picard-js/node=../../dist/node/picard.js",
+    "build:red": "node src/build-mf.js red/products.jsx",
+    "build:green": "node src/build-mf.js green/recommendations.jsx",
+    "build:blue": "npm run build:blue-basket && npm run build:blue-button",
+    "build:blue-basket": "node src/build-mf.js blue/basket-info.jsx",
+    "build:blue-button": "node src/build-mf.js blue/buy-button.jsx"
+  },
+  "dependencies": {
+    "express": "^4",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "esbuild": "0.20.2",
+    "esbuild-auto-path-plugin": "1.0.1"
+  }
+}

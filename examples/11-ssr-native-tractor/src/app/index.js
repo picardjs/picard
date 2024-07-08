@@ -7,11 +7,12 @@ import { reactConverter } from './helpers';
 const port = process.env.PORT || 8091;
 const app = express();
 const picard = initializePicard({
-  feed: () => Promise.resolve({
-    'red': `http://localhost:${port}/mfs/red.json`,
-    'blue': `http://localhost:${port}/mfs/blue.json`,
-    'green': `http://localhost:${port}/mfs/green.json`,
-  }),
+  feed: () =>
+    Promise.resolve({
+      red: `http://localhost:${port}/mfs/red.json`,
+      blue: `http://localhost:${port}/mfs/blue.json`,
+      green: `http://localhost:${port}/mfs/green.json`,
+    }),
   services: {
     'framework.react': reactConverter,
   },

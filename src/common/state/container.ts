@@ -5,11 +5,11 @@ export async function loadContainer(
   mf: PicardMicrofrontend,
   containers: Record<string, Promise<ComponentGetter>>,
 ) {
-  const { name, kind, details } = mf;
+  const { name, format, details } = mf;
   let container = containers[name];
 
   if (!container) {
-    const service = injector.get(`kind.${kind}`);
+    const service = injector.get(`format.${format}`);
     container = service.createContainer(details).then(
       async (c) => {
         const assets = c.getAssets();

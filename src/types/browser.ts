@@ -3,7 +3,7 @@ export interface PiComponentProps {
   source?: string;
   name?: string;
   data?: string;
-  kind?: string;
+  format?: string;
   framework?: string;
   container?: string;
   'fallback-template-id'?: string;

@@ -1,16 +1,16 @@
 import { PicardMicrofrontend } from '@/types';
 
-export function createEmptyMicrofrontend<T extends PicardMicrofrontend['kind']>(
+export function createEmptyMicrofrontend<T extends PicardMicrofrontend['format']>(
   name: string,
-  kind: T,
+  format: T,
   source: string,
   details: any,
 ): PicardMicrofrontend {
   return {
-    kind,
     name,
-    details,
     source,
+    format,
+    details,
     flags: 0,
     assets: [],
     components: {},

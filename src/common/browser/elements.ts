@@ -7,7 +7,7 @@ const attrItemTemplateId = 'item-template-id';
 const attrRemoteName = 'remote-name';
 const attrRemoteType = 'remote-type';
 const attrSource = 'source';
-const attrKind = 'kind';
+const attrFormat = 'format';
 const attrFramework = 'framework';
 const attrData = 'data';
 const attrCid = 'cid';
@@ -246,7 +246,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     static get observedAttributes() {
-      return [attrCid, attrData, attrName, attrKind, attrSource, attrFallbackTemplateId, attrRemoteName, attrRemoteType];
+      return [attrCid, attrData, attrName, attrFormat, attrSource, attrFallbackTemplateId, attrRemoteName, attrRemoteType];
     }
 
     #start() {
@@ -295,9 +295,9 @@ export function createElements(injector: DependencyInjector) {
         const source = this.getAttribute(attrSource);
         const remoteName = this.getAttribute(attrRemoteName);
         const remoteType = this.getAttribute(attrRemoteType);
-        const kind = this.getAttribute(attrKind);
+        const format = this.getAttribute(attrFormat);
         const framework = this.getAttribute(attrFramework);
-        this._lc = renderer.render({ name, source, remoteName, remoteType, kind, framework });
+        this._lc = renderer.render({ name, source, remoteName, remoteType, format, framework });
       }
 
       this._queue.enqueue(() =>

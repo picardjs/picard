@@ -53,7 +53,7 @@ const Product = () => {
         name="BasketInfo"
         source="/mfs/blue/dist/remoteEntry.js"
         data={data}
-        kind="module"
+        format="module"
         remote-name="blue"
         framework="single-spa"
       />
@@ -82,7 +82,7 @@ const Product = () => {
           name="Reviews"
           source="/mfs/purple/dist/remoteEntry.js"
           data={data}
-          kind="module"
+          format="module"
           remote-name="purple"
           fallback-template-id="reviews-fallback"
           framework="single-spa"
@@ -92,7 +92,7 @@ const Product = () => {
         name="BuyButton"
         source="/mfs/blue/dist/remoteEntry.js"
         data={data}
-        kind="module"
+        format="module"
         remote-name="blue"
         framework="single-spa"
       />
@@ -100,7 +100,7 @@ const Product = () => {
         name="Recommendations"
         source="/mfs/green/dist/remoteEntry.js"
         data={data}
-        kind="module"
+        format="module"
         remote-name="green"
         framework="single-spa"
       />

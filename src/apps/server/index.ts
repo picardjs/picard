@@ -8,9 +8,9 @@ import { createInjector } from '@/common/injector';
 import { createRenderer } from '@/common/renderer';
 import { createSheet } from '@/common/styles';
 import { createRouter } from '@/common/runtime/router';
-import { createModuleFederation } from '@/common/kinds/module';
-import { createNativeFederation } from '@/common/kinds/native';
-import { createPilet } from '@/common/kinds/pilet';
+import { createModuleFederation } from '@/common/formats/module';
+import { createNativeFederation } from '@/common/formats/native';
+import { createPilet } from '@/common/formats/pilet';
 import { createDefaultConverter } from '@/common/frameworks/default';
 import { createHtmlConverter } from '@/common/frameworks/html';
 import type { DecoratorService, FeedDefinition, FeedService } from '@/types';
@@ -82,9 +82,9 @@ export function initializePicard(options?: PicardOptions) {
     loader: createLoader,
     decorator: createDecorator,
     sheet: createSheet,
-    'kind.module': createModuleFederation,
-    'kind.native': createNativeFederation,
-    'kind.pilet': createPilet,
+    'format.module': createModuleFederation,
+    'format.native': createNativeFederation,
+    'format.pilet': createPilet,
     'framework.default': createDefaultConverter,
     'framework.html': createHtmlConverter,
   };

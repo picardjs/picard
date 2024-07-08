@@ -11,7 +11,7 @@ import {
   retrieveaAsset,
 } from './actions';
 import { getActiveMfNames, filterItems, mergeItems } from './utils';
-import { createLazyLifecycle } from '../kinds/lifecycle';
+import { createLazyLifecycle } from '../formats/lifecycle';
 import type {
   ComponentGetter,
   ComponentLifecycle,

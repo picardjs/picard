@@ -112,17 +112,17 @@ export function getExistingLifecycle(scope: PicardStore, component: ComponentRef
 }
 
 export function createMicrofrontend(component: ComponentRef): PicardMicrofrontend {
-  const { source, kind } = component;
+  const { source, format } = component;
 
-  if (kind === 'module') {
+  if (format === 'module') {
     const { remoteName, remoteType = 'var' } = component;
-    return createEmptyMicrofrontend(source, kind, source, {
+    return createEmptyMicrofrontend(source, format, source, {
       id: remoteName,
       type: remoteType,
       url: getUrl(source),
     });
-  } else if (kind === 'native') {
-    return createEmptyMicrofrontend(source, kind, source, {
+  } else if (format === 'native') {
+    return createEmptyMicrofrontend(source, format, source, {
       url: getUrl(source),
     });
   } else {

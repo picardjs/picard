@@ -20,7 +20,7 @@ export interface Services {
   renderer: RendererService;
   sheet?: SheetService;
   [framework: `framework.${string}`]: ConverterService;
-  [kind: `kind.${string}`]: ContainerService;
+  [format: `format.${string}`]: ContainerService;
 }
 
 export interface Configuration {

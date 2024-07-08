@@ -10,9 +10,9 @@ import { createListener } from '@/common/browser/events';
 import { createPlatform } from '@/common/browser/platform';
 import { createDebug } from '@/common/browser/debug';
 import { createSheet } from '@/common/styles';
-import { createPilet } from '@/common/kinds/pilet';
-import { createModuleFederation } from '@/common/kinds/module';
-import { createNativeFederation } from '@/common/kinds/native';
+import { createPilet } from '@/common/formats/pilet';
+import { createModuleFederation } from '@/common/formats/module';
+import { createNativeFederation } from '@/common/formats/native';
 import { createDefaultConverter } from '@/common/frameworks/default';
 import { createHtmlConverter } from '@/common/frameworks/html';
 import { createSingleSpaConverter } from '@/common/frameworks/single-spa';
@@ -96,9 +96,9 @@ export function initializePicard(options?: PicardOptions) {
     elements: createElements,
     router: createRouter,
     debug: createDebug,
-    'kind.module': createModuleFederation,
-    'kind.native': createNativeFederation,
-    'kind.pilet': createPilet,
+    'format.module': createModuleFederation,
+    'format.native': createNativeFederation,
+    'format.pilet': createPilet,
     'framework.single-spa': createSingleSpaConverter,
     'framework.default': createDefaultConverter,
     'framework.html': createHtmlConverter,

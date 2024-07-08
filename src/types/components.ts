@@ -13,7 +13,7 @@ export interface ComponentRef {
   cid?: string;
   name?: string;
   source?: string;
-  kind?: string;
+  format?: string;
   framework?: string;
   remoteName?: string;
   remoteType?: string;

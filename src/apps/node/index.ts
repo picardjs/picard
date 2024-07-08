@@ -1,3 +1,4 @@
+import { createEsm } from './esm';
 import { createListener } from './events';
 import { createPlatform } from './platform';
 import { createFeed } from '@/common/feed';
@@ -76,6 +77,7 @@ export function initializePicard(options?: PicardOptions) {
     events: createListener,
     scope: createPicardScope,
     feed: createFeed,
+    esm: createEsm,
     renderer: createRenderer,
     router: createRouter,
     platform: createPlatform,

@@ -3,6 +3,7 @@ import { createFeed } from '@/common/feed';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
+import { createEsm } from '@/common/browser/esm';
 import { createRouter } from '@/common/browser/router';
 import { createElements } from '@/common/browser/elements';
 import { createListener } from '@/common/browser/events';
@@ -96,6 +97,7 @@ export function initializePicard(options?: PicardOptions) {
     elements: createElements,
     router: createRouter,
     debug: createDebug,
+    esm: createEsm,
     'format.module': createModuleFederation,
     'format.native': createNativeFederation,
     'format.pilet': createPilet,

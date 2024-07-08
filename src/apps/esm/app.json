@@ -5,5 +5,5 @@
   "entry": "index.ts",
   "globalName": "__shimport__",
   "formats": ["iife"],
-  "outDirs": ["browser", "client", "native", "server"]
+  "outDirs": ["browser", "client", "node"]
 }

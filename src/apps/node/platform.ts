@@ -16,14 +16,18 @@ async function linkModule(url: string, ctx: Context) {
   const content = await res.text();
   const mod = new SourceTextModule(content);
   mod.context = ctx;
-  await mod.link((specifier) => linkModule(specifier, ctx));
+  await mod.link((specifier) => {
+    const newUrl = new URL(specifier, url);
+    return linkModule(newUrl.href, ctx);
+  });
   await mod.evaluate();
   return mod;
 }
 
 async function loadModule(url: string) {
   const ctx = createContext();
-  await linkModule(url, ctx);
+  const res = await linkModule(url, ctx);
+  return res.namespace;
 }
 
 async function loadJson<T = any>(url: string) {

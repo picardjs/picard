@@ -6,6 +6,7 @@ export type * from './debug';
 export type * from './decorator';
 export type * from './discovery';
 export type * from './elements';
+export type * from './esm';
 export type * from './events';
 export type * from './feed';
 export type * from './fragments';

@@ -3,7 +3,6 @@ import type {
   NativeFederationExposedEntry,
   ContainerService,
   DependencyInjector,
-  PlatformService,
 } from '@/types';
 
 interface NativeFederationManifest {
@@ -19,25 +18,14 @@ interface NativeFederationManifest {
   exposes: Array<NativeFederationExposedEntry>;
 }
 
-async function getShimport(platform: PlatformService) {
-  const marker = '__shimport__';
-
-  if (marker in globalThis) {
-    return globalThis[marker];
-  }
-
-  await platform.loadScript('./dist/picard-esm.js');
-  return globalThis[marker];
-}
-
 export function createNativeFederation(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
   const platform = injector.get('platform');
+  const esm = injector.get('esm');
 
   return {
     async createContainer(entry: NativeFederationEntry) {
       let exposes = entry.exposes;
-      const shimport = await getShimport(platform);
       const depMap: Record<string, string> = {};
 
       if (!exposes) {
@@ -50,7 +38,7 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
               const depUrl = new URL(c.outFileName, entry.url);
               const id = `${c.packageName}@${c.version}`;
               depMap[c.packageName] = `${c.packageName}@${c.requiredVersion}`;
-              p[id] = () => shimport.load(depUrl.href, depMap);
+              p[id] = () => esm.load(depUrl.href, depMap);
               return p;
             }, {}),
           );
@@ -66,7 +54,7 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
 
           if (item) {
             const entryUrl = new URL(item.outFileName, entry.url);
-            const component = await shimport.load(entryUrl.href, depMap);
+            const component = await esm.load(entryUrl.href, depMap);
             return component?.default || component;
           }
 

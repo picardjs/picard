@@ -4,5 +4,5 @@
   "minify": true,
   "entry": "index.ts",
   "formats": ["esm"],
-  "outDirs": ["browser", "client", "server"]
+  "outDirs": ["browser", "client", "node"]
 }

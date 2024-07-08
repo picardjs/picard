@@ -10,11 +10,13 @@ export function createDebug(injector: DependencyInjector) {
   let adapter: DebugAdapter;
 
   const createAdapter = async () => {
-    const { initializeDebugAdapter } = await import(debugScript);
+    const platform = injector.get('platform');
     const scope = injector.get('scope');
     const events = injector.get('events');
     const config = injector.get('config');
     const router = injector.get('router');
+    
+    const { initializeDebugAdapter } = await platform.loadModule(debugScript);
     adapter = initializeDebugAdapter({ scope, events, config, router });
   };
 

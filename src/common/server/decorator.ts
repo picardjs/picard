@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { render } from 'dom-serializer';
+import { escapeHtml } from '@/common/utils/escape';
 import type { ChildNode, Document, Element } from 'domhandler';
 import type { DecoratorService, DependencyInjector } from '@/types';
 
@@ -55,20 +56,6 @@ type ServerComponent = (
   attribs: Record<string, string>,
   document: Document,
 ) => Promise<string>;
-
-function escapeHtml(str: string) {
-  return str.replace(
-    /[&<>'"]/g,
-    (tag) =>
-      ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;',
-      })[tag],
-  );
-}
 
 function renderFallback(attribs: Record<string, string>, document: Document) {
   const fallbackTemplateId = attribs['fallback-template-id'];

@@ -1,5 +1,6 @@
 import type { ContainerService } from './container';
 import type { ConverterService } from './converter';
+import type { EsmService } from './esm';
 import type { EventSystem } from './events';
 import type { SheetService } from './sheet';
 import type { LoaderService } from './loader';
@@ -15,6 +16,7 @@ export interface Services {
   scope: PicardStore;
   loader: LoaderService;
   pilet?: PiletService;
+  esm: EsmService;
   router: RouterService;
   platform: PlatformService;
   renderer: RendererService;

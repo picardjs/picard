@@ -4,6 +4,7 @@ import { createElements } from '@/common/browser/elements';
 import { createListener } from '@/common/browser/events';
 import { createPlatform } from '@/common/browser/platform';
 import { createDebug } from '@/common/browser/debug';
+import { createEsm } from '@/common/browser/esm';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
@@ -52,6 +53,7 @@ const resumePicard = () => {
     scope: createPicardScope,
     fragments: createFragments,
     loader: createLoader,
+    esm: createEsm,
     renderer: createRenderer,
     platform: createPlatform,
     elements: createElements,

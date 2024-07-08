@@ -1,6 +1,6 @@
 {
   "name": "@picard/js",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "exports": {
     ".": "./dist/server/picard.mjs",
     "./package.json": "./package.json",

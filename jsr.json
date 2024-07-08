@@ -2,12 +2,12 @@
   "name": "@picard/js",
   "version": "0.1.0",
   "exports": {
-    ".": "./dist/server/picard.mjs",
+    ".": "./dist/native/picard.mjs",
     "./package.json": "./package.json",
     "./browser": "./dist/browser/picard.js",
     "./client": "./dist/client/picard.mjs",
     "./native": "./dist/native/picard.mjs",
-    "./server": "./dist/server/picard.mjs"
+    "./node": "./dist/node/picard.mjs"
   },
   "publish": {
     "include": [

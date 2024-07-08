@@ -8,7 +8,7 @@ esbuild.build({
   bundle: true,
   platform: 'node',
   alias: {
-    'picard-js/server': resolve(__dirname, '../../dist/server/picard.js'),
+    'picard-js/node': resolve(__dirname, '../../dist/node/picard.js'),
   },
   outfile: resolve(__dirname, 'dist/server.js'),
   plugins: [

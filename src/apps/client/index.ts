@@ -1,6 +1,5 @@
 import { createFragments } from './fragments';
 import { createFeed } from '@/common/feed';
-import { createRenderer } from '@/common/renderer';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
@@ -9,7 +8,8 @@ import { createElements } from '@/common/browser/elements';
 import { createListener } from '@/common/browser/events';
 import { createPlatform } from '@/common/browser/platform';
 import { createDebug } from '@/common/browser/debug';
-import { createSheet } from '@/common/styles';
+import { createSheet } from '@/common/ui/styles';
+import { createRenderer } from '@/common/ui/renderer';
 import { createPilet } from '@/common/formats/pilet';
 import { createModuleFederation } from '@/common/formats/module';
 import { createNativeFederation } from '@/common/formats/native';

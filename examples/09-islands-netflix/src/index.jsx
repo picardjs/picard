@@ -5,7 +5,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { resolve } from 'path';
-import { initializePicard } from 'picard-js/server';
+import { initializePicard } from 'picard-js/node';
 import { reactConverter, getParams } from './helpers';
 import PageLayout from './PageLayout';
 

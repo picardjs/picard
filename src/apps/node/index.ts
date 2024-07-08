@@ -1,13 +1,13 @@
 import { createListener } from './events';
-import { createDecorator } from './decorator';
 import { createPlatform } from './platform';
 import { createFeed } from '@/common/feed';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
-import { createRenderer } from '@/common/renderer';
-import { createSheet } from '@/common/styles';
-import { createRouter } from '@/common/runtime/router';
+import { createRouter } from '@/common/server/router';
+import { createDecorator } from '@/common/server/decorator';
+import { createSheet } from '@/common/ui/styles';
+import { createRenderer } from '@/common/ui/renderer';
 import { createModuleFederation } from '@/common/formats/module';
 import { createNativeFederation } from '@/common/formats/native';
 import { createPilet } from '@/common/formats/pilet';

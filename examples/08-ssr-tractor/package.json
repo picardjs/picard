@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "start": "node dist/server.js",
-    "build": "esbuild src/index.jsx --platform=node --bundle --outfile=dist/server.js --alias:picard-js/server=../../dist/server/picard.js"
+    "build": "esbuild src/index.jsx --platform=node --bundle --outfile=dist/server.js --alias:picard-js/node=../../dist/node/picard.js"
   },
   "dependencies": {
     "express": "^4",

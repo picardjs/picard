@@ -46,6 +46,10 @@ test('pilet is loaded', async ({ page }) => {
   await expect(page.locator('li:nth-child(5)')).toContainText('Hello from "test5": 🇩🇰.');
 });
 
+test('module federation v2 is loaded', async ({ page }) => {
+  await expect(page.locator('li:nth-child(6)')).toContainText('Hello from "test6": 🀄️.');
+});
+
 test('triggering HTTP request from native federation works', async ({ page }) => {
   const dialogs: Array<string> = [];
   page.on('dialog', (dialog) => {

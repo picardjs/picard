@@ -6,6 +6,7 @@ interface SingleSpaParcel {
   mount(props: any): void;
   unmount(props: any): void;
   update(props: any): void;
+  unload(): Promise<void>;
 }
 
 export function createSingleSpaConverter(): ConverterService {
@@ -13,8 +14,11 @@ export function createSingleSpaConverter(): ConverterService {
     convert(component: SingleSpaParcel) {
       return {
         ...emptyLifecycle,
-        bootstrap() {
-          return component.bootstrap();
+        load() {
+          return component.bootstrap?.() ?? Promise.resolve();
+        },
+        unload() {
+          return component.unload?.() ?? Promise.resolve();
         },
         mount(container, props, locals) {
           locals.container = container;

@@ -49,7 +49,7 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
 
       return {
         async load(name: string) {
-          const key = `./${name}`;
+          const key = name.startsWith('./') ? name : `./${name}`;
           const item = exposes?.find((m) => m.key === key);
 
           if (item) {

@@ -1,7 +1,11 @@
-import { initializePicard } from '../client';
+import { initializePicard, PicardOptions } from '../client';
 import type { PicardStore } from '@/types';
 
-const script = document.currentScript;
+const script = document.currentScript as PicardStartScriptElement;
+
+interface PicardStartScriptElement extends HTMLScriptElement {
+  config?: PicardOptions;
+}
 
 function deserializeState() {
   // we obtain the serialized state
@@ -25,8 +29,10 @@ declare global {
 
 const runPicard = () => {
   const feed = script?.getAttribute('feed') || undefined;
+  const options = script?.config;
   const state = deserializeState();
   const scope = initializePicard({
+    ...options,
     feed,
     state,
   });

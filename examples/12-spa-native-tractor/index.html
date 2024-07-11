@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPA with Native Federation - No Tooling!</title>
+<style>
+* {
+  box-sizing: border-box;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+
+body > p {
+  min-width: 500px;
+  max-width: 1000px;
+  margin: auto;
+  padding: 0.5rem 0;
+  line-height: 1.5;
+}
+
+#app {
+  display: grid;
+  grid-column-gap: 20px;
+  grid-gap: 20px;
+  grid-row-gap: 10px;
+  margin: 20px auto;
+  min-width: 500px;
+}
+
+#app {
+  outline: 3px dashed orangered;
+  padding: 15px;
+}
+
+@media only screen and (max-width: 999px) {
+  #app {
+    grid-template-areas:
+      "store basket"
+      "image name"
+      "image options"
+      "image buy"
+      "reco reco";
+    grid-template-columns: 4fr 3fr;
+  }
+}
+
+@media only screen and (min-width: 1000px) {
+  #app {
+    grid-template-areas:
+      "store basket  reco"
+      "image name    reco"
+      "image options reco"
+      "image buy     reco";
+    grid-template-columns: 4fr 3fr 200px;
+    width: 1000px;
+  }
+}
+</style>
+<script>
+function configure({ target }) {
+  target.config = {
+    services: {
+      'framework.react': () => {
+        return {
+          convert(component) {
+            const React = System.get('react@18.2.0');
+            const ReactDom = System.get('react-dom@18.2.0');
+
+            return {
+              mount(container, props) {
+                ReactDom.render(React.createElement(component, props), container);
+              },
+            };
+          }
+        };
+      },
+    }
+  };
+}
+
+window.loadComponent = (remoteName, exposedModule) => {
+  const React = System.get('react@18.2.0');
+  return React.lazy(() => picard.getExport({ name: exposedModule, source: remoteName }).then(comp => ({ default: comp })));
+};
+</script>
+<script src="./dist/picard.js" feed="https://native-federation-demo.my.piral.cloud/api/v1/native-federation" onload="configure(event)"></script>
+</head>
+<body>
+  <p>The main purpose of this example is to show that we can re-use the micro frontends developed using Native Federation for another demo - which assumes React is used for the components.</p>
+  <p>Without any tooling we are able to extend Picard and make the previous assumptions (e.g., <code>window.loadComponent</code> is available) come true.</p>
+  <div id="app">
+    <pi-component name="productPage" source="mf-red" framework="react"></pi-component>
+  </div>
+</body>
+</html>

@@ -19,6 +19,7 @@ const demos = {
     '05-static-page-with-routing',
     '06-static-page-single-spa',
     '10-dependencies-sharing',
+    '12-spa-native-tractor',
   ],
 };
 

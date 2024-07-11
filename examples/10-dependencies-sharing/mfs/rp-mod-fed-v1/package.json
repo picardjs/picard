@@ -1,5 +1,5 @@
 {
-  "name": "rp-mod-fed",
+  "name": "rp-mod-fed-v1",
   "version": "0.0.0",
   "scripts": {
     "start": "rspack serve --port 6003",

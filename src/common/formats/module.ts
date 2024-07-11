@@ -2,6 +2,7 @@ import type {
   ModuleFederationEntry,
   ModuleFederationContainer,
   ModuleFederationFactoryScope,
+  ModuleFederationManifestV2,
   DependencyInjector,
   LoaderService,
   ModuleResolver,
@@ -59,7 +60,29 @@ function extractSharedDependencies(parent: string, scope: ModuleFederationFactor
   loader.registerResolvers(dependencies);
 }
 
-async function loadRemote(platform: PlatformService, entry: ModuleFederationEntry): Promise<ModuleFederationContainer> {
+async function loadRemoteV2(
+  platform: PlatformService,
+  entry: ModuleFederationEntry,
+): Promise<ModuleFederationContainer> {
+  const manifest = await platform.loadJson<ModuleFederationManifestV2>(entry.url);
+  const { globalName, remoteEntry } = manifest.metaData;
+  const { name, type } = remoteEntry;
+  const url = new URL(name, entry.url);
+
+  switch (type) {
+    case 'module':
+      return await platform.loadModule(url.href);
+    case 'global':
+    default:
+      await platform.loadScript(url.href);
+      return window[globalName];
+  }
+}
+
+async function loadRemoteV1(
+  platform: PlatformService,
+  entry: ModuleFederationEntry,
+): Promise<ModuleFederationContainer> {
   const { id, url, type } = entry;
   const varName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
 
@@ -71,6 +94,14 @@ async function loadRemote(platform: PlatformService, entry: ModuleFederationEntr
       await platform.loadScript(url);
       return window[varName];
   }
+}
+
+function loadRemote(platform: PlatformService, entry: ModuleFederationEntry) {
+  if (entry.id) {
+    return loadRemoteV1(platform, entry);
+  }
+
+  return loadRemoteV2(platform, entry);
 }
 
 async function loadFactory(loader: LoaderService, remote: ModuleFederationContainer, entry: ModuleFederationEntry) {

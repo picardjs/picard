@@ -14,6 +14,15 @@
     margin: 0;
     flex-direction: column;
   }
+  canvas {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    margin: auto;
+    pointer-events: none;
+  }
 </style>
 <script src="./dist/picard.js"></script>
 </head>
@@ -25,10 +34,11 @@
   <div class="container">
     <ul class="examples">
       <li><pi-component name="example" source="/mfs/wp-mod-fed/dist/remoteEntry.mjs" format="module" remote-name="test1" remote-type="esm"></pi-component></li>
-      <li><pi-component name="example" source="/mfs/rp-mod-fed/dist/remoteEntry.js" format="module" remote-name="test2" remote-type="var"></pi-component></li>
+      <li><pi-component name="example" source="/mfs/rp-mod-fed-v1/dist/remoteEntry.js" format="module" remote-name="test2" remote-type="var"></pi-component></li>
       <li><pi-component name="example" source="/mfs/nat-fed-1/dist/remoteEntry.json" format="native"></pi-component></li>
       <li><pi-component name="example" source="/mfs/nat-fed-2/dist/remoteEntry.json" format="native"></pi-component></li>
       <li><pi-component name="example" source="/mfs/pilet/index.meta.json" format="pilet"></pi-component></li>
+      <li><pi-component name="example" source="/mfs/rp-mod-fed-v2/dist/mf-manifest.json" format="module"></pi-component></li>
     </ul>
   </div>
 </body>

@@ -4,6 +4,7 @@
 
 - Extended and aligned event names and arguments
 - Updated the lifecycle model for consistency
+- Added support for Module Federation v2 manifest
 - Added extensible part services for the SSR decorator
 
 ## 0.1.0 (July 8, 2024)

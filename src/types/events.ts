@@ -73,6 +73,40 @@ export interface UnmountedComponentEvent {
 }
 
 /**
+ * Gets fired when a pi-slot mounts.
+ */
+export interface MountedSlotEvent {
+  /**
+   * The corresponding HTML element.
+   */
+  element: HTMLElement;
+}
+
+/**
+ * Gets fired when a pi-slot unmounts.
+ */
+export interface UnmountedSlotEvent {
+  /**
+   * The corresponding HTML element.
+   */
+  element: HTMLElement;
+}
+
+/**
+ * Gets fired when a pi-component changes data.
+ */
+export interface ChangedDataEvent {
+  /**
+   * The currently deserialized data.
+   */
+  current: any;
+  /**
+   * The currently available data serialization.
+   */
+  data: string;
+}
+
+/**
  * Gets fired when any event occurs.
  */
 export interface AnyEvent {
@@ -96,8 +130,11 @@ export interface PicardEventMap {
   'unloaded-microfrontend': UnloadMicrofrontendEvent;
   'updated-microfrontends': UpdatedMicrofrontendsEvent;
   'resolved-dependency': ResolvedDependencyEvent;
+  'mounted-slot': MountedSlotEvent;
+  'unmounted-slot': UnmountedSlotEvent;
   'mounted-component': MountedComponentEvent;
   'unmounted-component': UnmountedComponentEvent;
+  'changed-data': ChangedDataEvent;
   '*': AnyEvent;
   [custom: string]: any;
 }

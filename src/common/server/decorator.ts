@@ -161,27 +161,14 @@ async function Slot(
   return renderFallback(attribs, document);
 }
 
-async function Part(injector: DependencyInjector, attribs: Record<string, string>): Promise<string> {
-  if (attribs.name === 'style') {
-    const scope = injector.get('scope');
-    const sheet = injector.get('sheet');
-    const assets = await scope.loadAssets('css');
-
-    const internals = `<style>${sheet?.content}</style>`;
-
-    const externals = assets
-      .map((id) => scope.retrieveAsset(id))
-      .filter(Boolean)
-      .map(
-        (asset) =>
-          `<link rel="stylesheet" href=${JSON.stringify(asset.url)} data-origin=${JSON.stringify(asset.origin)} data-ref-id=${JSON.stringify(asset.id)}>`,
-      )
-      .join('');
-
-    return `${internals}${externals}`;
-  }
-
-  return `<!-- here would be the part for "${attribs.name}" -->`;
+async function Part(
+  injector: DependencyInjector,
+  attribs: Record<string, string>,
+  document: Document,
+): Promise<string> {
+  const name = attribs.name;
+  const part = injector.get(`part.${name}`);
+  return part?.getReplacement(document, attribs) ?? `<!-- part: "${name}" -->`;
 }
 
 export function createDecorator(injector: DependencyInjector): DecoratorService {

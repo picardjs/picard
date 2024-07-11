@@ -203,14 +203,6 @@ export function createElements(injector: DependencyInjector) {
       }
     };
 
-    get name() {
-      return this.getAttribute(attrName);
-    }
-
-    set name(value: string) {
-      this.setAttribute(attrName, value);
-    }
-
     get data() {
       return tryJson(this.getAttribute(attrData), {});
     }
@@ -282,7 +274,12 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #update() {
-      this._queue.enqueue(() => this._lc?.update?.(this.data, this._locals));
+      this._queue.enqueue(() => {
+        const data = this.getAttribute(attrData);
+        const current = this.data;
+        this._lc?.update?.(current, this._locals);
+        events.emit('changed-data', { current, data })
+      });
     }
 
     #bootstrap() {
@@ -301,7 +298,7 @@ export function createElements(injector: DependencyInjector) {
       }
 
       this._queue.enqueue(() =>
-        this._lc?.bootstrap?.().catch(() => {
+        this._lc?.load?.().catch(() => {
           this._lc = undefined;
         }),
       );

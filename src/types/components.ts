@@ -1,11 +1,12 @@
 export interface ComponentLifecycle {
-  bootstrap(): Promise<void>;
+  load(): Promise<void>;
   unload(): Promise<void>;
 
   mount(container: HTMLElement, props: any, locals: any): void;
   unmount(container: HTMLElement, locals: any): void;
   update(props: any, locals: any): void;
 
+  bootstrap(): Promise<void>;
   stringify(props: any): Promise<string>;
 }
 

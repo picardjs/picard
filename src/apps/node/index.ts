@@ -7,6 +7,7 @@ import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
 import { createRouter } from '@/common/server/router';
 import { createDecorator } from '@/common/server/decorator';
+import { createStylePart } from '@/common/server/style-part';
 import { createSheet } from '@/common/ui/styles';
 import { createRenderer } from '@/common/ui/renderer';
 import { createModuleFederation } from '@/common/formats/module';
@@ -14,7 +15,7 @@ import { createNativeFederation } from '@/common/formats/native';
 import { createPilet } from '@/common/formats/pilet';
 import { createDefaultConverter } from '@/common/frameworks/default';
 import { createHtmlConverter } from '@/common/frameworks/html';
-import type { DecoratorService, FeedDefinition, FeedService } from '@/types';
+import type { DecoratorService, FeedDefinition, FeedService, PartService } from '@/types';
 
 export interface PicardOptions {
   componentName?: string;
@@ -40,6 +41,7 @@ declare module '@/types/injector' {
   interface Services {
     decorator: DecoratorService;
     feed: FeedService;
+    [part: `part.${string}`]: PartService;
   }
 
   interface Configuration {
@@ -89,6 +91,7 @@ export function initializePicard(options?: PicardOptions) {
     'format.pilet': createPilet,
     'framework.default': createDefaultConverter,
     'framework.html': createHtmlConverter,
+    'part.style': createStylePart,
   };
 
   return createInjector(serviceDefinitions).instantiate('loader').instantiate('feed').get('decorator');

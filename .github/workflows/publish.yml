@@ -7,8 +7,13 @@ on:
     branches: [develop]
 
 jobs:
+  tests:
+    uses: ./github/workflows/playwright.yml
+
   build:
     runs-on: ubuntu-latest
+
+    needs: tests
 
     steps:
       - uses: actions/checkout@v2

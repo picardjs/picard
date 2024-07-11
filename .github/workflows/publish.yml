@@ -8,12 +8,7 @@ on:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run Tests
-        uses: ./github/workflows/playwright.yml
+    uses: ./github/workflows/playwright.yml@develop
 
   build:
     runs-on: ubuntu-latest

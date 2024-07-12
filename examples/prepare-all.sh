@@ -27,6 +27,6 @@ npm i
 npm run build
 cd ..
 
-cd 13-spa-tractor-v2/mfs
+cd 13-spa-tractor-v2-full/mfs
 ./prepare-mfs.sh
 cd ../..

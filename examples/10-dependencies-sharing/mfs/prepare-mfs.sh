@@ -12,11 +12,11 @@ cd pilet
 npm i
 npm run build
 cd ..
-cd rp-mod-fed-1
+cd rp-mod-fed-v1
 npm i
 npm run build
 cd ..
-cd rp-mod-fed-2
+cd rp-mod-fed-v2
 npm i
 npm run build
 cd ..

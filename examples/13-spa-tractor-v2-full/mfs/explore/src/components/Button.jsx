@@ -1,6 +1,6 @@
 import { h } from 'preact';
 
-export default ({ href, type, value, disabled, rounded, className, children, dataId, variant = 'secondary' }) => {
+export default ({ href, type, value, disabled, rounded, className, children, dataId, variant = 'secondary', onClick}) => {
   const tag = href ? 'a' : 'button';
   return h(
     tag,
@@ -9,6 +9,7 @@ export default ({ href, type, value, disabled, rounded, className, children, dat
       href,
       type,
       value,
+      onClick,
       'data-id': dataId ? dataId : undefined,
       class: `e_Button e_Button--${variant} ${className} ${rounded ? 'e_Button--rounded' : ''}`,
     },

@@ -5,6 +5,15 @@ import { src, srcset } from '../js/utils';
 export default ({ sku, id, name, quantity, total, image }) => {
   const url = `/product/${id}?sku=${sku}`;
 
+  function submit(ev) {
+    window.dispatchEvent(
+      new CustomEvent('remove-from-cart', {
+        detail: { sku },
+      }),
+    );
+    ev.preventDefault();
+  }
+
   return (
     <li class="c_LineItem">
       <a href={url} class="c_LineItem__image">
@@ -27,7 +36,7 @@ export default ({ sku, id, name, quantity, total, image }) => {
         <div class="c_LineItem__quantity">
           <span>{quantity}</span>
 
-          <form action="/checkout/cart/remove" method="post">
+          <form action="/checkout/cart/remove" method="post" onSubmit={submit}>
             <input type="hidden" name="sku" value={sku} />
             <Button
               variant="secondary"

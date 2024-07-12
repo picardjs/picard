@@ -10,7 +10,7 @@ build({
   minify: true,
   format: 'esm',
   platform: 'browser',
-  external: ['preact'],
+  external: ['preact', 'preact/hooks'],
   outdir: 'dist',
   jsxFactory: 'h',
 });

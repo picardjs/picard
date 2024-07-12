@@ -147,8 +147,8 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #details(): [string, any] {
-      const rel = this.getAttribute('rel') || 'default';
-      const service = injector.get(`slotRel.${rel}`);
+      const rel = this.getAttribute('rel');
+      const service = rel && injector.get(`slotRel.${rel}`);
 
       if (!service) {
         return [this.name, this.data];
@@ -164,7 +164,8 @@ export function createElements(injector: DependencyInjector) {
       });
 
       this._queue.enqueue((content: string) => {
-        const itemTemplate = document.getElementById(this.getAttribute(attrItemTemplateId) || '');
+        const itemTemplateId = this.getAttribute(attrItemTemplateId) || '';
+        const itemTemplate = itemTemplateId && document.getElementById(itemTemplateId);
         this._empty = !!content;
         this.innerHTML = '';
         this._components = [];

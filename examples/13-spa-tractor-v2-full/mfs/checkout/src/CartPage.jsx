@@ -2,6 +2,7 @@ import { h } from 'preact';
 import LineItem from './components/LineItem';
 import Button from './components/Button';
 import data from './data/db.json';
+import { useLineItems } from './data/store';
 import { getLifecycle } from './js/utils';
 
 function convertToLineItems(items) {
@@ -15,8 +16,8 @@ function convertToLineItems(items) {
 }
 
 const CartPage = () => {
-  const cookieLineItems = [];//TODO
-  const lineItems = convertToLineItems(cookieLineItems);
+  const rawLineItems = useLineItems();
+  const lineItems = convertToLineItems(rawLineItems);
   const total = lineItems.reduce((res, { total }) => res + total, 0);
   const skus = lineItems.map(({ sku }) => sku);
 

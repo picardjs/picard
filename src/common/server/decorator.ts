@@ -63,8 +63,8 @@ function renderFallback(attribs: Record<string, string>, document: Document) {
 }
 
 function getSlotParameters(injector: DependencyInjector, attribs: Record<string, string>): [string, any] {
-  const { name, rel = 'default' } = attribs;
-  const service = injector.get(`slotRel.${rel}`);
+  const { name, rel } = attribs;
+  const service = rel && injector.get(`slotRel.${rel}`);
 
   if (!service) {
     const data = tryJson(attribs.data, {});

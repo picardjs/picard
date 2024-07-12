@@ -24,7 +24,7 @@
   max-height: calc(90vh - 2rem);
   max-width: 100%;
   padding: 0 5px;
-  overflow: scroll;
+  overflow: auto;
 }
 
 .e_StorePicker_list {

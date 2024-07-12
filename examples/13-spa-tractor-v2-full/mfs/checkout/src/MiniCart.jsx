@@ -1,9 +1,10 @@
 import { h } from 'preact';
 import Button from './components/Button';
+import { useLineItems } from './data/store';
 import { getLifecycle } from './js/utils';
 
 const MiniCart = () => {
-  const lineItems = [];//TODO
+  const lineItems = useLineItems();
   const quantity = lineItems.reduce((t, { quantity }) => t + quantity, 0);
 
   return (

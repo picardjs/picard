@@ -1,12 +1,34 @@
 import { h } from 'preact';
+import { useState } from 'preact/hooks';
 import VariantOption from './components/VariantOption';
 import data from './data/db.json';
 import { src, srcset, getLifecycle } from './js/utils';
 
+function useSku() {
+  const [sku, setSku] = useState(() => new URL(location.href).searchParams.get('sku'));
+
+  return [
+    sku,
+    (val) => {
+      history.replaceState(null, null, `?sku=${val}`);
+      setSku(val);
+    },
+  ];
+}
+
 const ProductPage = ({ id }) => {
-  const sku = new URL(location.href).searchParams.get('sku');
+  const [sku, setSku] = useSku();
   const { name, variants, highlights = [] } = data.products.find((p) => p.id === id);
   const variant = variants.find((v) => v.sku === sku) || variants[0];
+
+  const handleSkuSelect = (ev) => {
+    const attr = ev.target.getAttribute('href');
+
+    if (attr) {
+      const val = attr.substring(attr.indexOf('?sku=') + 5);
+      setSku(val);
+    }
+  };
 
   return (
     <div data-boundary-page="decide">
@@ -29,7 +51,7 @@ const ProductPage = ({ id }) => {
                 <li>{highlight}</li>
               ))}
             </ul>
-            <ul class="d_ProductPage__variants">
+            <ul class="d_ProductPage__variants" onClick={handleSkuSelect}>
               {variants.map((v) => (
                 <VariantOption {...{ ...v, selected: v.sku === variant.sku }} />
               ))}

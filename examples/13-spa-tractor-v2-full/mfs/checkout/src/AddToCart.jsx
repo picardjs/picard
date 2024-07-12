@@ -7,8 +7,18 @@ const AddToCart = ({ sku }) => {
   const variant = data.variants.find((p) => p.sku === sku);
   const outOfStock = variant.inventory === 0;
 
+  function submit(ev) {
+    window.dispatchEvent(
+      new CustomEvent('add-to-cart', {
+        detail: { sku },
+      }),
+    );
+    history.pushState({}, undefined, '/checkout/cart');
+    ev.preventDefault();
+  }
+
   return (
-    <form action="/checkout/cart/add" method="POST" class="c_AddToCart" data-boundary="checkout">
+    <form action="/checkout/cart/add" method="POST" class="c_AddToCart" data-boundary="checkout" onSubmit={submit}>
       <input type="hidden" name="sku" value={sku} />
       <div class="c_AddToCart__information">
         <p>{variant.price} Ø</p>

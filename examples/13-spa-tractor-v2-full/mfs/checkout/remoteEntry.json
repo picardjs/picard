@@ -8,6 +8,22 @@
       "singleton": true,
       "strictVersion": true,
       "version": "10.22.1"
+    },
+    {
+      "packageName": "preact/hooks",
+      "outFileName": "https://esm.sh/preact@10.22.1/hooks",
+      "requiredVersion": "^10",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "10.22.1"
+    },
+    {
+      "packageName": "canvas-confetti",
+      "outFileName": "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm",
+      "requiredVersion": "^1",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "1.9.2"
     }
   ],
   "exposes": [

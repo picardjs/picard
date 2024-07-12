@@ -1,0 +1,47 @@
+{
+  "name": "explore",
+  "shared": [
+    {
+      "packageName": "preact",
+      "outFileName": "https://esm.sh/preact@10.22.1",
+      "requiredVersion": "^10",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "10.22.1"
+    }
+  ],
+  "exposes": [
+    {
+      "key": "./page:/products{/:category}?",
+      "outFileName": "./dist/CategoryPage.js"
+    },
+    {
+      "key": "./page:/",
+      "outFileName": "./dist/HomePage.js"
+    },
+    {
+      "key": "./page:/stores",
+      "outFileName": "./dist/StoresPage.js"
+    },
+    {
+      "key": "./Recommendations",
+      "outFileName": "./dist/Recommendations.js"
+    },
+    {
+      "key": "./StorePicker",
+      "outFileName": "./dist/StorePicker.js"
+    },
+    {
+      "key": "./Header",
+      "outFileName": "./dist/Header.js"
+    },
+    {
+      "key": "./Footer",
+      "outFileName": "./dist/Footer.js"
+    },
+    {
+      "key": "./styles",
+      "outFileName": "./dist/styles.css"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { tryJson } from '@/common/utils/json';
 import type { PiComponentProps, PiSlotProps } from '@/types/browser';
 import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent } from '@/types';
 
@@ -38,17 +39,6 @@ function createQueue(): ElementQueue {
 
 function createFragment() {
   return document.createDocumentFragment();
-}
-
-function tryJson(content: string, fallback: any) {
-  if (content) {
-    try {
-      return JSON.parse(content);
-    } catch {
-      // empty on purpose
-    }
-  }
-  return fallback;
 }
 
 function getFragment(template: HTMLTemplateElement) {
@@ -132,7 +122,7 @@ export function createElements(injector: DependencyInjector) {
         this.#reset();
       } else if (name === attrData) {
         const data = this.data;
-        this._components.forEach((m) => m.data = data);
+        this._components.forEach((m) => (m.data = data));
       } else if (name === attrName) {
         this.#reset();
       } else if (name === attrFallbackTemplateId && this._empty) {
@@ -156,9 +146,21 @@ export function createElements(injector: DependencyInjector) {
       this.#start();
     }
 
+    #details(): [string, any] {
+      const rel = this.getAttribute('rel') || 'default';
+      const service = injector.get(`slotRel.${rel}`);
+
+      if (!service) {
+        return [this.name, this.data];
+      }
+
+      return service.apply(Object.fromEntries(this.getAttributeNames().map((name) => [name, this.getAttribute(name)])));
+    }
+
     async #setupChildren() {
       this._queue.enqueue(() => {
-        return fragments.load(this.name, this.data);
+        const [name, data] = this.#details();
+        return fragments.load(name, data);
       });
 
       this._queue.enqueue((content: string) => {
@@ -238,7 +240,16 @@ export function createElements(injector: DependencyInjector) {
     }
 
     static get observedAttributes() {
-      return [attrCid, attrData, attrName, attrFormat, attrSource, attrFallbackTemplateId, attrRemoteName, attrRemoteType];
+      return [
+        attrCid,
+        attrData,
+        attrName,
+        attrFormat,
+        attrSource,
+        attrFallbackTemplateId,
+        attrRemoteName,
+        attrRemoteType,
+      ];
     }
 
     #start() {
@@ -278,7 +289,7 @@ export function createElements(injector: DependencyInjector) {
         const data = this.getAttribute(attrData);
         const current = this.data;
         this._lc?.update?.(current, this._locals);
-        events.emit('changed-data', { current, data })
+        events.emit('changed-data', { current, data });
       });
     }
 
@@ -309,6 +320,32 @@ export function createElements(injector: DependencyInjector) {
     const style = document.createElement('style');
     style.textContent = sheet.content;
     document.head.appendChild(style);
+    const sheets: Record<string, Array<HTMLLinkElement>> = {};
+
+    events.on('updated-microfrontends', async ({ added, removed }) => {
+      const scope = injector.get('scope');
+
+      removed.forEach((name) => {
+        const nodes = sheets[name];
+        nodes?.forEach((node) => node.remove());
+        delete sheets[name];
+      });
+
+      const ids = await scope.loadAssets('css');
+
+      added.forEach((name) => {
+        sheets[name] = ids
+          .map((id) => scope.retrieveAsset(id))
+          .filter((m) => m.origin === name)
+          .map((asset) => {
+            const node = document.createElement('link');
+            node.href = asset.url;
+            node.rel = 'stylesheet';
+            style.insertAdjacentElement('afterend', node);
+            return node;
+          });
+      });
+    });
   }
 
   customElements.define(slotName, PiSlot);

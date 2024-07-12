@@ -1,3 +1,5 @@
 {
-    // https://assets.piral.cloud/pilets/native-federation-demo/mf-blue/1.0.0/remoteEntry.json
+  "checkout": "/mfs/checkout/remoteEntry.json",
+  "decide": "/mfs/decide/remoteEntry.json",
+  "explore": "/mfs/explore/remoteEntry.json"
 }

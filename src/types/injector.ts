@@ -9,6 +9,7 @@ import type { PiletService } from './pilet';
 import type { RendererService } from './renderer';
 import type { RouterService } from './router';
 import type { PicardStore } from './state';
+import type { SlotBehaviorService } from './slot';
 
 export interface Services {
   config: Configuration;
@@ -23,6 +24,7 @@ export interface Services {
   sheet?: SheetService;
   [framework: `framework.${string}`]: ConverterService;
   [format: `format.${string}`]: ContainerService;
+  [slotRel: `slotRel.${string}`]: SlotBehaviorService;
 }
 
 export interface Configuration {

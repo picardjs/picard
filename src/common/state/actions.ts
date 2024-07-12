@@ -1,4 +1,5 @@
 import type { StoreApi } from 'zustand/vanilla';
+import { getUrl } from '@/common/utils/url';
 import { createEmptyMicrofrontend } from '@/common/utils/dto';
 import type { ComponentLifecycle, ComponentRef, PicardMicrofrontend, PicardState, PicardStore } from '@/types';
 
@@ -8,15 +9,6 @@ function generateUID() {
   const first = ('000' + a.toString(36)).slice(-3);
   const second = ('000' + b.toString(36)).slice(-3);
   return first + second;
-}
-
-function getUrl(source: string) {
-  if (typeof location !== 'undefined') {
-    const url = new URL(source, location.href);
-    return url.href;
-  }
-
-  return source;
 }
 
 export function registerAsset(store: StoreApi<PicardState>, origin: PicardMicrofrontend, url: string, type: string) {

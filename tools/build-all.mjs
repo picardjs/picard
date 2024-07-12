@@ -20,6 +20,7 @@ const demos = {
     '06-static-page-single-spa',
     '10-dependencies-sharing',
     '12-spa-native-tractor',
+    '13-spa-tractor-v2-full',
   ],
 };
 

@@ -1,0 +1,39 @@
+{
+  "name": "checkout",
+  "shared": [
+    {
+      "packageName": "preact",
+      "outFileName": "https://esm.sh/preact@10.22.1",
+      "requiredVersion": "^10",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "10.22.1"
+    }
+  ],
+  "exposes": [
+    {
+      "key": "./page:/checkout/cart",
+      "outFileName": "./dist/CartPage.js"
+    },
+    {
+      "key": "./page:/checkout/checkout",
+      "outFileName": "./dist/Checkout.js"
+    },
+    {
+      "key": "./page:/checkout/thanks",
+      "outFileName": "./dist/Thanks.js"
+    },
+    {
+      "key": "./AddToCart",
+      "outFileName": "./dist/AddToCart.js"
+    },
+    {
+      "key": "./MiniCart",
+      "outFileName": "./dist/MiniCart.js"
+    },
+    {
+      "key": "./styles",
+      "outFileName": "./dist/styles.css"
+    }
+  ]
+}

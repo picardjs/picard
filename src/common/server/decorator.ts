@@ -1,6 +1,7 @@
 import { parseDocument } from 'htmlparser2';
 import { render } from 'dom-serializer';
 import { escapeHtml } from '@/common/utils/escape';
+import { tryJson } from '@/common/utils/json';
 import type { ChildNode, Document, Element } from 'domhandler';
 import type { DecoratorService, DependencyInjector } from '@/types';
 
@@ -40,17 +41,6 @@ function findByName(container: Document | Element, name: string): Element {
   return result;
 }
 
-function tryJson(content: string, fallback: any) {
-  if (content) {
-    try {
-      return JSON.parse(content);
-    } catch {
-      // empty on purpose
-    }
-  }
-  return fallback;
-}
-
 type ServerComponent = (
   injector: DependencyInjector,
   attribs: Record<string, string>,
@@ -73,19 +63,15 @@ function renderFallback(attribs: Record<string, string>, document: Document) {
 }
 
 function getSlotParameters(injector: DependencyInjector, attribs: Record<string, string>): [string, any] {
-  const name = attribs.name;
+  const { name, rel = 'default' } = attribs;
+  const service = injector.get(`slotRel.${rel}`);
 
-  if (attribs.rel === 'router') {
-    const router = injector.get('router');
-    const match = router.matchRoute(name);
-
-    if (match) {
-      return [match.name, match.data];
-    }
+  if (!service) {
+    const data = tryJson(attribs.data, {});
+    return [name, data];
   }
 
-  const data = tryJson(attribs.data, {});
-  return [name, data];
+  return service.apply(attribs);
 }
 
 async function renderComponents(injector: DependencyInjector, name: string, data: any) {

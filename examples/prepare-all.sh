@@ -26,3 +26,7 @@ cd 11-ssr-native-tractor
 npm i
 npm run build
 cd ..
+
+cd 13-spa-tractor-v2/mfs
+./prepare-mfs.sh
+cd ../..

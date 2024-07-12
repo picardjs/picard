@@ -1,5 +1,3 @@
-import type { PicardMicrofrontend } from './microfrontend';
-
 export interface PicardAsset {
   /**
    * The id of the asset.

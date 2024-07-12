@@ -18,6 +18,7 @@ import { createDefaultConverter } from '@/common/frameworks/default';
 import { createHtmlConverter } from '@/common/frameworks/html';
 import { createSingleSpaConverter } from '@/common/frameworks/single-spa';
 import { createWebComponentConverter } from '@/common/frameworks/web-component';
+import { createSlotBehaviorForRouter } from '@/common/slot-rels/router';
 import type { DebugService, ElementsService, FeedDefinition, FeedService, FragmentsService } from '@/types';
 
 export interface PicardOptions {
@@ -105,6 +106,7 @@ export function initializePicard(options?: PicardOptions) {
     'framework.default': createDefaultConverter,
     'framework.html': createHtmlConverter,
     'framework.web-component': createWebComponentConverter,
+    'slotRel.router': createSlotBehaviorForRouter,
   };
 
   return createInjector(serviceDefinitions)

@@ -1,3 +1,4 @@
+import { getUrl } from '@/common/utils/url';
 import { createEmptyMicrofrontend } from '@/common/utils/dto';
 import type { DiscoveryResponse, MicroFrontendDefinition, PicardMicrofrontend } from '@/types';
 
@@ -20,7 +21,7 @@ function inferKind(definition: MicroFrontendDefinition): PicardMicrofrontend['fo
   return 'module';
 }
 
-export function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofrontend> {
+export function fromDiscovery(feed: DiscoveryResponse, baseUrl?: string): Array<PicardMicrofrontend> {
   const mfs = feed.microFrontends || {};
 
   return Object.entries(mfs)
@@ -32,19 +33,19 @@ export function fromDiscovery(feed: DiscoveryResponse): Array<PicardMicrofronten
       if (kind === 'module') {
         return createEmptyMicrofrontend(name, kind, definition.url, {
           id: definition.extras?.id || name,
-          url: definition.url,
+          url: getUrl(definition.url, baseUrl),
         });
       } else if (kind === 'native') {
         return createEmptyMicrofrontend(name, kind, definition.url, {
-          url: definition.url,
           exposes: definition.extras?.exposes,
+          url: getUrl(definition.url, baseUrl),
         });
       } else {
         return createEmptyMicrofrontend(name, kind, definition.url, {
           name,
           link: definition.url,
-          url: definition.url,
           spec: definition.extras?.pilet.spec,
+          url: getUrl(definition.url, baseUrl),
         });
       }
     });

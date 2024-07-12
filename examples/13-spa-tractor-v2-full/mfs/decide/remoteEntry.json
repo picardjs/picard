@@ -1,0 +1,23 @@
+{
+  "name": "decide",
+  "shared": [
+    {
+      "packageName": "preact",
+      "outFileName": "https://esm.sh/preact@10.22.1",
+      "requiredVersion": "^10",
+      "singleton": true,
+      "strictVersion": true,
+      "version": "10.22.1"
+    }
+  ],
+  "exposes": [
+    {
+      "key": "./page:/product/:id",
+      "outFileName": "./dist/ProductPage.js"
+    },
+    {
+      "key": "./styles",
+      "outFileName": "./dist/styles.css"
+    }
+  ]
+}

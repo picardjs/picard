@@ -45,7 +45,22 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
         }
       }
 
-      const names = exposes.map((m) => m.key.substring(2));
+      const assets: Array<{ url: string; type: string }> = [];
+      const names: Array<string> = [];
+
+      for (const { key, outFileName } of exposes) {
+        const name = key.substring(2);
+
+        if (/\.m?js$/.test(outFileName)) {
+          names.push(name);
+        } else if (/\.css$/.test(outFileName)) {
+          const entryUrl = new URL(outFileName, entry.url);
+          assets.push({
+            url: entryUrl.href,
+            type: 'css',
+          });
+        }
+      }
 
       return {
         async load(name: string) {
@@ -64,7 +79,7 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
           return names;
         },
         getAssets() {
-          return [];
+          return assets;
         },
       };
     },

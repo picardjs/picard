@@ -1,4 +1,4 @@
-name: Publish Packages
+name: Build Packages
 
 on:
   push:
@@ -16,7 +16,8 @@ jobs:
     needs: tests
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
@@ -35,7 +36,8 @@ jobs:
     if: ${{ github.ref == 'refs/heads/develop' && github.event_name == 'push' }}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
@@ -64,7 +66,8 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:

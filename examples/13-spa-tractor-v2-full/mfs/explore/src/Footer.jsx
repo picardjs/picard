@@ -30,7 +30,7 @@ const Footer = () => {
             <h3>techstack</h3>
             <p>SPA, Native Federation, Picard.js, Preact, esbuild</p>
             <p>
-              build by <img src="https://picard.js.org/picard-logo-mini.png" alt="Picard.js" width="15" height="13" />
+              build by <img src="https://picard.js.org/picard-logo-mini.png" alt="Picard.js" width="14" height="14" />
               <a href="https://picard.js.org" target="_blank">
                 Picard.js
               </a>{' '}

@@ -94,7 +94,7 @@ async function Component(
 
   if ('cid' in attribs || 'name' in attribs) {
     const renderer = injector.get('renderer');
-    const lc = renderer.render(attribs);
+    const lc = renderer.render(attribs, attribs);
 
     if (lc) {
       try {

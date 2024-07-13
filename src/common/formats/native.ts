@@ -1,22 +1,12 @@
+import { getUrl } from '@/common/utils/url';
 import type {
   NativeFederationEntry,
-  NativeFederationExposedEntry,
+  NativeFederationManifest,
   ContainerService,
   DependencyInjector,
+  AssetDefinition,
+  ComponentDefinition,
 } from '@/types';
-
-interface NativeFederationManifest {
-  name: string;
-  shared: Array<{
-    packageName: string;
-    outFileName: string;
-    requiredVersion: string;
-    singleton: boolean;
-    strictVersion: boolean;
-    version: string;
-  }>;
-  exposes: Array<NativeFederationExposedEntry>;
-}
 
 export function createNativeFederation(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
@@ -27,6 +17,9 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
     async createContainer(entry: NativeFederationEntry) {
       let exposes = entry.exposes;
       const depMap: Record<string, string> = {};
+      const assets: Array<AssetDefinition> = [];
+      const components: Array<ComponentDefinition> = [];
+      const componentRefs: Record<string, { url: string; component: undefined | Promise<any> }> = {};
 
       if (!exposes) {
         const manifest = await platform.loadJson<NativeFederationManifest>(entry.url);
@@ -35,48 +28,50 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
         if (manifest.shared.length > 0) {
           loader.registerResolvers(
             manifest.shared.reduce((p, c) => {
-              const depUrl = new URL(c.outFileName, entry.url);
+              const depUrl = getUrl(c.outFileName, entry.url);
               const id = `${c.packageName}@${c.version}`;
               depMap[c.packageName] = `${c.packageName}@${c.requiredVersion}`;
-              p[id] = () => esm.load(depUrl.href, depMap);
+              p[id] = () => esm.load(depUrl, depMap);
               return p;
             }, {}),
           );
         }
       }
 
-      const assets: Array<{ url: string; type: string }> = [];
-      const names: Array<string> = [];
-
       for (const { key, outFileName } of exposes) {
         const name = key.substring(2);
 
         if (/\.m?js$/.test(outFileName)) {
-          names.push(name);
+          components.push({ name });
+          componentRefs[name] = {
+            url: getUrl(outFileName, entry.url),
+            component: undefined,
+          };
         } else if (/\.css$/.test(outFileName)) {
-          const entryUrl = new URL(outFileName, entry.url);
           assets.push({
-            url: entryUrl.href,
+            url: getUrl(outFileName, entry.url),
             type: 'css',
           });
         }
       }
 
       return {
-        async load(name: string) {
-          const key = name.startsWith('./') ? name : `./${name}`;
-          const item = exposes?.find((m) => m.key === key);
+        async load(key: string) {
+          const name = key.startsWith('./') ? key.substring(2) : key;
+          const componentRef = componentRefs[name];
 
-          if (item) {
-            const entryUrl = new URL(item.outFileName, entry.url);
-            const component = await esm.load(entryUrl.href, depMap);
-            return component?.default || component;
+          if (!componentRef) {
+            return undefined;
           }
 
-          return undefined;
+          if (!componentRef.component) {
+            componentRef.component = esm.load(componentRef.url, depMap).then((c) => c?.default || c);
+          }
+
+          return await componentRef.component;
         },
-        getNames() {
-          return names;
+        getComponents() {
+          return components;
         },
         getAssets() {
           return assets;

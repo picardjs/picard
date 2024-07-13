@@ -1,25 +1,17 @@
 import { loadContainer } from './container';
 import { createNewQueue } from './queue';
 import { initializeStore } from './store';
+import { getActiveMfNames, filterItems, mergeItems } from './utils';
 import {
   registerComponent,
   retrieveComponent,
   createMicrofrontend,
-  getExistingLifecycle,
   findMicrofrontend,
   registerAsset,
   retrieveaAsset,
+  findComponent,
 } from './actions';
-import { getActiveMfNames, filterItems, mergeItems } from './utils';
-import { createLazyLifecycle } from '../formats/lifecycle';
-import type {
-  ComponentGetter,
-  ComponentLifecycle,
-  DependencyInjector,
-  PicardAsset,
-  PicardComponent,
-  PicardStore,
-} from '@/types';
+import type { ComponentGetter, DependencyInjector, PicardAsset, PicardComponent, PicardStore } from '@/types';
 
 /**
  * Creates a new scope for obtaining MF information.
@@ -67,15 +59,6 @@ export function createPicardScope(injector: DependencyInjector) {
     }));
   };
 
-  const convert = (lc: ComponentLifecycle, type: string) => {
-    if (lc && type) {
-      const framework = injector.get(`framework.${type}`);
-      return framework ? framework.convert(lc, {}) : lc;
-    }
-
-    return lc;
-  };
-
   const scope: PicardStore = {
     dispose() {
       unsubscribe();
@@ -89,17 +72,14 @@ export function createPicardScope(injector: DependencyInjector) {
     subscribe(listener) {
       return store.subscribe(listener);
     },
-    registerAsset(mf, url, type) {
-      return registerAsset(store, mf, url, type);
+    registerAsset(mf, asset) {
+      return registerAsset(store, mf, asset);
     },
-    registerComponent(mf, name, render) {
-      return registerComponent(store, mf, name, render);
+    registerComponent(mf, component) {
+      return registerComponent(store, mf, component);
     },
     retrieveComponent(id) {
       return retrieveComponent(store, id);
-    },
-    retrieveLifecycle(id) {
-      return scope.retrieveComponent(id)?.render;
     },
     retrieveAsset(id) {
       return retrieveaAsset(store, id);
@@ -117,59 +97,49 @@ export function createPicardScope(injector: DependencyInjector) {
         scope.appendMicrofrontends(mfs);
       });
     },
-    getExport(component) {
+    getComponent(ref) {
       return queue.enqueue(async () => {
-        const existing = findMicrofrontend(scope, component.source);
-        const mf = existing || createMicrofrontend(component);
+        const { cid, name, source } = ref;
 
-        if (!mf.flags) {
-          const container = await loadContainer(injector, mf, containers);
-          const result = await container.load(component.name);
+        if (cid) {
+          const component = scope.retrieveComponent(cid);
+          const mf = findMicrofrontend(scope, component.origin);
 
-          if (!existing) {
-            scope.appendMicrofrontend(mf);
+          if (mf && !mf.flags) {
+            const container = await loadContainer(injector, mf, containers);
+            const result = await container.load(component.name);
+
+            return {
+              ...component,
+              exports: result,
+            };
           }
+        } else if (name && source) {
+          const existing = findMicrofrontend(scope, source);
+          const mf = existing || createMicrofrontend(ref);
 
-          return result;
+          if (mf && !mf.flags) {
+            const container = await loadContainer(injector, mf, containers);
+            const result = await container.load(name);
+            const origin = mf.name;
+
+            if (result && !findComponent(store, name, origin)) {
+              registerComponent(store, mf, { name });
+            }
+
+            if (!existing) {
+              scope.appendMicrofrontend(mf);
+            }
+
+            return {
+              ...findComponent(store, name, origin),
+              exports: result,
+            };
+          }
         }
 
         return undefined;
       });
-    },
-    loadLifecycle(component) {
-      const lc = getExistingLifecycle(scope, component);
-      const type = component.framework;
-
-      if (!lc) {
-        const name = component.name;
-        const promise = queue.enqueue(async () => {
-          let lc = getExistingLifecycle(scope, component);
-
-          if (!lc) {
-            const existing = findMicrofrontend(scope, component.source);
-            const mf = existing || createMicrofrontend(component);
-
-            if (!mf.flags) {
-              const container = await loadContainer(injector, mf, containers);
-              lc = await container.load(name);
-
-              if (lc && !(name in mf.components)) {
-                registerComponent(store, mf, name, lc);
-              }
-
-              if (!existing) {
-                scope.appendMicrofrontend(mf);
-              }
-            }
-          }
-
-          return convert(lc, type);
-        });
-
-        return createLazyLifecycle(() => promise, name);
-      }
-
-      return convert(lc, type);
     },
     loadComponents(name) {
       return queue.enqueue(async () => {
@@ -181,18 +151,18 @@ export function createPicardScope(injector: DependencyInjector) {
             .filter((mf) => !mf.flags)
             .map(async (mf) => {
               const container = await loadContainer(injector, mf, containers);
-              const id = mf.components[name];
+              const { components } = store.getState();
+              let component = components[name].find((m) => m.origin === mf.name);
 
-              if (!id) {
-                const lc = await container.load(name);
-
-                if (lc) {
-                  const c = registerComponent(store, mf, name, lc);
-                  ids.push(c.id);
+              if (!component) {
+                if (await container.load(name)) {
+                  component = registerComponent(store, mf, { name });
+                } else {
+                  return;
                 }
-              } else {
-                ids.push(id);
               }
+
+              ids.push(component.id);
             }),
         );
 
@@ -210,28 +180,28 @@ export function createPicardScope(injector: DependencyInjector) {
         }));
       }
     },
-    toggleMicrofrontend(name) {
+    toggleMicrofrontend(origin) {
       const { microfrontends } = store.getState();
-      const current = microfrontends.find((m) => m.name === name);
+      const current = microfrontends.find((m) => m.name === origin);
 
       if (current?.flags === 0) {
-        disableMicrofrontends([name]);
+        disableMicrofrontends([origin]);
       } else if (current?.flags === 1) {
-        enableMicrofrontend(name);
+        enableMicrofrontend(origin);
       }
     },
-    removeMicrofrontend(name) {
-      scope.removeMicrofrontends([name]);
+    removeMicrofrontend(origin) {
+      scope.removeMicrofrontends([origin]);
     },
-    removeMicrofrontends(names) {
-      if (names.length > 0) {
-        disableMicrofrontends(names, true);
+    removeMicrofrontends(origins) {
+      if (origins.length > 0) {
+        disableMicrofrontends(origins, true);
       }
     },
-    updateMicrofrontend(name, details) {
+    updateMicrofrontend(origin, details) {
       store.setState((state) => ({
         microfrontends: state.microfrontends.map((item: any) =>
-          item.name === name
+          item.name === origin
             ? {
                 ...item,
                 ...details,

@@ -1,18 +1,34 @@
-import type { ComponentRef, DependencyInjector } from '@/types';
+import { createLazyLifecycle } from '@/common/utils/lifecycle';
+import type { DependencyInjector, RendererService } from '@/types';
 
-export function createRenderer(injector: DependencyInjector) {
+export function createRenderer(injector: DependencyInjector): RendererService {
   const scope = injector.get('scope');
 
+  function convert(component: any, meta: any, type: string) {
+    const framework = injector.get(`framework.${type}`);
+    return framework && component ? framework.convert(component, meta) : component;
+  }
+
   return {
-    render(component: ComponentRef) {
-      if (typeof component.cid === 'string') {
-        // look up if we have this component via its ID.
-        return scope.retrieveLifecycle(component.cid);
-      } else if (typeof component.source === 'string') {
-        return scope.loadLifecycle(component);
+    render(component, opts) {
+      const result = scope.getComponent(component);
+
+      if (result) {
+        return createLazyLifecycle(() =>
+          result.then((c) => {
+            const { meta, type = 'default' } = c;
+            const { framework = type } = opts;
+            const lc = convert(c.exports, meta, framework);
+
+            if (!lc) {
+              throw new Error(`The component "${c.name}" could not be loaded.`);
+            }
+
+            return lc;
+          }),
+        );
       }
 
-      // Fallback; render nothing
       return undefined;
     },
   };

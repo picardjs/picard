@@ -1,3 +1,4 @@
+import { getUrl } from '@/common/utils/url';
 import type {
   ModuleFederationEntry,
   ModuleFederationContainer,
@@ -8,6 +9,9 @@ import type {
   ModuleResolver,
   ContainerService,
   PlatformService,
+  AssetDefinition,
+  ComponentDefinition,
+  ComponentGetter,
 } from '@/types';
 
 const root = '__picard__';
@@ -60,48 +64,28 @@ function extractSharedDependencies(parent: string, scope: ModuleFederationFactor
   loader.registerResolvers(dependencies);
 }
 
-async function loadRemoteV2(
+async function loadRemoteEntryPoint(
   platform: PlatformService,
-  entry: ModuleFederationEntry,
+  url: string,
+  type: string,
+  globalName: string,
 ): Promise<ModuleFederationContainer> {
-  const manifest = await platform.loadJson<ModuleFederationManifestV2>(entry.url);
-  const { globalName, remoteEntry } = manifest.metaData;
-  const { name, type } = remoteEntry;
-  const url = new URL(name, entry.url);
-
   switch (type) {
     case 'module':
-      return await platform.loadModule(url.href);
-    case 'global':
-    default:
-      await platform.loadScript(url.href);
-      return window[globalName];
-  }
-}
-
-async function loadRemoteV1(
-  platform: PlatformService,
-  entry: ModuleFederationEntry,
-): Promise<ModuleFederationContainer> {
-  const { id, url, type } = entry;
-  const varName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
-
-  switch (type) {
     case 'esm':
       return await platform.loadModule(url);
+    case 'global':
     case 'var':
     default:
       await platform.loadScript(url);
-      return window[varName];
-  }
-}
+      const remote = window[globalName];
 
-function loadRemote(platform: PlatformService, entry: ModuleFederationEntry) {
-  if (entry.id) {
-    return loadRemoteV1(platform, entry);
-  }
+      if (!remote) {
+        throw new Error(`The remote "${globalName}" was not found in "${url}".`);
+      }
 
-  return loadRemoteV2(platform, entry);
+      return remote;
+  }
 }
 
 async function loadFactory(loader: LoaderService, remote: ModuleFederationContainer, entry: ModuleFederationEntry) {
@@ -114,37 +98,116 @@ async function loadFactory(loader: LoaderService, remote: ModuleFederationContai
   return remote;
 }
 
+async function loadContainerV2(
+  platform: PlatformService,
+  loader: LoaderService,
+  entry: ModuleFederationEntry,
+): Promise<ComponentGetter> {
+  const assets: Array<AssetDefinition> = [];
+  const components: Array<ComponentDefinition> = [];
+  const componentRefs: Record<string, { component: undefined | Promise<any> }> = {};
+  const manifest = await platform.loadJson<ModuleFederationManifestV2>(entry.url);
+  const { globalName, remoteEntry } = manifest.metaData;
+  const { name, type } = remoteEntry;
+  const remote = await loadRemoteEntryPoint(platform, getUrl(name, entry.url), type, globalName);
+  const container = await loadFactory(loader, remote, entry);
+
+  for (const item of manifest.exposes) {
+    const name = item.name;
+    components.push({ name });
+    componentRefs[name] = { component: undefined };
+
+    for (const path of item.assets.css.sync) {
+      assets.push({
+        type: 'css',
+        url: getUrl(path, entry.url),
+      });
+    }
+  }
+
+  return {
+    async load(name) {
+      const componentRef = componentRefs[name];
+
+      if (!componentRef) {
+        return undefined;
+      }
+
+      if (!componentRef.component) {
+        componentRef.component = container
+          .get(name)
+          .then((factory) => factory())
+          .then((c) => c?.default || c);
+      }
+
+      return await componentRef.component;
+    },
+    getComponents() {
+      return components;
+    },
+    getAssets() {
+      return assets;
+    },
+  };
+}
+
+async function loadContainerV1(
+  platform: PlatformService,
+  loader: LoaderService,
+  entry: ModuleFederationEntry,
+): Promise<ComponentGetter> {
+  const componentRefs: Record<string, { component: undefined | Promise<any> }> = {};
+  const { id, url, type } = entry;
+  const varName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
+  const remote = await loadRemoteEntryPoint(platform, url, type, varName);
+  const container = await loadFactory(loader, remote, entry);
+
+  return {
+    async load(name) {
+      let componentRef = componentRefs[name];
+
+      if (!componentRef) {
+        componentRef = {
+          component: container
+            .get(name)
+            .then((factory) => factory())
+            .then((c) => c?.default || c)
+            .catch(() => undefined),
+        };
+
+        componentRefs[name] = componentRef;
+      }
+
+      return await componentRef.component;
+    },
+    getComponents() {
+      return [];
+    },
+    getAssets() {
+      return [];
+    },
+  };
+}
+
+function loadContainer(
+  platform: PlatformService,
+  loader: LoaderService,
+  entry: ModuleFederationEntry,
+): Promise<ComponentGetter> {
+  if (entry.id) {
+    return loadContainerV1(platform, loader, entry);
+  }
+
+  return loadContainerV2(platform, loader, entry);
+}
+
 export function createModuleFederation(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
   const platform = injector.get('platform');
 
   return {
-    async createContainer(entry: ModuleFederationEntry) {
-      const remote = await loadRemote(platform, entry);
-
-      if (!remote) {
-        throw new Error(`The remote "${entry.id}" was not found in "${entry.url}".`);
-      }
-
-      const container = await loadFactory(loader, remote, entry);
-
-      return {
-        async load(name) {
-          try {
-            const factory = await container.get(name);
-            const component = factory();
-            return component.default || component;
-          } catch (e) {
-            return undefined;
-          }
-        },
-        getNames() {
-          return [];
-        },
-        getAssets() {
-          return [];
-        },
-      };
+    createContainer(entry: ModuleFederationEntry) {
+      return loadContainer(platform, loader, entry);
     },
   };
 }

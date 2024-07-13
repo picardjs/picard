@@ -81,7 +81,7 @@ function configure({ target }) {
 
 window.loadComponent = (remoteName, exposedModule) => {
   const React = System.get('react@18.2.0');
-  return React.lazy(() => picard.getExport({ name: exposedModule, source: remoteName }).then(comp => ({ default: comp })));
+  return React.lazy(() => picard.getComponent({ name: exposedModule, source: remoteName }).then(comp => ({ default: comp.exports })));
 };
 </script>
 <script src="./dist/picard.js" feed="https://native-federation-demo.my.piral.cloud/api/v1/native-federation" onload="configure(event)"></script>

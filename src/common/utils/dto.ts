@@ -13,6 +13,6 @@ export function createEmptyMicrofrontend<T extends PicardMicrofrontend['format']
     details,
     flags: 0,
     assets: [],
-    components: {},
+    components: [],
   };
 }

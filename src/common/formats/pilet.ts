@@ -1,5 +1,12 @@
-import { createLazyLifecycle } from './lifecycle';
-import type { ContainerService, DependencyInjector, PiletApi, PiletEntry } from '@/types';
+import { getUrl } from '@/common/utils/url';
+import type {
+  AssetDefinition,
+  ComponentDefinition,
+  ContainerService,
+  DependencyInjector,
+  PiletApi,
+  PiletEntry,
+} from '@/types';
 
 interface PiletManifest {
   name: string;
@@ -22,14 +29,15 @@ export function createPilet(injector: DependencyInjector): ContainerService {
 
   return {
     async createContainer(entry: PiletEntry) {
-      const components = {};
-      const assets = [];
+      const components: Array<ComponentDefinition> = [];
+      const componentRefs: Record<string, any> = {};
+      const assets: Array<AssetDefinition> = [];
       let link = entry.url;
 
       if (!entry.name) {
         const manifest = await platform.loadJson<PiletManifest>(entry.url);
         const { main, dependencies = {} } = manifest;
-        link = new URL(main, entry.url).href;
+        link = getUrl(main, entry.url);
         loader.registerUrls(dependencies);
       } else {
         const { dependencies = {} } = entry;
@@ -39,22 +47,22 @@ export function createPilet(injector: DependencyInjector): ContainerService {
       const app = await loader.load(link);
 
       if (app && 'setup' in app) {
-        const basePath = new URL('.', link);
+        const basePath = getUrl('.', link);
         const api: PiletApi = {
           meta: {
-            basePath: basePath.href,
+            basePath,
           },
           registerComponent(name: string, component: any, opts: any = {}) {
-            const { type = '', ...rest } = opts;
-            const framework = type && injector.get(`framework.${type}`);
-            const lc = framework ? framework.convert(component, { ...rest, api }) : component;
-            components[name] = typeof lc === 'function' ? createLazyLifecycle(lc, name) : lc;
+            const { type, ...rest } = opts;
+            const meta = { ...rest, api };
+            componentRefs[name] = component;
+            components.push({ name, type, meta });
           },
         };
 
         if (Array.isArray(app.styles)) {
           const styleSheets = app.styles.map((style) => ({
-            url: new URL(style, basePath).href,
+            url: getUrl(style, basePath),
             type: 'css',
           }));
           assets.push(...styleSheets);
@@ -66,14 +74,14 @@ export function createPilet(injector: DependencyInjector): ContainerService {
 
       return {
         async load(name) {
-          return components[name];
+          return componentRefs[name];
         },
-        getNames() {
-          return Object.keys(components);
+        getComponents() {
+          return components;
         },
         getAssets() {
           return assets;
-        }
+        },
       };
     },
   };

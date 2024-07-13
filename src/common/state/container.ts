@@ -13,16 +13,15 @@ export async function loadContainer(
     container = service.createContainer(details).then(
       async (c) => {
         const assets = c.getAssets();
-        const names = c.getNames();
+        const components = c.getComponents();
         const scope = injector.get('scope');
 
         for (const asset of assets) {
-          scope.registerAsset(mf, asset.url, asset.type);
+          scope.registerAsset(mf, asset);
         }
 
-        for (const name of names) {
-          const comp = await c.load(name);
-          scope.registerComponent(mf, name, comp);
+        for (const component of components) {
+          scope.registerComponent(mf, component);
         }
 
         return c;
@@ -34,7 +33,7 @@ export async function loadContainer(
           getAssets() {
             return [];
           },
-          getNames() {
+          getComponents() {
             return [];
           },
           load() {

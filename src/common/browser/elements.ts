@@ -175,7 +175,8 @@ export function createElements(injector: DependencyInjector) {
           fragment.innerHTML = content;
           this.appendChild(fillTemplate(getFragment(fragment), itemTemplate, this._components));
         } else {
-          const fallbackTemplate = document.getElementById(this.getAttribute(attrFallbackTemplateId) || '');
+          const fallbackTemplateId = this.getAttribute(attrFallbackTemplateId) || '';
+          const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
 
           if (fallbackTemplate instanceof HTMLTemplateElement) {
             this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
@@ -262,7 +263,8 @@ export function createElements(injector: DependencyInjector) {
         if (lc) {
           lc.mount?.(this, this.data, this._locals);
         } else {
-          const fallbackTemplate = document.getElementById(this.getAttribute(attrFallbackTemplateId) || '');
+          const fallbackTemplateId = this.getAttribute(attrFallbackTemplateId) || '';
+          const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
 
           if (fallbackTemplate instanceof HTMLTemplateElement) {
             this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
@@ -297,16 +299,17 @@ export function createElements(injector: DependencyInjector) {
     #bootstrap() {
       const cid = this.getAttribute(attrCid);
       const name = this.getAttribute(attrName);
+      const framework = this.getAttribute(attrFramework) || undefined;
+      const opts = { framework };
 
       if (cid) {
-        this._lc = renderer.render({ cid });
+        this._lc = renderer.render({ cid }, opts);
       } else if (name) {
         const source = this.getAttribute(attrSource);
         const remoteName = this.getAttribute(attrRemoteName);
-        const remoteType = this.getAttribute(attrRemoteType);
+        const remoteType = this.getAttribute(attrRemoteType) as 'esm' | 'var';
         const format = this.getAttribute(attrFormat);
-        const framework = this.getAttribute(attrFramework);
-        this._lc = renderer.render({ name, source, remoteName, remoteType, format, framework });
+        this._lc = renderer.render({ name, source, remoteName, remoteType, format }, opts);
       }
 
       this._queue.enqueue(() =>

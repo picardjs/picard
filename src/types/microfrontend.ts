@@ -8,11 +8,11 @@ export interface BasePicardMicrofrontend {
    */
   name: string;
   /**
-   * The component name-to-id mapping.
+   * The list of associated component IDs.
    */
-  components: Record<string, string>;
+  components: Array<string>;
   /**
-   * The list of asset IDs.
+   * The list of associated asset IDs.
    */
   assets: Array<string>;
   /**

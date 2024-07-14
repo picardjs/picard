@@ -3,6 +3,7 @@
 ## 0.2.3 (July 15, 2024)
 
 - Improved automatic releases of CI/CD pipeline
+- Improved the generated TypeScript declarations
 
 **Note**: ⚠️ Early preview: Not suitable for production yet
 

@@ -53,7 +53,7 @@ declare module '@/types/injector' {
   }
 }
 
-export function initializePicard(options?: PicardOptions) {
+export function initializePicard(options?: PicardOptions): DecoratorService {
   const {
     feed,
     state,

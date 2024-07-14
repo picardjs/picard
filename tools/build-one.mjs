@@ -1,23 +1,30 @@
 import { build } from 'esbuild';
 import { generateDeclaration } from 'dets';
 import { resolve } from 'node:path';
-import { writeFile, readFile } from 'node:fs/promises';
+import { writeFile, readFile, readdir } from 'node:fs/promises';
+
+async function readJson(file) {
+  return JSON.parse(await readFile(file, 'utf8'));
+}
+
+async function createDeclHead(appDir) {
+  const readmePath = resolve(appDir, 'README.md');
+  const readme = await readFile(readmePath, 'utf8');
+  const desc = readme
+    .split('\n')
+    .filter((line) => !line.startsWith('#') && line.length > 0)
+    .map((line) => ` * ${line}`);
+  return ['/**', ...desc, ' * @module', ' */'].join('\n');
+}
 
 export async function buildOne(app) {
   const root = resolve(process.cwd(), 'src');
-  const info = resolve(root, `apps/${app}/app.json`);
-  const {
-    name,
-    platform,
-    minify,
-    entry,
-    formats,
-    outDirs,
-    globalName,
-  } = JSON.parse(await readFile(info, 'utf8'));
+  const appDir = resolve(root, `apps/${app}`);
+  const typesDir = resolve(root, 'types');
+  const { name, platform, minify, entry, formats, outDirs, globalName } = await readJson(resolve(appDir, `app.json`));
 
   const entryPoints = {
-    [name]: resolve(root, `apps/${app}`, entry),
+    [name]: resolve(appDir, entry),
   };
   const logOverride = {
     'package.json': 'verbose',
@@ -53,15 +60,18 @@ export async function buildOne(app) {
     }
 
     if (declfile) {
+      const declFiles = await readdir(typesDir);
+      const files = declFiles.map((file) => resolve(typesDir, file));
       const declName = resolve(outdir, `${name}.d.ts`);
+      const declHead = await createDeclHead(appDir);
       const declText = await generateDeclaration({
         name,
-        files: [],
+        files,
+        types: [...files, ...Object.values(entryPoints)],
+        root: appDir,
         noModuleDeclaration: true,
-        types: Object.values(entryPoints),
       });
-
-      await writeFile(declName, declText, 'utf8');
+      await writeFile(declName, `${declHead}\n\n${declText}`, 'utf8');
     }
   }
 

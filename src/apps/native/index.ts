@@ -13,7 +13,7 @@ import { createNativeFederation } from '@/common/formats/native';
 import { createPilet } from '@/common/formats/pilet';
 import { createDefaultConverter } from '@/common/frameworks/default';
 import { createHtmlConverter } from '@/common/frameworks/html';
-import type { FeedDefinition, FeedService } from '@/types';
+import type { FeedDefinition, FeedService, PicardStore } from '@/types';
 
 export interface PicardOptions {
   componentName?: string;
@@ -46,7 +46,7 @@ declare module '@/types/injector' {
   }
 }
 
-export function initializePicard(options?: PicardOptions) {
+export function initializePicard(options?: PicardOptions): PicardStore {
   const {
     feed,
     state,

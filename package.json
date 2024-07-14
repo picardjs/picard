@@ -83,7 +83,7 @@
     "@types/http-server": "^0",
     "@types/node": "^20",
     "@types/systemjs": "^6",
-    "dets": "0.15.0",
+    "dets": "0.16.0",
     "dom-serializer": "2.0.0",
     "domhandler": "5.0.3",
     "esbuild": "0.20.2",

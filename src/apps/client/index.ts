@@ -19,7 +19,7 @@ import { createHtmlConverter } from '@/common/frameworks/html';
 import { createSingleSpaConverter } from '@/common/frameworks/single-spa';
 import { createWebComponentConverter } from '@/common/frameworks/web-component';
 import { createSlotBehaviorForRouter } from '@/common/slot-rels/router';
-import type { DebugService, ElementsService, FeedDefinition, FeedService, FragmentsService } from '@/types';
+import type { DebugService, ElementsService, FeedDefinition, FeedService, FragmentsService, PicardStore } from '@/types';
 
 export interface PicardOptions {
   componentName?: string;
@@ -62,7 +62,7 @@ export function share(exports: any) {
   return () => Promise.resolve(exports);
 }
 
-export function initializePicard(options?: PicardOptions) {
+export function initializePicard(options?: PicardOptions): PicardStore {
   const {
     feed,
     state,

@@ -1,6 +1,6 @@
 import { tryJson } from '@/common/utils/json';
 import type { PiComponentProps, PiSlotProps } from '@/types/browser';
-import type { ComponentLifecycle, DependencyInjector, UpdatedMicrofrontendsEvent } from '@/types';
+import type { ComponentLifecycle, DependencyInjector, PicardAsset, UpdatedMicrofrontendsEvent } from '@/types';
 
 const attrName = 'name';
 const attrFallbackTemplateId = 'fallback-template-id';
@@ -35,6 +35,22 @@ function createQueue(): ElementQueue {
       queue.splice(0, queue.length);
     },
   };
+}
+
+function makeSheet(asset: PicardAsset) {
+  const node = document.createElement('link');
+  node.href = asset.url;
+  node.rel = 'stylesheet';
+  node.dataset.origin = asset.origin;
+  return node;
+}
+
+function appendSheets(sheets: Array<HTMLLinkElement>, node: Node) {
+  if (sheets.length > 0) {
+    const frag = createFragment();
+    frag.append(...sheets);
+    document.head.insertBefore(frag, node);
+  }
 }
 
 function createFragment() {
@@ -321,34 +337,29 @@ export function createElements(injector: DependencyInjector) {
   }
 
   if (sheet) {
+    const scope = injector.get('scope');
     const style = document.createElement('style');
+    const { assets } = scope.readState();
     style.textContent = sheet.content;
-    document.head.appendChild(style);
-    const sheets: Record<string, Array<HTMLLinkElement>> = {};
+    appendSheets((assets.css || []).map(makeSheet), document.head.appendChild(style));
 
     events.on('updated-microfrontends', async ({ added, removed }) => {
-      const scope = injector.get('scope');
-
       removed.forEach((name) => {
-        const nodes = sheets[name];
-        nodes?.forEach((node) => node.remove());
-        delete sheets[name];
+        const sheets = document.querySelectorAll(`link[data-origin="${name}"]`);
+        sheets.forEach((node) => node.remove());
       });
 
       const ids = await scope.loadAssets('css');
 
-      added.forEach((name) => {
-        sheets[name] = ids
-          .map((id) => scope.retrieveAsset(id))
-          .filter((m) => m.origin === name)
-          .map((asset) => {
-            const node = document.createElement('link');
-            node.href = asset.url;
-            node.rel = 'stylesheet';
-            style.insertAdjacentElement('afterend', node);
-            return node;
-          });
-      });
+      appendSheets(
+        added.flatMap((name) =>
+          ids
+            .map((id) => scope.retrieveAsset(id))
+            .filter((m) => m.origin === name)
+            .map(makeSheet),
+        ),
+        style,
+      );
     });
   }
 

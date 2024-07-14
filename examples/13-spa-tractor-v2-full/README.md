@@ -34,6 +34,14 @@ List of techniques used in this implementation.
 
 This implementation is deliberately kept simple to focus on the micro frontends aspects. URLs are hardcoded, components could be more DRY and no linting, testing or type-safety is implemented. In a real-world scenario, these aspects should be addressed properly.
 
+### Performance
+
+Several performance optimizations could still be applied, however, in the out-of-the-box state with three micro frontends and multiple components / pages included we'll end up with a lighthouse score of 88/100, which is decent.
+
+![Lighthouse Score](./lighthouse.png)
+
+As a comparison a most lightweight SSR-only solution using the same codebase would be around 99/100. Using Picard.js for doing a SSR with hydration setup leads to 99-100/100 score, too.
+
 ## How to run locally
 
 Clone this repository and run the following commands:

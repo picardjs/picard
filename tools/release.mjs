@@ -15,6 +15,7 @@ async function parseChangelog() {
   const end = content.lastIndexOf('\n\n', previousVersion.index) - 2;
 
   const removed = [];
+  const fixed = [];
   const updated = [];
   const added = [];
   const others = [];
@@ -31,6 +32,8 @@ async function parseChangelog() {
         added.push(line);
       } else if (line.startsWith('- Updated')) {
         updated.push(line);
+      } else if (line.startsWith('- Fixed')) {
+        updated.push(line);
       } else if (line.startsWith('- ')) {
         others.push(line);
       } else {
@@ -43,6 +46,7 @@ async function parseChangelog() {
     previous: previousVersion[1],
     removed,
     updated,
+    fixed,
     added,
     others,
     notes,
@@ -56,9 +60,10 @@ function addSection(items, title) {
   }
 }
 
-addSection(docs.added, `### Added 🚀`);
+addSection(docs.added, `### Added 🎯`);
+addSection(docs.removed, `### Fixed 🚀`);
 addSection(docs.updated, `### Updated 🏭`);
-addSection(docs.removed, `### Removed 🚦`);
+addSection(docs.removed, `### Removed ❌`);
 addSection(docs.others, `### Others 🚧`);
 addSection(docs.notes, `### Remarks 📯`);
 

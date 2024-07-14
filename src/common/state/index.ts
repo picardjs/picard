@@ -85,7 +85,7 @@ export function createPicardScope(injector: DependencyInjector) {
       return retrieveaAsset(store, id);
     },
     loadAssets(type) {
-      return queue.enqueue(() => {
+      return queue.depends(() => {
         const assets = scope.readState().assets[type] || [];
         return assets.map((asset) => asset.id);
       });
@@ -98,7 +98,7 @@ export function createPicardScope(injector: DependencyInjector) {
       });
     },
     getComponent(ref) {
-      return queue.enqueue(async () => {
+      return queue.depends(async () => {
         const { cid, name, source } = ref;
 
         if (cid) {
@@ -142,7 +142,7 @@ export function createPicardScope(injector: DependencyInjector) {
       });
     },
     loadComponents(name) {
-      return queue.enqueue(async () => {
+      return queue.depends(async () => {
         const ids: Array<string> = [];
         const { microfrontends } = store.getState();
 

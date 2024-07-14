@@ -1,5 +1,13 @@
 # Picard.js Changelog
 
+## 0.2.2 (July 14, 2024)
+
+- Fixed initialization from existing state
+- Fixed dependency map structure in debug adapter
+- Improved loading performance of components
+
+**Note**: ⚠️ Early preview: Not suitable for production yet
+
 ## 0.2.1 (July 14, 2024)
 
 - Updated CI/CD pipelines to make automatic releases

@@ -8,6 +8,9 @@ export function createNewQueue() {
       queue.current = next.then(() => {});
       return await next;
     },
+    depends(cb) {
+      return queue.current.then(cb);
+    },
   };
 
   return queue;

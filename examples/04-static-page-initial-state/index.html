@@ -6,46 +6,150 @@
 <title>Picard.js Static Page incl. Slots Filled from Feed</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
 <script type="pi-state">
-  {
-    "microfrontends": [
-      {
-        "components": [],
-        "details": {
-          "id": "simplehtml",
-          "url": "https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js"
-        },
-        "format": "module",
-        "name": "mf-simple-html",
-        "source": "https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js"
+{
+  "microfrontends": [
+    {
+      "name": "mf-simple-html",
+      "source": "https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js",
+      "format": "module",
+      "details": {
+        "id": "simplehtml",
+        "url": "https://assets.piral.cloud/pilets/picard-demos/mf-simple-html/1.0.1/remoteEntry.js"
       },
-      {
-        "components": [],
-        "details": {
-          "url": "https://assets.piral.cloud/pilets/picard-demos/nfsimplehtml/1.0.0/remoteEntry.json",
-          "exposes": [
-            {
-              "key": "./column",
-              "outFileName": "column-GYWVDTPB.js"
-            }
-          ]
-        },
-        "format": "native",
-        "name": "nfsimplehtml",
-        "source": "https://assets.piral.cloud/pilets/picard-demos/nfsimplehtml/1.0.0/remoteEntry.json"
+      "flags": 0,
+      "assets": [],
+      "components": [
+        "jend1b"
+      ]
+    },
+    {
+      "name": "nfsimplehtml",
+      "source": "https://assets.piral.cloud/pilets/picard-demos/nfsimplehtml/1.0.0/remoteEntry.json",
+      "format": "native",
+      "details": {
+        "exposes": [
+          {
+            "key": "./column",
+            "outFileName": "column-GYWVDTPB.js"
+          }
+        ],
+        "url": "https://assets.piral.cloud/pilets/picard-demos/nfsimplehtml/1.0.0/remoteEntry.json",
+        "dependencies": []
       },
-      {
-        "components": [],
-        "details": {
-          "name": "pi-simple-html",
-          "url": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js",
-          "link": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js"
+      "flags": 0,
+      "assets": [],
+      "components": [
+        "5u9iqb"
+      ]
+    },
+    {
+      "name": "pi-pages-multiple",
+      "source": "https://assets.piral.cloud/pilets/picard-demos/pi-pages-multiple/1.0.1/index.js",
+      "format": "pilet",
+      "details": {
+        "name": "pi-pages-multiple",
+        "version": "1.0.1",
+        "description": "Exported page components via pilet",
+        "author": {
+          "name": "",
+          "email": ""
         },
-        "format": "pilet",
+        "dependencies": {},
+        "requireRef": "esbuildpr_pipagesmultiple",
+        "spec": "v2",
+        "link": "https://assets.piral.cloud/pilets/picard-demos/pi-pages-multiple/1.0.1/index.js",
+        "url": "https://assets.piral.cloud/pilets/picard-demos/pi-pages-multiple/1.0.1/index.js"
+      },
+      "flags": 0,
+      "assets": [],
+      "components": [
+        "pwikb1",
+        "o0zxho"
+      ]
+    },
+    {
+      "name": "pi-simple-html",
+      "source": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js",
+      "format": "pilet",
+      "details": {
         "name": "pi-simple-html",
-        "source": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js"
+        "version": "1.0.1",
+        "description": "Exported components via pilet",
+        "author": {
+          "name": "",
+          "email": ""
+        },
+        "dependencies": {},
+        "requireRef": "esbuildpr_pisimplehtml",
+        "spec": "v2",
+        "link": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js",
+        "url": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/index.js"
+      },
+      "flags": 0,
+      "assets": [],
+      "components": [
+        "g9kr0b"
+      ]
+    }
+  ],
+  "assets": {},
+  "components": {
+    "column": [
+      {
+        "id": "5u9iqb",
+        "name": "column",
+        "origin": "nfsimplehtml"
+      },
+      {
+        "id": "jend1b",
+        "name": "column",
+        "origin": "mf-simple-html"
+      }
+    ],
+    "page:/": [
+      {
+        "id": "pwikb1",
+        "name": "page:/",
+        "meta": {
+          "api": {
+            "meta": {
+              "basePath": "https://assets.piral.cloud/pilets/picard-demos/pi-pages-multiple/1.0.1/"
+            }
+          }
+        },
+        "origin": "pi-pages-multiple"
+      }
+    ],
+    "page:/about": [
+      {
+        "id": "o0zxho",
+        "name": "page:/about",
+        "meta": {
+          "api": {
+            "meta": {
+              "basePath": "https://assets.piral.cloud/pilets/picard-demos/pi-pages-multiple/1.0.1/"
+            }
+          }
+        },
+        "origin": "pi-pages-multiple"
+      }
+    ],
+    "counter": [
+      {
+        "id": "g9kr0b",
+        "name": "counter",
+        "meta": {
+          "api": {
+            "meta": {
+              "basePath": "https://assets.piral.cloud/pilets/picard-demos/pi-simple-html/1.0.1/"
+            }
+          }
+        },
+        "origin": "pi-simple-html"
       }
     ]
   }
+}
 </script>
 <script src="./dist/picard.js"></script>
 </head>

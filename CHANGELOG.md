@@ -1,5 +1,11 @@
 # Picard.js Changelog
 
+## 0.2.3 (July 15, 2024)
+
+- Improved automatic releases of CI/CD pipeline
+
+**Note**: ⚠️ Early preview: Not suitable for production yet
+
 ## 0.2.2 (July 14, 2024)
 
 - Fixed initialization from existing state

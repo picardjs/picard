@@ -12,7 +12,7 @@ async function parseChangelog() {
   const currentVersion = versionMatcher.exec(content);
   const previousVersion = versionMatcher.exec(content);
   const start = content.indexOf('\n\n', currentVersion.index) + 2;
-  const end = content.lastIndexOf('\n\n', previousVersion.index) - 2;
+  const end = content.lastIndexOf('\n\n', previousVersion.index);
 
   const removed = [];
   const fixed = [];

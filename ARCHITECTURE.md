@@ -83,3 +83,19 @@ createInjector(serviceDefinitions)
 ```
 
 The provided `serviceDefinitions` for the `createInjector` call expect an object with properties resolving to the initializer functions of the different services. An initializer function is a function that will return the service instance - taking one argument: The dependency injector. This way, when initialized a service may use other services (which are then initialized by the DI system).
+
+### CI/CD Flow
+
+For CI/CD purposes we have three distinct workflows:
+
+1. Build and release of the packages
+2. Testing the code
+3. Creating a GitHub release
+
+The build workflow (1) has a dependency to the tests (2). If the tests are failing no build or package release step is run.
+
+In case that (1) was triggered on the `main` branch it will eventually release the packages on the JSR and npm registries. If that works out a Git tag is created and pushed to GitHub. Finally, using that tag the GitHub release (3) workflow is triggered.
+
+Only the build workflow (1) is sensitive to the branch. The release parts are only triggered in the `main` and `develop` branches. In case of a pull request only the build part is run. The release part is divided into two areas; one for preview releases (`develop` branch) and one for full releases (`main` branch).
+
+A preview release is the full release without a Git tag or the "normal" version number. Instead, the version number is augmented with a preview segment - something like `-pre.15`. Therefore, a version such as `1.2.3` would look like `1.2.3-pre.15` when being processed as a preview release.

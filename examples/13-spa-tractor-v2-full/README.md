@@ -2,7 +2,7 @@
 
 A micro frontends sample implementation of [The Tractor Store](https://micro-frontends.org/tractor-store/) built with Picard.js, Preact, and Native Federation. It's based on the [Blueprint](https://github.com/neuland/tractor-store-blueprint).
 
-**Live Demo:** [TBA](#)
+**Live Demo:** [picard-tractor.munichjs.org](https://picard-tractor.munichjs.org/)
 
 ## About This Implementation
 

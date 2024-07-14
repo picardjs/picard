@@ -1,5 +1,12 @@
 # Picard.js Changelog
 
+## 0.2.1 (July 14, 2024)
+
+- Updated CI/CD pipelines to make automatic releases
+- Added scroll reset on history replace/push in the router
+
+**Note**: ⚠️ Early preview: Not suitable for production yet
+
 ## 0.2.0 (July 13, 2024)
 
 - Renamed `getExport` to `getComponent`

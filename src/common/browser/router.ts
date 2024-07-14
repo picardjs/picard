@@ -15,6 +15,10 @@ function navigate(route: string, state: any) {
   history.pushState(state, '', route);
 }
 
+function scrollToTop() {
+  window.scrollTo(0, 0);
+}
+
 const pageQualifier = 'page:';
 
 export function createRouter(injector: DependencyInjector): RouterService {
@@ -22,12 +26,14 @@ export function createRouter(injector: DependencyInjector): RouterService {
   const { slotName } = injector.get('config');
   const routerSlot = `${slotName}[rel=router]`;
 
-  function onHistory() {
-    const target = location.pathname;
+  function onHistory(ev?: Event) {
     const router = document.querySelector(routerSlot);
 
     if (router) {
+      const target = location.pathname;
+      const forward = ev && ev.type !== 'popstate';
       router.setAttribute('name', `${pageQualifier}${target}`);
+      forward && scrollToTop();
     }
   }
 

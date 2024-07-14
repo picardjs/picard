@@ -24,11 +24,13 @@ function setupDependencies(
         const depUrl = getUrl(c.outFileName, url);
         const id = `${c.packageName}@${c.version}`;
         depMap[c.packageName] = `${c.packageName}@${c.requiredVersion}`;
-        p[id] = () => esm.load(depUrl, depMap);
+        p[id] = () => esm.load(depUrl, depMap, url);
         return p;
       }, {}),
     );
   }
+
+  loader.registerModule(url, {});
 }
 
 function inspect(entry: NativeFederationEntry) {
@@ -65,9 +67,10 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
   return {
     async createContainer(entry: NativeFederationEntry) {
       const depMap: Record<string, string> = {};
+      const { url } = entry;
 
       if (!entry.exposes || !entry.dependencies) {
-        const manifest = await platform.loadJson<NativeFederationManifest>(entry.url);
+        const manifest = await platform.loadJson<NativeFederationManifest>(url);
         entry.exposes = manifest.exposes;
         entry.dependencies = manifest.shared;
       }
@@ -85,7 +88,7 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
           }
 
           if (!componentRef.component) {
-            componentRef.component = esm.load(componentRef.url, depMap).then((c) => c?.default || c);
+            componentRef.component = esm.load(componentRef.url, depMap, url).then((c) => c?.default || c);
           }
 
           return await componentRef.component;

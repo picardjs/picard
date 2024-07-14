@@ -142,7 +142,7 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
     scope.appendMicrofrontend({
       name: meta.name,
       format: 'pilet',
-      components: {},
+      components: [],
       assets: [],
       details: meta,
       source: meta.name,

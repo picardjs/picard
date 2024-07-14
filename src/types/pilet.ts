@@ -34,3 +34,17 @@ export interface PiletApi {
 export interface PiletService {
   extend(api: PiletApi): void;
 }
+
+export interface PiletManifest {
+  name: string;
+  version: string;
+  description: string;
+  author: {
+    name: string;
+    email: string;
+  };
+  config?: Record<string, any>;
+  dependencies?: Record<string, string>;
+  main: string;
+  spec: 'v2';
+}

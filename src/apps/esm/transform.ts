@@ -591,8 +591,8 @@ function find(str: string, id: string): [Range[], Range[], Range[], Range[]] {
   return [importDeclarations, importStatements, importMetaUrls, exportDeclarations];
 }
 
-export function transform(source: string, id: string, depMap: Record<string, string>) {
-  const [importDeclarations, importStatements, importMetaUrls, exportDeclarations] = find(source, id);
+export function transform(source: string, url: string, parent: string, depMap: Record<string, string>) {
+  const [importDeclarations, importStatements, importMetaUrls, exportDeclarations] = find(source, url);
 
   const nameBySource = new Map();
 
@@ -632,7 +632,7 @@ export function transform(source: string, id: string, depMap: Record<string, str
       });
   });
 
-  let transformed = `__shimport__.define('${id}', [${deps}], function(${names}){ ${hoisted.join('')}`;
+  let transformed = `__shimport__.define('${url}', '${parent}', [${deps}], function(${names}){ ${hoisted.join('')}`;
 
   const ranges: any[] = [...importDeclarations, ...importStatements, ...importMetaUrls, ...exportDeclarations].sort(
     (a, b) => a.start - b.start,
@@ -653,6 +653,6 @@ export function transform(source: string, id: string, depMap: Record<string, str
     if (d.name) transformed += `\n__exports.${d.as || d.name} = ${d.name};`;
   });
 
-  transformed += `\n},${JSON.stringify(depMap)});\n//# sourceURL=${id}`;
+  transformed += `\n},${JSON.stringify(depMap)});\n//# sourceURL=${url}`;
   return transformed;
 }

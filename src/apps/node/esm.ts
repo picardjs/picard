@@ -4,7 +4,7 @@ import type { EsmService } from '@/types';
 export function createEsm(): EsmService {
   const cache: Record<string, SyntheticModule> = {};
 
-  async function linkModule(url: string, ctx: Context, depMap: Record<string, string>) {
+  async function linkModule(url: string, ctx: Context, depMap: Record<string, string>, parent: string) {
     const res = await fetch(url);
     const content = await res.text();
     const mod = new SourceTextModule(content, {
@@ -24,7 +24,7 @@ export function createEsm(): EsmService {
       }
   
       if (dep) {
-        const result = await System.import(dep);
+        const result = await System.import(dep, parent);
         const names = Object.keys(result);
         return cache[dep] = new SyntheticModule(names, function () {
           for (const name of names) {
@@ -34,7 +34,7 @@ export function createEsm(): EsmService {
       }
   
       const newUrl = new URL(specifier, url);
-      return await linkModule(newUrl.href, ctx, depMap);
+      return await linkModule(newUrl.href, ctx, depMap, parent);
     });
 
     await mod.evaluate();
@@ -42,9 +42,9 @@ export function createEsm(): EsmService {
   }
 
   return {
-    async load(url, depMap) {
+    async load(url, depMap, parent) {
       const ctx = createContext();
-      const mod = await linkModule(url, ctx, depMap);
+      const mod = await linkModule(url, ctx, depMap, parent);
       return mod.namespace;
     },
   };

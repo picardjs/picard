@@ -5,23 +5,23 @@ const promises: Record<string, Promise<any>> = {};
 type __Import = (id: string) => Promise<any>;
 type __Exports = Record<string, any>;
 
-function loadModule(url: string, depMap: Record<string, string>) {
+function loadModule(url: string, parent: string, depMap: Record<string, string>) {
   return (
     promises[url] ||
     (promises[url] = fetch(url)
       .then((r) => r.text())
-      .then((text) => evaluate(transform(text, url, depMap))))
+      .then((text) => evaluate(transform(text, url, parent, depMap))))
   );
 }
 
-function loadDependency(id: string, parent: string, depMap: Record<string, string>) {
+function loadDependency(id: string, url: string, parent: string, depMap: Record<string, string>) {
   const depId = depMap[id];
 
   if (depId) {
     return System.import(depId, parent);
   }
 
-  return loadModule(new URL(id, parent).href, depMap);
+  return loadModule(new URL(id, url).href, parent, depMap);
 }
 
 let uid = 1;
@@ -51,18 +51,19 @@ function evaluate(code: string) {
 }
 
 export async function define(
-  id: string,
+  url: string,
+  parent: string,
   deps: Array<string>,
   factory: (__import: __Import, __exports: __Exports, ...deps: Array<any>) => void,
   depMap: Record<string, string>,
 ) {
-  const __import = (dep: string) => loadDependency(dep, id, depMap);
+  const __import = (dep: string) => loadDependency(dep, url, parent, depMap);
   const __deps = await Promise.all(deps.map(__import));
   const __exports = {};
   factory(__import, __exports, ...__deps);
   return __exports;
 }
 
-export function load(url: string, depMap: Record<string, string>) {
-  return loadModule(url, depMap);
+export function load(url: string, depMap: Record<string, string>, parent: string) {
+  return loadModule(url, parent, depMap);
 }

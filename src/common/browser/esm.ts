@@ -17,9 +17,9 @@ export function createEsm(injector: DependencyInjector): EsmService {
   const platform = injector.get('platform');
 
   return {
-    async load(url, depMap) {
+    async load(url, depMap, parent) {
       const shimport = await getShimport(platform);
-      return await shimport.load(url, depMap);
+      return await shimport.load(url, depMap, parent);
     },
   };
 }

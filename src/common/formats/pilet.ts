@@ -4,23 +4,10 @@ import type {
   ComponentDefinition,
   ContainerService,
   DependencyInjector,
+  PiletManifest,
   PiletApi,
   PiletEntry,
 } from '@/types';
-
-interface PiletManifest {
-  name: string;
-  version: string;
-  description: string;
-  author: {
-    name: string;
-    email: string;
-  };
-  config?: Record<string, any>;
-  dependencies?: Record<string, string>;
-  main: string;
-  spec: 'v2';
-}
 
 export function createPilet(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
@@ -32,22 +19,19 @@ export function createPilet(injector: DependencyInjector): ContainerService {
       const components: Array<ComponentDefinition> = [];
       const componentRefs: Record<string, any> = {};
       const assets: Array<AssetDefinition> = [];
-      let link = entry.url;
 
       if (!entry.name) {
         const manifest = await platform.loadJson<PiletManifest>(entry.url);
-        const { main, dependencies = {} } = manifest;
-        link = getUrl(main, entry.url);
-        loader.registerUrls(dependencies);
-      } else {
-        const { dependencies = {} } = entry;
-        loader.registerUrls(dependencies);
+        const { name, version, main, dependencies = {}, spec, config } = manifest;
+        const url = getUrl(main, entry.url);
+        Object.assign(entry, { name, version, dependencies, spec, config, url });
       }
 
-      const app = await loader.load(link);
+      loader.registerUrls(entry.dependencies);
+      const app = await loader.load(entry.url);
 
       if (app && 'setup' in app) {
-        const basePath = getUrl('.', link);
+        const basePath = getUrl('.', entry.url);
         const api: PiletApi = {
           meta: {
             basePath,

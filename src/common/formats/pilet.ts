@@ -22,9 +22,9 @@ export function createPilet(injector: DependencyInjector): ContainerService {
 
       if (!entry.name) {
         const manifest = await platform.loadJson<PiletManifest>(entry.url);
-        const { name, version, main, dependencies = {}, spec, config } = manifest;
+        const { name, version, main, dependencies = {}, spec, config, integrity, custom } = manifest;
         const url = getUrl(main, entry.url);
-        Object.assign(entry, { name, version, dependencies, spec, config, url });
+        Object.assign(entry, { name, version, dependencies, spec, config, url, integrity, custom });
       }
 
       loader.registerUrls(entry.dependencies);

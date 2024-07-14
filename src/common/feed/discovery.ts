@@ -29,23 +29,28 @@ export function fromDiscovery(feed: DiscoveryResponse, baseUrl?: string): Array<
     .map(([name, definitions]) => {
       const [definition] = definitions;
       const kind = inferKind(definition);
+      const { metadata, extras, url } = definition;
 
       if (kind === 'module') {
-        return createEmptyMicrofrontend(name, kind, definition.url, {
-          id: definition.extras?.id || name,
-          url: getUrl(definition.url, baseUrl),
+        return createEmptyMicrofrontend(name, kind, url, {
+          id: extras?.id || name,
+          url: getUrl(url, baseUrl),
         });
       } else if (kind === 'native') {
-        return createEmptyMicrofrontend(name, kind, definition.url, {
-          exposes: definition.extras?.exposes,
-          url: getUrl(definition.url, baseUrl),
+        return createEmptyMicrofrontend(name, kind, url, {
+          exposes: extras?.exposes,
+          url: getUrl(url, baseUrl),
         });
       } else {
-        return createEmptyMicrofrontend(name, kind, definition.url, {
+        return createEmptyMicrofrontend(name, kind, url, {
           name,
-          link: definition.url,
-          spec: definition.extras?.pilet.spec,
-          url: getUrl(definition.url, baseUrl),
+          integrity: metadata.integrity,
+          version: metadata.version,
+          dependencies: extras?.dependencies || {},
+          config: extras?.config,
+          spec: extras?.pilet.spec,
+          url: getUrl(url, baseUrl),
+
         });
       }
     });

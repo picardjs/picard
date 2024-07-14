@@ -43,6 +43,8 @@ export interface PiletManifest {
     name: string;
     email: string;
   };
+  integrity?: string;
+  custom?: any;
   config?: Record<string, any>;
   dependencies?: Record<string, string>;
   main: string;

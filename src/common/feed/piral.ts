@@ -16,7 +16,13 @@ export function fromPiral(pilet: PiletDefinition, baseUrl?: string): PicardMicro
       });
     default:
       return createEmptyMicrofrontend(pilet.name, 'pilet', pilet.link, {
-        ...pilet,
+        name: pilet.name,
+        integrity: pilet.integrity,
+        custom: pilet.custom,
+        version: pilet.version,
+        dependencies: pilet.dependencies || {},
+        spec: pilet.spec,
+        config: pilet.config,
         url: getUrl(pilet.link, baseUrl),
       });
   }

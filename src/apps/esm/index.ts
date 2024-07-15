@@ -5,7 +5,7 @@ const promises: Record<string, Promise<any>> = {};
 type __Import = (id: string) => Promise<any>;
 type __Exports = Record<string, any>;
 
-function loadModule(url: string, parent: string, depMap: Record<string, string>) {
+function loadModule(url: string, parent: string, depMap: Record<string, string>): Promise<any> {
   return (
     promises[url] ||
     (promises[url] = fetch(url)
@@ -14,7 +14,7 @@ function loadModule(url: string, parent: string, depMap: Record<string, string>)
   );
 }
 
-function loadDependency(id: string, url: string, parent: string, depMap: Record<string, string>) {
+function loadDependency(id: string, url: string, parent: string, depMap: Record<string, string>): Promise<any> {
   const depId = depMap[id];
 
   if (depId) {
@@ -56,7 +56,7 @@ export async function define(
   deps: Array<string>,
   factory: (__import: __Import, __exports: __Exports, ...deps: Array<any>) => void,
   depMap: Record<string, string>,
-) {
+): Promise<any> {
   const __import = (dep: string) => loadDependency(dep, url, parent, depMap);
   const __deps = await Promise.all(deps.map(__import));
   const __exports = {};
@@ -64,6 +64,6 @@ export async function define(
   return __exports;
 }
 
-export function load(url: string, depMap: Record<string, string>, parent: string) {
+export function load(url: string, depMap: Record<string, string>, parent: string): Promise<any> {
   return loadModule(url, parent, depMap);
 }

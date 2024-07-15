@@ -1,5 +1,9 @@
 import type { EventSystem, PicardStore } from '@/types';
 
+interface Visualizer {
+  toggle(): void;
+}
+
 const visualizerName = 'piral-inspector-visualizer';
 
 const colors = [
@@ -18,7 +22,7 @@ const colors = [
   '#B10DC9',
 ];
 
-function getTarget(element: Element) {
+function getTarget(element: Element): DOMRectReadOnly {
   const row = element.childNodes;
   return [...row]
     .map((item) => {
@@ -42,7 +46,7 @@ function getTarget(element: Element) {
     });
 }
 
-export function attachVisualizer(scope: PicardStore, events: EventSystem, componentName: string) {
+export function attachVisualizer(scope: PicardStore, events: EventSystem, componentName: string): Visualizer {
   const mfColorMap: Record<string, string> = {};
   const getMicrofrontend = (element: Element) => {
     const origin = element.getAttribute('origin');

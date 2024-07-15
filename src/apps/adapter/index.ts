@@ -11,7 +11,7 @@ import { createInjector } from '@/common/injector';
 import { createRenderer } from './renderer';
 import type { PicardStore, FragmentsService, ElementsService, DebugService } from '@/types';
 
-function deserializeConfig() {
+function deserializeConfig(): any {
   // we obtain the serialized config
   const element = document.querySelector('script[type=pi-config]');
 
@@ -45,7 +45,7 @@ declare module '@/types/injector' {
   }
 }
 
-const resumePicard = () => {
+const resumePicard = (): void => {
   const config = deserializeConfig();
   const serviceDefinitions = {
     config: () => config,

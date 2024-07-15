@@ -591,7 +591,7 @@ function find(str: string, id: string): [Range[], Range[], Range[], Range[]] {
   return [importDeclarations, importStatements, importMetaUrls, exportDeclarations];
 }
 
-export function transform(source: string, url: string, parent: string, depMap: Record<string, string>) {
+export function transform(source: string, url: string, parent: string, depMap: Record<string, string>): string {
   const [importDeclarations, importStatements, importMetaUrls, exportDeclarations] = find(source, url);
 
   const nameBySource = new Map();

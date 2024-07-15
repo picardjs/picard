@@ -1,25 +1,18 @@
 {
   "name": "@picard/js",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "exports": {
-    ".": "./dist/native/picard.mjs",
-    "./package.json": "./package.json",
-    "./browser": "./dist/browser/picard.js",
-    "./client": "./dist/client/picard.mjs",
-    "./native": "./dist/native/picard.mjs",
-    "./node": "./dist/node/picard.mjs"
+    ".": "./src/apps/native/index.ts",
+    "./package.json": "./package.json"
   },
   "publish": {
     "include": [
+      "src/**/*",
       "LICENSE",
       "ARCHITECTURE.md",
       "README.md",
       "SECURITY.md",
-      "package.json",
-      "dist/**/*"
-    ],
-    "exclude": [
-      "!dist"
+      "package.json"
     ]
   }
 }

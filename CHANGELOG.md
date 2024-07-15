@@ -1,5 +1,12 @@
 # Picard.js Changelog
 
+## 0.3.0 (tbd)
+
+- Improved released package on JSR (only considering native output)
+- Added more inline documentation / type declarations
+
+**Note**: ⚠️ Early preview: Not suitable for production yet
+
 ## 0.2.3 (July 15, 2024)
 
 - Improved automatic releases of CI/CD pipeline

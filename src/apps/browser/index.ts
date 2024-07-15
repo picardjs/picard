@@ -7,7 +7,7 @@ interface PicardStartScriptElement extends HTMLScriptElement {
   config?: PicardOptions;
 }
 
-function deserializeState() {
+function deserializeState(): any {
   // we obtain the serialized state
   const element = document.querySelector('script[type=pi-state]');
 
@@ -27,7 +27,7 @@ declare global {
   }
 }
 
-const runPicard = () => {
+const runPicard = (): void => {
   const feed = script?.getAttribute('feed') || undefined;
   const options = script?.config;
   const state = deserializeState();

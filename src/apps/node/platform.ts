@@ -1,6 +1,7 @@
 import { createContext, SourceTextModule, Script, Context } from 'vm';
+import type { PlatformService } from '@/types';
 
-async function loadScript(url: string, integrity?: string, crossOrigin?: string) {
+async function loadScript(url: string, integrity?: string, crossOrigin?: string): Promise<void> {
   const res = await fetch(url, {
     mode: (crossOrigin && 'cors') || undefined,
   });
@@ -11,7 +12,7 @@ async function loadScript(url: string, integrity?: string, crossOrigin?: string)
   script.runInContext(ctx);
 }
 
-async function linkModule(url: string, ctx: Context) {
+async function linkModule(url: string, ctx: Context): Promise<SourceTextModule> {
   const res = await fetch(url);
   const content = await res.text();
   const mod = new SourceTextModule(content);
@@ -24,19 +25,19 @@ async function linkModule(url: string, ctx: Context) {
   return mod;
 }
 
-async function loadModule(url: string) {
+async function loadModule(url: string): Promise<Object> {
   const ctx = createContext();
   const res = await linkModule(url, ctx);
   return res.namespace;
 }
 
-async function loadJson<T = any>(url: string) {
+async function loadJson<T = any>(url: string): Promise<T> {
   const res = await fetch(url);
   const doc: T = await res.json();
   return doc;
 }
 
-export function createPlatform() {
+export function createPlatform(): PlatformService {
   return {
     loadJson,
     loadModule,

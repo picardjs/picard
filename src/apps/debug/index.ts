@@ -1,47 +1,24 @@
 import { decycle } from './decycle';
 import { attachVisualizer } from './visualizer';
-import type { Configuration, EventSystem, Listener, PicardEventMap, PicardStore, RouterService } from '@/types';
+import type {
+  Configuration,
+  Dispose,
+  EventSystem,
+  Listener,
+  PicardEventMap,
+  PicardStore,
+  RouterService,
+} from '@/types';
 
-const selfSource = 'piral-debug-api';
-const debugApiVersion = 'v1';
+type Dependencies = Array<{ demanded: string; resolved: string }>;
 
-function sendMessage(data: any) {
-  const message = {
-    content: decycle(data),
-    source: selfSource,
-    version: debugApiVersion,
-  };
-  window.postMessage(message, '*');
-}
-
-function findAncestor(parent: string, subDeps: Record<string, string>) {
-  while (subDeps[parent]) {
-    parent = subDeps[parent];
-  }
-
-  return parent;
-}
+type DependencyMap = Record<string, Dependencies>;
 
 interface EventItem {
   id: string;
   name: string;
   args: any;
   time: number;
-}
-
-type Dependencies = Array<{ demanded: string; resolved: string }>;
-
-type DependencyMap = Record<string, Dependencies>;
-
-function attach<TEvent extends keyof PicardEventMap>(
-  events: EventSystem,
-  name: TEvent & string,
-  handler: Listener<PicardEventMap[TEvent]>,
-) {
-  events.on(name, handler);
-  return () => {
-    events.off(name, handler);
-  };
 }
 
 interface DebugAdapterOptions {
@@ -51,7 +28,42 @@ interface DebugAdapterOptions {
   router: RouterService;
 }
 
-export function initializeDebugAdapter({ config, events, router, scope }: DebugAdapterOptions) {
+interface DebugAdapter {
+  dispose: Dispose;
+}
+
+const selfSource = 'piral-debug-api';
+const debugApiVersion = 'v1';
+
+function sendMessage(data: any): void {
+  const message = {
+    content: decycle(data),
+    source: selfSource,
+    version: debugApiVersion,
+  };
+  window.postMessage(message, '*');
+}
+
+function findAncestor(parent: string, subDeps: Record<string, string>): string {
+  while (subDeps[parent]) {
+    parent = subDeps[parent];
+  }
+
+  return parent;
+}
+
+function attach<TEvent extends keyof PicardEventMap>(
+  events: EventSystem,
+  name: TEvent & string,
+  handler: Listener<PicardEventMap[TEvent]>,
+): Dispose {
+  events.on(name, handler);
+  return () => {
+    events.off(name, handler);
+  };
+}
+
+export function initializeDebugAdapter({ config, events, router, scope }: DebugAdapterOptions): DebugAdapter {
   const { componentName } = config;
 
   const eventList: Array<EventItem> = [];

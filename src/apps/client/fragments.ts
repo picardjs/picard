@@ -1,6 +1,6 @@
 import type { DependencyInjector, FragmentsService } from '@/types';
 
-function getAttrValue(data: any) {
+function getAttrValue(data: any): string {
   if (data) {
     const div = document.createElement('div');
     div.setAttribute('data', JSON.stringify(data));

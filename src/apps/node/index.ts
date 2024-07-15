@@ -19,13 +19,42 @@ import { createSlotBehaviorForRouter } from '@/common/slot-rels/router';
 import type { DecoratorService, FeedDefinition, FeedService, PartService } from '@/types';
 
 export interface PicardOptions {
+  /**
+   * The name of the pi-component.
+   * @default pi-component
+   */
   componentName?: string;
-  fragmentUrl?: string;
+  /**
+   * The name of the pi-slot.
+   * @default pi-slot
+   */
   slotName?: string;
+  /**
+   * The name of the pi-part.
+   * @default pi-part
+   */
   partName?: string;
+  /**
+   * The URL of the fragment service, if any.
+   */
+  fragmentUrl?: string;
+  /**
+   * The micro frontend discovery service URL,
+   * data from calling it, or callback function
+   * to call it manually.
+   */
   feed?: FeedDefinition;
+  /**
+   * The initial state of Picard.js - if resumed.
+   */
   state?: any;
+  /**
+   * The additional services to register.
+   */
   services?: Record<string, any>;
+  /**
+   * The centrally shared dependencies to use.
+   */
   dependencies?: Record<string, () => Promise<any>>;
 }
 

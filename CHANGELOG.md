@@ -4,7 +4,7 @@
 
 - Improved released package on JSR (only considering native output)
 - Added more inline documentation / type declarations
-- Added `loading-template-id` to attributes (#8)
+- Added `loading-template-id` to attributes of `pi-component` and `pi-slot` (#8)
 - Added slot ordering attributes to `pi-slot` (#7)
 
 **Note**: ⚠️ Early preview: Not suitable for production yet

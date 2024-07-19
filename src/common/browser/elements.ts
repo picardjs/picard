@@ -223,6 +223,12 @@ export function createElements(injector: DependencyInjector) {
             this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
           }
         }
+
+        const loading = this.getAttribute(attrLoadingTemplateId);
+
+        if (loading) {
+          this._components.forEach((c) => c.setAttribute(attrLoadingTemplateId, loading));
+        }
       });
     }
 

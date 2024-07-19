@@ -1,10 +1,6 @@
-import type { Document } from 'domhandler';
+import type { FragmentLoader } from './fragments';
 
 export interface DecoratorService {
-  render(name: string, parameters: any): Promise<string>;
+  render: FragmentLoader;
   decorate(content: string): Promise<string>;
-}
-
-export interface PartService {
-  getReplacement(document: Document, attribs: Record<string, string>): Promise<string>;
 }

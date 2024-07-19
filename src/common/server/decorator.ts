@@ -3,7 +3,7 @@ import { render } from 'dom-serializer';
 import { escapeHtml } from '@/common/utils/escape';
 import { tryJson } from '@/common/utils/json';
 import type { ChildNode, Document, Element } from 'domhandler';
-import type { DecoratorService, DependencyInjector } from '@/types';
+import type { DecoratorService, DependencyInjector, OrderingOptions } from '@/types';
 
 function traverse(nodes: Array<ChildNode>, cb: (node: ChildNode) => boolean) {
   nodes.forEach((node) => {
@@ -74,10 +74,10 @@ function getSlotParameters(injector: DependencyInjector, attribs: Record<string,
   return service.apply(attribs);
 }
 
-async function renderComponents(injector: DependencyInjector, name: string, data: any) {
+async function renderComponents(injector: DependencyInjector, name: string, data: any, opts?: OrderingOptions) {
   const { componentName } = injector.get('config');
   const scope = injector.get('scope');
-  const cids = await scope.loadComponents(name);
+  const cids = await scope.loadComponents(name, opts);
 
   return cids.map(
     (id) =>
@@ -115,7 +115,10 @@ async function Slot(
   document: Document,
 ): Promise<string> {
   const [name, data] = getSlotParameters(injector, attribs);
-  const components = await renderComponents(injector, name, data);
+  const components = await renderComponents(injector, name, data, {
+    orderBy: attribs['order-by'],
+    reverse: !!attribs['order-reverse'],
+  });
 
   if (components.length > 0) {
     const itemTemplateId = attribs['item-template-id'];
@@ -160,7 +163,7 @@ async function Part(
 export function createDecorator(injector: DependencyInjector): DecoratorService {
   const { slotName, componentName, partName } = injector.get('config');
 
-  const components: Record<string, ServerComponent> = {
+  const renderers: Record<string, ServerComponent> = {
     [slotName]: Slot,
     [componentName]: Component,
     [partName]: Part,
@@ -199,10 +202,10 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
     const parts: Array<string> = [content];
 
     for (const [name, attribs, index, length] of markers) {
-      const render = components[name];
+      const renderer = renderers[name];
       parts.pop();
       parts.push(content.substring(previous, index));
-      const replacement = await render(injector, attribs, document);
+      const replacement = await renderer(injector, attribs, document);
       const result = await decorate(replacement, count + 1);
       parts.push(result);
       previous = index + length;
@@ -213,8 +216,8 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
   };
 
   return {
-    async render(name, data) {
-      const components = await renderComponents(injector, name, data);
+    async render(name, data, opts) {
+      const components = await renderComponents(injector, name, data, opts);
       const content = components.join('');
       return await decorate(content);
     },

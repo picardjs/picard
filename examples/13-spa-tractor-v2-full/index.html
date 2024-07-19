@@ -38,6 +38,8 @@ body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 p {
@@ -107,8 +109,8 @@ p {
 <body>
   <pi-slot rel="router" loading-template-id="loader"></pi-slot>
   <template id="loader">
-    <div className="loader-frame">
-      <span className="loader"></span>
+    <div class="loader-frame">
+      <span class="loader"></span>
     </div>
   </template>
   <script src="https://blueprint.the-tractor.store/cdn/js/helper.js" type="module"></script>

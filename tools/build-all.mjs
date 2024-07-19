@@ -21,6 +21,7 @@ const demos = {
     '10-dependencies-sharing',
     '12-spa-native-tractor',
     '13-spa-tractor-v2-full',
+    '14-slot-capabilities',
   ],
 };
 

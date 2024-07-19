@@ -18,8 +18,8 @@ export function createFragments(injector: DependencyInjector): FragmentsService 
   const { componentName } = config;
 
   return {
-    async load(name, data) {
-      const ids = await scope.loadComponents(name);
+    async load(name, data, options) {
+      const ids = await scope.loadComponents(name, options);
       const rest = getAttrValue(data);
       const content = ids.map((id) => `<${componentName} cid="${id}"${rest}></${componentName}>`);
       return Promise.resolve(content.join(''));

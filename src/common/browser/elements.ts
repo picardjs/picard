@@ -5,6 +5,9 @@ import type { ComponentLifecycle, DependencyInjector, PicardAsset, UpdatedMicrof
 const attrName = 'name';
 const attrFallbackTemplateId = 'fallback-template-id';
 const attrItemTemplateId = 'item-template-id';
+const attrLoadingTemplateId = 'loading-template-id';
+const attrOrderBy = 'order-by';
+const attrReverseOrder = 'reverse-order';
 const attrRemoteName = 'remote-name';
 const attrRemoteType = 'remote-type';
 const attrSource = 'source';
@@ -88,6 +91,20 @@ function fillTemplate(fragment: DocumentFragment, template: HTMLElement, items: 
   return fragment;
 }
 
+function loader(element: HTMLElement) {
+  const frameIndex = requestAnimationFrame(() => {
+    const loadingTemplateId = element.getAttribute(attrLoadingTemplateId) || '';
+    const loadingTemplate = loadingTemplateId && document.getElementById(loadingTemplateId);
+
+    if (loadingTemplate instanceof HTMLTemplateElement) {
+      element.innerHTML = '';
+      element.appendChild(getFragment(loadingTemplate).cloneNode(true));
+    }
+  });
+
+  return () => cancelAnimationFrame(frameIndex);
+}
+
 export function createElements(injector: DependencyInjector) {
   const config = injector.get('config');
   const renderer = injector.get('renderer');
@@ -143,6 +160,8 @@ export function createElements(injector: DependencyInjector) {
         this.#reset();
       } else if (name === attrFallbackTemplateId && this._empty) {
         this.#reset();
+      } else if (name === attrReverseOrder) {
+        this.#reset();
       }
     }
 
@@ -174,9 +193,13 @@ export function createElements(injector: DependencyInjector) {
     }
 
     async #setupChildren() {
+      const stopLoader = loader(this);
+
       this._queue.enqueue(() => {
+        const orderBy = this.getAttribute(attrOrderBy);
+        const reverse = !!this.getAttribute(attrReverseOrder);
         const [name, data] = this.#details();
-        return fragments.load(name, data);
+        return fragments.load(name, data, { orderBy, reverse });
       });
 
       this._queue.enqueue((content: string) => {
@@ -185,6 +208,8 @@ export function createElements(injector: DependencyInjector) {
         this._empty = !!content;
         this.innerHTML = '';
         this._components = [];
+
+        stopLoader();
 
         if (content) {
           const fragment = document.createElement('template');
@@ -202,7 +227,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     static get observedAttributes() {
-      return [attrName, attrData, attrItemTemplateId, attrFallbackTemplateId];
+      return [attrName, attrData, attrItemTemplateId, attrFallbackTemplateId, attrReverseOrder];
     }
   }
 
@@ -271,10 +296,13 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #start() {
+      const stopLoader = loader(this);
       this.#bootstrap();
 
       this._queue.enqueue(() => {
         const lc = this._lc;
+
+        stopLoader();
 
         if (lc) {
           lc.mount?.(this, this.data, this._locals);
@@ -301,6 +329,16 @@ export function createElements(injector: DependencyInjector) {
     #reset() {
       this.#clean();
       this.#start();
+    }
+
+    #loading() {
+      const loadingTemplateId = this.getAttribute(attrLoadingTemplateId) || '';
+      const loadingTemplate = loadingTemplateId && document.getElementById(loadingTemplateId);
+
+      if (loadingTemplate instanceof HTMLTemplateElement) {
+        this.innerHTML = '';
+        this.appendChild(getFragment(loadingTemplate).cloneNode(true));
+      }
     }
 
     #update() {

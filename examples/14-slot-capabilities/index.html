@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Picard.js Slot Capabilities</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="./dist/picard.js" feed="/mfs/index.json"></script>
+</head>
+<body>
+  <div class="jumbotron text-center">
+    <h1>Hello World!</h1>
+    <p>This page shows how <code>pi-slot</code> can be used.</p> 
+  </div>
+    
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>No Attributes</h2>
+    </div>
+    <div class="row m-4">
+      <pi-slot name="component"></pi-slot>
+    </div>
+  </div>
+    
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>Wrapping in a Template</h2>
+    </div>
+    <div class="row m-4">
+      <pi-slot name="component" item-template-id="item-template"></pi-slot>
+    </div>
+  </div>
+    
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>Reverse Order</h2>
+    </div>
+    <div class="row m-4">
+      <pi-slot name="component" reverse-order item-template-id="item-template"></pi-slot>
+    </div>
+  </div>
+    
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>By Component ID</h2>
+    </div>
+    <div class="row m-4">
+      <pi-slot name="component" reverse-order order-by="cid" item-template-id="item-template"></pi-slot>
+    </div>
+  </div>
+    
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>By Micro Frontend Name</h2>
+    </div>
+    <div class="row m-4">
+      <pi-slot name="component" reverse-order order-by="origin" item-template-id="item-template"></pi-slot>
+    </div>
+  </div>
+
+  <template id="item-template">
+    <div class="col-sm-4">
+      <slot></slot>
+    </div>
+  </template>
+</body>
+</html>

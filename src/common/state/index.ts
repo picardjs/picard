@@ -141,30 +141,42 @@ export function createPicardScope(injector: DependencyInjector) {
         return undefined;
       });
     },
-    loadComponents(name) {
+    loadComponents(name, options) {
       return queue.depends(async () => {
         const ids: Array<string> = [];
         const { microfrontends } = store.getState();
+        const orderBy = options?.orderBy || 'none';
+        const mfs = microfrontends.filter((mf) => !mf.flags);
+
+        if (orderBy === 'origin') {
+          mfs.sort((a, b) => a.name.localeCompare(b.name));
+        }
 
         await Promise.all(
-          microfrontends
-            .filter((mf) => !mf.flags)
-            .map(async (mf) => {
-              const container = await loadContainer(injector, mf, containers);
-              const { components } = store.getState();
-              let component = components[name].find((m) => m.origin === mf.name);
+          mfs.map(async (mf) => {
+            const container = await loadContainer(injector, mf, containers);
+            const { components } = store.getState();
+            let component = components[name].find((m) => m.origin === mf.name);
 
-              if (!component) {
-                if (await container.load(name)) {
-                  component = registerComponent(store, mf, { name });
-                } else {
-                  return;
-                }
+            if (!component) {
+              if (await container.load(name)) {
+                component = registerComponent(store, mf, { name });
+              } else {
+                return;
               }
+            }
 
-              ids.push(component.id);
-            }),
+            ids.push(component.id);
+          }),
         );
+
+        if (orderBy === 'cid') {
+          ids.sort();
+        }
+
+        if (options?.reverse) {
+          ids.reverse();
+        }
 
         return ids;
       });

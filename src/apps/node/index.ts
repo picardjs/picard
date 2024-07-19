@@ -8,6 +8,7 @@ import { createInjector } from '@/common/injector';
 import { createRouter } from '@/common/server/router';
 import { createDecorator } from '@/common/server/decorator';
 import { createStylePart } from '@/common/server/style-part';
+import { createScriptPart } from '@/common/server/script-part';
 import { createSheet } from '@/common/ui/styles';
 import { createRenderer } from '@/common/ui/renderer';
 import { createModuleFederation } from '@/common/formats/module';
@@ -56,6 +57,11 @@ export interface PicardOptions {
    * The centrally shared dependencies to use.
    */
   dependencies?: Record<string, () => Promise<any>>;
+  /**
+   * Indicates that the rendering should be interactive, i.e.,
+   * going into an islands architecture application.
+   */
+  interactive?: boolean;
 }
 
 const defaultOptions = {
@@ -65,6 +71,7 @@ const defaultOptions = {
   fragmentUrl: '',
   services: {},
   dependencies: {},
+  interactive: false,
 };
 
 declare module '@/types/injector' {
@@ -92,7 +99,12 @@ export function initializePicard(options?: PicardOptions): DecoratorService {
     componentName = defaultOptions.componentName,
     slotName = defaultOptions.slotName,
     partName = defaultOptions.partName,
+    interactive = defaultOptions.interactive,
   } = options || {};
+
+  if (interactive) {
+    services['part.script'] = createScriptPart;
+  }
 
   const serviceDefinitions = {
     ...services,

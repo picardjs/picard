@@ -2,6 +2,7 @@
 
 ## 0.3.0 (tbd)
 
+- Renamed `picard-js/server` to `picard-js/node` (#9)
 - Improved released package on JSR (only considering native output)
 - Added more inline documentation / type declarations
 - Added `loading-template-id` to attributes of `pi-component` and `pi-slot` (#8)

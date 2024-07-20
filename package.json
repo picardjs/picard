@@ -18,9 +18,10 @@
   ],
   "scripts": {
     "build": "node tools/build-all.mjs",
-    "build:server": "node tools/build.mjs server",
+    "build:browser": "node tools/build.mjs browser",
     "build:client": "node tools/build.mjs client",
     "build:native": "node tools/build.mjs native",
+    "build:node": "node tools/build.mjs node",
     "test": "playwright test --project firefox",
     "test:all": "playwright test"
   },
@@ -29,9 +30,9 @@
   "unpkg": "dist/browser/picard.js",
   "jsdelivr": "dist/browser/picard.js",
   "browser": "dist/browser/picard.js",
-  "module": "dist/server/picard.mjs",
-  "main": "dist/server/picard.js",
-  "typings": "dist/server/picard.d.ts",
+  "module": "dist/node/picard.mjs",
+  "main": "dist/node/picard.js",
+  "typings": "dist/node/picard.d.ts",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/smapiot"
@@ -50,9 +51,9 @@
         "types": "./dist/client/picard.d.ts"
       },
       "node": {
-        "require": "./dist/server/picard.js",
-        "import": "./dist/server/picard.mjs",
-        "types": "./dist/server/picard.d.ts"
+        "require": "./dist/node/picard.js",
+        "import": "./dist/node/picard.mjs",
+        "types": "./dist/node/picard.d.ts"
       },
       "electron": {
         "require": "./dist/native/picard.js",
@@ -71,10 +72,10 @@
       "import": "./dist/native/picard.mjs",
       "types": "./dist/native/picard.d.ts"
     },
-    "./server": {
-      "require": "./dist/server/picard.js",
-      "import": "./dist/server/picard.mjs",
-      "types": "./dist/server/picard.d.ts"
+    "./node": {
+      "require": "./dist/node/picard.js",
+      "import": "./dist/node/picard.mjs",
+      "types": "./dist/node/picard.d.ts"
     }
   },
   "sideEffects": false,

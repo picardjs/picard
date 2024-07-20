@@ -166,7 +166,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #start() {
-      if (this.name) {
+      if (this.name && !this.innerHTML) {
         this.#setupChildren();
       }
     }
@@ -302,6 +302,12 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #start() {
+      if (!this.innerHTML) {
+        this.#setupContent();
+      }
+    }
+
+    #setupContent() {
       const stopLoader = loader(this);
       this.#bootstrap();
 

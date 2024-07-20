@@ -40,6 +40,11 @@ export interface PicardOptions {
    */
   fragmentUrl?: string;
   /**
+   * The URL of the script for interactive sessions.
+   * If not given a public URL will be selected.
+   */
+  scriptUrl?: string;
+  /**
    * The micro frontend discovery service URL,
    * data from calling it, or callback function
    * to call it manually.
@@ -69,6 +74,7 @@ const defaultOptions = {
   slotName: 'pi-slot',
   partName: 'pi-part',
   fragmentUrl: '',
+  scriptUrl: 'https://unpkg.com/picard-js/dist/node/picard-ia.js',
   services: {},
   dependencies: {},
   interactive: false,
@@ -83,6 +89,7 @@ declare module '@/types/injector' {
 
   interface Configuration {
     feed?: FeedDefinition;
+    scriptUrl?: string;
     state?: any;
     fragmentUrl?: string;
     dependencies: Record<string, () => Promise<any>>;
@@ -93,6 +100,7 @@ export function initializePicard(options?: PicardOptions): DecoratorService {
   const {
     feed,
     state,
+    scriptUrl = defaultOptions.scriptUrl,
     services = defaultOptions.services,
     dependencies = defaultOptions.dependencies,
     fragmentUrl = defaultOptions.fragmentUrl,
@@ -116,6 +124,7 @@ export function initializePicard(options?: PicardOptions): DecoratorService {
       slotName,
       fragmentUrl,
       dependencies,
+      scriptUrl,
       services,
     }),
     events: createListener,

@@ -156,7 +156,7 @@ export function createPicardScope(injector: DependencyInjector) {
           mfs.map(async (mf) => {
             const container = await loadContainer(injector, mf, containers);
             const { components } = store.getState();
-            let component = components[name].find((m) => m.origin === mf.name);
+            let component = components[name]?.find((m) => m.origin === mf.name);
 
             if (!component) {
               if (await container.load(name)) {

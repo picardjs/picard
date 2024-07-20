@@ -27,7 +27,7 @@ export function registerModule(name: string, resolve: ModuleResolver) {
   }));
 }
 
-function registerDependencies(dependencies: Array<[string, ModuleResolver]>) {
+function registerDependencies(dependencies: Array<[string, ModuleResolver]> = []) {
   for (const [name, dependency] of dependencies) {
     if (!System.has(name)) {
       registerModule(name, dependency);
@@ -39,7 +39,7 @@ function registerDependencies(dependencies: Array<[string, ModuleResolver]>) {
  * Registers the given dependency URLs in SystemJS.
  * @param dependencyUrls The dependencies to resolve later.
  */
-export function registerDependencyUrls(dependencyUrls: Record<string, string>) {
+export function registerDependencyUrls(dependencyUrls: Record<string, string> = {}) {
   const dependencies = Object.entries(dependencyUrls).map(([name, url]): [string, ModuleResolver] => [
     name,
     () => System.import(url),
@@ -51,7 +51,7 @@ export function registerDependencyUrls(dependencyUrls: Record<string, string>) {
  * Registers the given dependency resolvers in SystemJS.
  * @param dependencies The dependencies to resolve later.
  */
-export function registerDependencyResolvers(dependencies: Record<string, ModuleResolver>) {
+export function registerDependencyResolvers(dependencies: Record<string, ModuleResolver> = {}) {
   registerDependencies(Object.entries(dependencies));
 }
 

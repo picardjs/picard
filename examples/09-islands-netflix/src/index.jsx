@@ -15,6 +15,7 @@ const context = new AsyncLocalStorage();
 const stores = {};
 const picard = initializePicard({
   feed: 'https://feed.dev.piral.cloud/api/v1/pilet/netflix-islands-demo',
+  scriptUrl: '/dist/picard-ia.js',
   interactive: true,
   componentName: 'piral-component',
   slotName: 'piral-slot',
@@ -84,7 +85,6 @@ app.post('/', (req, res) => {
 
   const data = context.getStore();
   return store(api, data).update(item);
-  return res.redirect('/browse');
 });
 
 app.get('/', (_, res) => {

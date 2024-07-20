@@ -23,6 +23,7 @@ const demos = {
     '13-spa-tractor-v2-full',
     '14-slot-capabilities',
   ],
+  node: ['09-islands-netflix/public'],
 };
 
 await Promise.all(

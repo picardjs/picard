@@ -1,24 +1,9 @@
-import type { DependencyInjector, PlatformService, EsmService } from '@/types';
+import type { EsmService } from '@/types';
 
-let load: Promise<void> = undefined;
-
-async function getShimport(platform: PlatformService) {
-  const marker = '__shimport__';
-
-  if (!load) {
-    load = platform.loadScript('./dist/picard-esm.js');
-  }
-
-  await load;
-  return globalThis[marker];
-}
-
-export function createEsm(injector: DependencyInjector): EsmService {
-  const platform = injector.get('platform');
-
+export function createEsm(): EsmService {
   return {
     async load(url, depMap, parent) {
-      const shimport = await getShimport(platform);
+      const shimport = await import('./shimport');
       return await shimport.load(url, depMap, parent);
     },
   };

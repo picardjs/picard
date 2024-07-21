@@ -1,4 +1,4 @@
-import { transform } from './transform';
+import { transform, globalName } from './transform';
 
 const promises: Record<string, Promise<any>> = {};
 
@@ -49,6 +49,11 @@ function evaluate(code: string) {
     document.head.appendChild(script);
   });
 }
+
+window[globalName] = {
+  define,
+  load,
+};
 
 export async function define(
   url: string,

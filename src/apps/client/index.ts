@@ -19,7 +19,14 @@ import { createHtmlConverter } from '@/common/frameworks/html';
 import { createSingleSpaConverter } from '@/common/frameworks/single-spa';
 import { createWebComponentConverter } from '@/common/frameworks/web-component';
 import { createSlotBehaviorForRouter } from '@/common/slot-rels/router';
-import type { DebugService, ElementsService, FeedDefinition, FeedService, FragmentsService, PicardStore } from '@/types';
+import type {
+  DebugService,
+  ElementsService,
+  FeedDefinition,
+  FeedService,
+  FragmentsService,
+  PicardStore,
+} from '@/types';
 
 export interface PicardOptions {
   /**
@@ -59,6 +66,10 @@ export interface PicardOptions {
    * The centrally shared dependencies to use.
    */
   dependencies?: Record<string, () => Promise<any>>;
+  /**
+   * The base URL of the script.
+   */
+  baseUrl?: string;
 }
 
 const defaultOptions = {
@@ -93,6 +104,7 @@ export function initializePicard(options?: PicardOptions): PicardStore {
     feed,
     state,
     meta,
+    baseUrl,
     services = defaultOptions.services,
     dependencies = defaultOptions.dependencies,
     componentName = defaultOptions.componentName,
@@ -110,6 +122,7 @@ export function initializePicard(options?: PicardOptions): PicardStore {
       partName,
       slotName,
       dependencies,
+      baseUrl,
     }),
     events: createListener,
     scope: createPicardScope,

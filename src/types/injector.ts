@@ -32,6 +32,7 @@ export interface Configuration {
   slotName: string;
   componentName: string;
   meta?: any;
+  baseUrl?: string;
 }
 
 export type ServiceCreator<TService extends keyof Services> = (injector: DependencyInjector) => Services[TService];

@@ -1,3 +1,4 @@
+import { getUrl } from '@/common/utils/url';
 import { initializePicard, PicardOptions } from '../client';
 import type { PicardStore } from '@/types';
 
@@ -35,6 +36,7 @@ const runPicard = (): void => {
     ...options,
     feed,
     state,
+    baseUrl: getUrl('.', script.src),
   });
   window.picard = scope;
 };

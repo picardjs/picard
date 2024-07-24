@@ -3,27 +3,36 @@ import { createEmptyMicrofrontend } from '@/common/utils/dto';
 import type { PicardMicrofrontend, PiletDefinition } from '@/types';
 
 export function fromPiral(pilet: PiletDefinition, baseUrl?: string): PicardMicrofrontend {
-  switch (pilet.spec) {
+  const { name, link, spec, custom } = pilet;
+
+  switch (spec) {
     case 'mf':
-      return createEmptyMicrofrontend(pilet.name, 'module', pilet.link, {
-        id: pilet.custom?.id || pilet.name,
-        url: getUrl(pilet.link, baseUrl),
+      return createEmptyMicrofrontend(name, 'module', link, {
+        id: custom?.id || name,
+        url: getUrl(link, baseUrl),
+        type: custom?.type,
+        runtime: custom?.runtime,
+        exposes: custom?.exposes,
+        remotes: custom?.remotes,
+        shared: custom?.shared,
+        metaData: custom?.metaData,
       });
     case 'nf':
-      return createEmptyMicrofrontend(pilet.name, 'native', pilet.link, {
-        exposes: pilet.custom.exposes,
-        url: getUrl(pilet.link, baseUrl),
+      return createEmptyMicrofrontend(name, 'native', link, {
+        url: getUrl(link, baseUrl),
+        exposes: custom?.exposes,
+        dependencies: custom?.dependencies,
       });
     default:
-      return createEmptyMicrofrontend(pilet.name, 'pilet', pilet.link, {
-        name: pilet.name,
+      return createEmptyMicrofrontend(name, 'pilet', link, {
+        name,
         integrity: pilet.integrity,
-        custom: pilet.custom,
+        custom,
         version: pilet.version,
         dependencies: pilet.dependencies || {},
-        spec: pilet.spec,
+        spec,
         config: pilet.config,
-        url: getUrl(pilet.link, baseUrl),
+        url: getUrl(link, baseUrl),
       });
   }
 }

@@ -1,9 +1,9 @@
 import { getUrl } from '@/common/utils/url';
 import { createEmptyMicrofrontend } from '@/common/utils/dto';
-import type { DiscoveryResponse, MicroFrontendDefinition, PicardMicrofrontend } from '@/types';
+import type { DiscoveryResponse, PicardMicrofrontend } from '@/types';
 
-function inferKind(definition: MicroFrontendDefinition): PicardMicrofrontend['format'] {
-  const spec = definition.extras?.pilet.spec;
+function inferKind(url: string, extras: any): PicardMicrofrontend['format'] {
+  const spec = extras.pilet.spec;
 
   if (spec === 'mf') {
     return 'module';
@@ -11,9 +11,9 @@ function inferKind(definition: MicroFrontendDefinition): PicardMicrofrontend['fo
     return 'native';
   } else if (typeof spec === 'string') {
     return 'pilet';
-  } else if (definition.url.endsWith('.js') || typeof definition.extras?.modulefederation === 'object') {
+  } else if (url.endsWith('.js') || typeof extras.modulefederation === 'object') {
     return 'module';
-  } else if (definition.url.endsWith('.json') || typeof definition.extras?.nativefederation === 'object') {
+  } else if (url.endsWith('.json') || typeof extras.nativefederation === 'object') {
     return 'native';
   }
 
@@ -28,29 +28,35 @@ export function fromDiscovery(feed: DiscoveryResponse, baseUrl?: string): Array<
     .filter(([, definitions]) => Array.isArray(definitions) && definitions.length > 0)
     .map(([name, definitions]) => {
       const [definition] = definitions;
-      const kind = inferKind(definition);
-      const { metadata, extras, url } = definition;
+      const { metadata, extras = {}, url } = definition;
+      const kind = inferKind(url, extras);
 
       if (kind === 'module') {
         return createEmptyMicrofrontend(name, kind, url, {
-          id: extras?.id || name,
+          id: extras.id || name,
           url: getUrl(url, baseUrl),
+          type: extras.type,
+          runtime: extras.runtime,
+          exposes: extras.exposes,
+          remotes: extras.remotes,
+          shared: extras.shared,
+          metaData: extras.metaData,
         });
       } else if (kind === 'native') {
         return createEmptyMicrofrontend(name, kind, url, {
-          exposes: extras?.exposes,
           url: getUrl(url, baseUrl),
+          exposes: extras.exposes,
+          dependencies: extras.dependencies,
         });
       } else {
         return createEmptyMicrofrontend(name, kind, url, {
           name,
           integrity: metadata.integrity,
           version: metadata.version,
-          dependencies: extras?.dependencies || {},
-          config: extras?.config,
-          spec: extras?.pilet.spec,
+          dependencies: extras.dependencies || {},
+          config: extras.config,
+          spec: extras.pilet.spec,
           url: getUrl(url, baseUrl),
-
         });
       }
     });

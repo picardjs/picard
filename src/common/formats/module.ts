@@ -12,6 +12,7 @@ import type {
   AssetDefinition,
   ComponentDefinition,
   ComponentGetter,
+  ModuleFederationManifestV2MetaData,
 } from '@/types';
 
 const root = '__picard__';
@@ -98,6 +99,31 @@ async function loadFactory(loader: LoaderService, remote: ModuleFederationContai
   return remote;
 }
 
+function reassign(meta: ModuleFederationManifestV2MetaData, entry: ModuleFederationEntry) {
+  const { globalName, remoteEntry } = meta;
+  const { name, type, path } = remoteEntry;
+  const file = `${path || '.'}/${name}`;
+  entry.url = getUrl(file, entry.url);
+  entry.type = type;
+  entry.id = globalName;
+}
+
+async function loadRemote(platform: PlatformService, entry: ModuleFederationEntry) {
+  if (entry.url.endsWith('.json')) {
+    if (!entry.metaData) {
+      const manifest = await platform.loadJson<ModuleFederationManifestV2>(entry.url);
+      entry.exposes = manifest.exposes;
+      entry.shared = manifest.shared;
+      entry.remotes = manifest.remotes;
+      entry.metaData = manifest.metaData;
+    }
+
+    reassign(entry.metaData, entry);
+  }
+
+  return await loadRemoteEntryPoint(platform, entry.url, entry.type, entry.id);
+}
+
 async function loadContainerV2(
   platform: PlatformService,
   loader: LoaderService,
@@ -106,13 +132,10 @@ async function loadContainerV2(
   const assets: Array<AssetDefinition> = [];
   const components: Array<ComponentDefinition> = [];
   const componentRefs: Record<string, { component: undefined | Promise<any> }> = {};
-  const manifest = await platform.loadJson<ModuleFederationManifestV2>(entry.url);
-  const { globalName, remoteEntry } = manifest.metaData;
-  const { name, type } = remoteEntry;
-  const remote = await loadRemoteEntryPoint(platform, getUrl(name, entry.url), type, globalName);
+  const remote = await loadRemote(platform, entry);
   const container = await loadFactory(loader, remote, entry);
 
-  for (const item of manifest.exposes) {
+  for (const item of entry.exposes) {
     const name = item.name;
     components.push({ name });
     componentRefs[name] = { component: undefined };
@@ -189,16 +212,31 @@ async function loadContainerV1(
   };
 }
 
+function getRuntime(entry: ModuleFederationEntry) {
+  const r = entry.runtime;
+
+  if (r) {
+    return r;
+  } else if (!entry.id || entry.url.endsWith('.json')) {
+    return '2.0';
+  } else {
+    return '1.0';
+  }
+}
+
 function loadContainer(
   platform: PlatformService,
   loader: LoaderService,
   entry: ModuleFederationEntry,
 ): Promise<ComponentGetter> {
-  if (entry.id) {
-    return loadContainerV1(platform, loader, entry);
+  switch (getRuntime(entry)) {
+    case '2.0':
+      return loadContainerV2(platform, loader, entry);
+    case '1.0':
+    case '1.5':
+    default:
+      return loadContainerV1(platform, loader, entry);
   }
-
-  return loadContainerV2(platform, loader, entry);
 }
 
 export function createModuleFederation(injector: DependencyInjector): ContainerService {

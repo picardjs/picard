@@ -1,7 +1,7 @@
 import { build } from 'esbuild';
 import { generateDeclaration } from 'dets';
 import { resolve } from 'node:path';
-import { writeFile, readFile, readdir } from 'node:fs/promises';
+import { writeFile, readFile, readdir, rm } from 'node:fs/promises';
 
 async function readJson(file) {
   return JSON.parse(await readFile(file, 'utf8'));
@@ -21,7 +21,9 @@ export async function buildOne(app) {
   const root = resolve(process.cwd(), 'src');
   const appDir = resolve(root, `apps/${app}`);
   const typesDir = resolve(root, 'types');
-  const { name, platform, minify, entry, formats, outDirs, globalName } = await readJson(resolve(appDir, `app.json`));
+  const { name, platform, minify, entry, formats, outDirs, globalName, extension } = await readJson(
+    resolve(appDir, `app.json`),
+  );
 
   const entryPoints = {
     [name]: resolve(appDir, entry),
@@ -37,8 +39,14 @@ export async function buildOne(app) {
   for (const dir of outDirs) {
     const outdir = resolve(process.cwd(), `dist`, dir);
 
+    await rm(outdir, {
+      force: true,
+      recursive: true,
+    });
+
     for (const format of formats) {
-      const ext = format !== 'esm' ? '.js' : '.mjs';
+      const ext = extension || (format !== 'esm' ? '.js' : '.mjs');
+      const splitting = format === 'esm';
 
       const result = await build({
         entryPoints,
@@ -51,6 +59,11 @@ export async function buildOne(app) {
         logOverride,
         format,
         globalName,
+        splitting,
+        define: {
+          'import.meta.env': 'true',
+          'import.meta.env.MODE': '"production"',
+        },
         outExtension: { '.js': ext },
       });
 

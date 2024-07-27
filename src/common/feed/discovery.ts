@@ -9,7 +9,7 @@ function inferKind(url: string, extras: any): PicardMicrofrontend['format'] {
     return 'module';
   } else if (spec === 'nf') {
     return 'native';
-  } else if (typeof spec === 'string') {
+  } else if (typeof spec === 'string' || typeof extras.pilet === 'object') {
     return 'pilet';
   } else if (url.endsWith('.js') || typeof extras.modulefederation === 'object') {
     return 'module';

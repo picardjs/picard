@@ -107,6 +107,15 @@ function loader(element: HTMLElement) {
   return () => cancelAnimationFrame(frameIndex);
 }
 
+function fallback(element: HTMLElement) {
+  const fallbackTemplateId = element.getAttribute(attrFallbackTemplateId) || '';
+  const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
+
+  if (fallbackTemplate instanceof HTMLTemplateElement) {
+    element.appendChild(getFragment(fallbackTemplate).cloneNode(true));
+  }
+}
+
 export function createElements(injector: DependencyInjector) {
   const config = injector.get('config');
   const renderer = injector.get('renderer');
@@ -218,12 +227,7 @@ export function createElements(injector: DependencyInjector) {
           fragment.innerHTML = content;
           this.appendChild(fillTemplate(getFragment(fragment), itemTemplate, this._components));
         } else {
-          const fallbackTemplateId = this.getAttribute(attrFallbackTemplateId) || '';
-          const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
-
-          if (fallbackTemplate instanceof HTMLTemplateElement) {
-            this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
-          }
+          fallback(this);
         }
 
         const loading = this.getAttribute(attrLoadingTemplateId);
@@ -252,9 +256,9 @@ export function createElements(injector: DependencyInjector) {
 
         if (client === 'none') {
           // Skip update as we don't want to render on the client
-        } else if (ev.removed.includes(source)) {
+        } else if (ev.removed.includes(source) && this._lc) {
           this.#reset();
-        } else if (ev.added.includes(source)) {
+        } else if (ev.added.includes(source) && !this._lc) {
           this.#reset();
         }
       }
@@ -346,12 +350,7 @@ export function createElements(injector: DependencyInjector) {
         if (lc) {
           lc.mount?.(this, this.data, this._locals);
         } else {
-          const fallbackTemplateId = this.getAttribute(attrFallbackTemplateId) || '';
-          const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
-
-          if (fallbackTemplate instanceof HTMLTemplateElement) {
-            this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
-          }
+          fallback(this);
         }
       });
     }

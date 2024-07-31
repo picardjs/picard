@@ -17,7 +17,7 @@
     <div class="row m-4">
       <h2>No Attributes</h2>
     </div>
-    <div class="row m-4">
+    <div class="row m-4" id="no-attributes">
       <pi-slot name="component"></pi-slot>
     </div>
   </div>
@@ -26,7 +26,7 @@
     <div class="row m-4">
       <h2>Wrapping in a Template</h2>
     </div>
-    <div class="row m-4">
+    <div class="row m-4" id="in-template">
       <pi-slot name="component" item-template-id="item-template"></pi-slot>
     </div>
   </div>
@@ -35,7 +35,7 @@
     <div class="row m-4">
       <h2>Reverse Order</h2>
     </div>
-    <div class="row m-4">
+    <div class="row m-4" id="reverse-order">
       <pi-slot name="component" reverse-order item-template-id="item-template"></pi-slot>
     </div>
   </div>
@@ -44,8 +44,8 @@
     <div class="row m-4">
       <h2>By Component ID</h2>
     </div>
-    <div class="row m-4">
-      <pi-slot name="component" reverse-order order-by="cid" item-template-id="item-template"></pi-slot>
+    <div class="row m-4" id="order-by-cid">
+      <pi-slot name="component" order-by="cid" item-template-id="item-template"></pi-slot>
     </div>
   </div>
 
@@ -53,7 +53,16 @@
     <div class="row m-4">
       <h2>By Micro Frontend Name</h2>
     </div>
+    <div class="row m-4" id="order-by-origin">
+      <pi-slot name="component" order-by="origin" item-template-id="item-template"></pi-slot>
+    </div>
+  </div>
+
+  <div class="container my-5">
     <div class="row m-4">
+      <h2>By Micro Frontend Name (Reversed)</h2>
+    </div>
+    <div class="row m-4" id="reverse-order-by-origin">
       <pi-slot name="component" reverse-order order-by="origin" item-template-id="item-template"></pi-slot>
     </div>
   </div>

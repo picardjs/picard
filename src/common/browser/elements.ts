@@ -13,6 +13,7 @@ const attrRemoteType = 'remote-type';
 const attrSource = 'source';
 const attrFormat = 'format';
 const attrFramework = 'framework';
+const attrClient = 'client';
 const attrData = 'data';
 const attrCid = 'cid';
 
@@ -93,12 +94,13 @@ function fillTemplate(fragment: DocumentFragment, template: HTMLElement, items: 
 
 function loader(element: HTMLElement) {
   const frameIndex = requestAnimationFrame(() => {
-    const loadingTemplateId = element.getAttribute(attrLoadingTemplateId) || '';
-    const loadingTemplate = loadingTemplateId && document.getElementById(loadingTemplateId);
+    if (!element.hasChildNodes()) {
+      const loadingTemplateId = element.getAttribute(attrLoadingTemplateId) || '';
+      const loadingTemplate = loadingTemplateId && document.getElementById(loadingTemplateId);
 
-    if (loadingTemplate instanceof HTMLTemplateElement) {
-      element.innerHTML = '';
-      element.appendChild(getFragment(loadingTemplate).cloneNode(true));
+      if (loadingTemplate instanceof HTMLTemplateElement) {
+        element.appendChild(getFragment(loadingTemplate).cloneNode(true));
+      }
     }
   });
 
@@ -166,7 +168,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #start() {
-      if (this.name && !this.innerHTML) {
+      if (this.name && !this.hasChildNodes()) {
         this.#setupChildren();
       }
     }
@@ -197,7 +199,7 @@ export function createElements(injector: DependencyInjector) {
 
       this._queue.enqueue(() => {
         const orderBy = this.getAttribute(attrOrderBy);
-        const reverse = !!this.getAttribute(attrReverseOrder);
+        const reverse = this.getAttribute(attrReverseOrder) !== null;
         const [name, data] = this.#details();
         return fragments.load(name, data, { orderBy, reverse });
       });
@@ -302,8 +304,27 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #start() {
-      if (!this.innerHTML) {
-        this.#setupContent();
+      const client = this.getAttribute(attrClient);
+
+      switch (client) {
+        case 'none':
+          return;
+        case 'idle':
+          return requestIdleCallback(() => this.#setupContent());
+        case 'visible':
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                this.#setupContent();
+                observer.disconnect();
+              }
+            });
+          });
+
+          return observer.observe(this);
+        case 'load':
+        default:
+          return this.#setupContent();
       }
     }
 
@@ -341,16 +362,6 @@ export function createElements(injector: DependencyInjector) {
     #reset() {
       this.#clean();
       this.#start();
-    }
-
-    #loading() {
-      const loadingTemplateId = this.getAttribute(attrLoadingTemplateId) || '';
-      const loadingTemplate = loadingTemplateId && document.getElementById(loadingTemplateId);
-
-      if (loadingTemplate instanceof HTMLTemplateElement) {
-        this.innerHTML = '';
-        this.appendChild(getFragment(loadingTemplate).cloneNode(true));
-      }
     }
 
     #update() {

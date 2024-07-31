@@ -22,6 +22,7 @@ const demos = {
     '12-spa-native-tractor',
     '13-spa-tractor-v2-full',
     '14-slot-capabilities',
+    '15-component-capabilities',
   ],
   node: ['09-islands-netflix/public'],
 };

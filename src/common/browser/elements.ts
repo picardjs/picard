@@ -248,7 +248,11 @@ export function createElements(injector: DependencyInjector) {
       const source = this.getAttribute(attrSource);
 
       if (source) {
-        if (ev.removed.includes(source)) {
+        const client = this.getAttribute(attrClient);
+
+        if (client === 'none') {
+          // Skip update as we don't want to render on the client
+        } else if (ev.removed.includes(source)) {
           this.#reset();
         } else if (ev.added.includes(source)) {
           this.#reset();
@@ -312,9 +316,11 @@ export function createElements(injector: DependencyInjector) {
         case 'idle':
           return requestIdleCallback(() => this.#setupContent());
         case 'visible':
+          this.style.display = 'block';
           const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
               if (entry.isIntersecting) {
+                this.style.display = 'contents';
                 this.#setupContent();
                 observer.disconnect();
               }

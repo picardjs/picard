@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "name": "one",
+      "version": "1.0.0",
+      "spec": "v2",
+      "dependencies": {},
+      "link": "one.js"
+    },
+    {
+      "name": "two",
+      "version": "1.0.0",
+      "spec": "v2",
+      "dependencies": {},
+      "link": "two.js"
+    },
+    {
+      "name": "three",
+      "version": "1.0.0",
+      "spec": "v2",
+      "dependencies": {},
+      "link": "three.js"
+    }
+  ]
+}

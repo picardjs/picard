@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Picard.js Component Capabilities</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="./dist/picard.js" feed="/mfs/index.json"></script>
+</head>
+<body>
+  <div class="jumbotron text-center">
+    <h1>Hello World!</h1>
+    <p>This page shows how <code>pi-component</code> can be used. The page extender below is intentional. You need to scroll.</p>
+  </div>
+
+  <div class="container" style="height: 100vh"></div>
+
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>Load once Ready</h2>
+    </div>
+    <div class="row m-4">
+      <p>This loads as fast as possible. Default.</p>
+    </div>
+    <div class="row m-4" id="load">
+      <pi-component name="component" source="three" client="load"></pi-component>
+    </div>
+  </div>
+
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>Lazy Loading (on idle)</h2>
+    </div>
+    <div class="row m-4">
+      <p>This is slightly delayed.</p>
+    </div>
+    <div class="row m-4" id="idle">
+      <pi-component name="component" source="two" client="idle"></pi-component>
+    </div>
+  </div>
+
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>Lazy Loading (on Visible)</h2>
+    </div>
+    <div class="row m-4">
+      <p>This only starts loading when the element is first visible.</p>
+    </div>
+    <div class="row m-4" id="visible">
+      <pi-component name="component" source="one" client="visible"></pi-component>
+    </div>
+  </div>
+
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>SSR with Client Hydration</h2>
+    </div>
+    <div class="row m-4">
+      <p>Keep in mind that these flags all work together with (or without) SSR generated content.</p>
+    </div>
+    <div class="row m-4" id="hydrate">
+      <pi-component name="component" source="three">
+        <div>Count (THREE - hydrated): <b>0</b></div>
+      </pi-component>
+    </div>
+  </div>
+
+  <div class="container my-5">
+    <div class="row m-4">
+      <h2>Only SSR - No Hydrate</h2>
+    </div>
+    <div class="row m-4">
+      <p>If nothing is to hydrate / work on the client, set the flag to <code>none</code>.</p>
+    </div>
+    <div class="row m-4" id="render-none">
+      <pi-component name="component" source="three" client="none">
+        <div>Count (THREE - SSR): <b>0</b></div>
+      </pi-component>
+    </div>
+  </div>
+</body>
+</html>

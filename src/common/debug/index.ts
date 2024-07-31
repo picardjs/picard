@@ -122,6 +122,7 @@ export function initializeDebugAdapter({ config, events, router, scope }: DebugA
       .map((m) => ({
         name: m.name,
         version: '0.0.0',
+        type: m.format,
         root: m.source,
         url: m.details.url || m.source,
         disabled: m.flags === 1,

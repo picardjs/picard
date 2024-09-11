@@ -1,14 +1,14 @@
 import { loadContainer } from './container';
 import { createNewQueue } from './queue';
 import { initializeStore } from './store';
-import { getActiveMfNames, filterItems, mergeItems } from './utils';
+import { getActiveMfNames, filterItems, mergeItems, byCid } from './utils';
 import {
   registerComponent,
   retrieveComponent,
   createMicrofrontend,
   findMicrofrontend,
   registerAsset,
-  retrieveaAsset,
+  retrieveAsset,
   findComponent,
 } from './actions';
 import type { ComponentGetter, DependencyInjector, PicardAsset, PicardComponent, PicardStore } from '@/types';
@@ -82,12 +82,11 @@ export function createPicardScope(injector: DependencyInjector) {
       return retrieveComponent(store, id);
     },
     retrieveAsset(id) {
-      return retrieveaAsset(store, id);
+      return retrieveAsset(store, id);
     },
     loadAssets(type) {
       return queue.depends(() => {
-        const assets = scope.readState().assets[type] || [];
-        return assets.map((asset) => asset.id);
+        return scope.readState().assets[type] || [];
       });
     },
     loadMicrofrontends(loader) {
@@ -143,7 +142,7 @@ export function createPicardScope(injector: DependencyInjector) {
     },
     loadComponents(name, options) {
       return queue.depends(async () => {
-        const ids: Array<string> = [];
+        const result: Array<PicardComponent> = [];
         const { microfrontends } = store.getState();
         const orderBy = options?.orderBy || 'none';
         const mfs = microfrontends.filter((mf) => !mf.flags);
@@ -166,19 +165,19 @@ export function createPicardScope(injector: DependencyInjector) {
               }
             }
 
-            ids.push(component.id);
+            result.push(component);
           }),
         );
 
         if (orderBy === 'cid') {
-          ids.sort();
+          result.sort(byCid);
         }
 
         if (options?.reverse) {
-          ids.reverse();
+          result.reverse();
         }
 
-        return ids;
+        return result;
       });
     },
     appendMicrofrontend(mf) {

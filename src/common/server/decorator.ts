@@ -74,14 +74,30 @@ function getSlotParameters(injector: DependencyInjector, attribs: Record<string,
   return service.apply(attribs);
 }
 
+function renderMeta(meta: any) {
+  let result = '';
+
+  if (meta) {
+    if (typeof meta.server === 'string') {
+      result += ` server="${meta.server}"`;
+    }
+
+    if (typeof meta.client === 'string') {
+      result += ` client="${meta.client}"`;
+    }
+  }
+
+  return result;
+}
+
 async function renderComponents(injector: DependencyInjector, name: string, data: any, opts?: OrderingOptions) {
   const { componentName } = injector.get('config');
   const scope = injector.get('scope');
-  const cids = await scope.loadComponents(name, opts);
+  const components = await scope.loadComponents(name, opts);
 
-  return cids.map(
-    (id) =>
-      `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"></${componentName}>`,
+  return components.map(
+    ({ id, meta }) =>
+      `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"${renderMeta(meta)}></${componentName}>`,
   );
 }
 
@@ -91,6 +107,10 @@ async function Component(
   document: Document,
 ): Promise<string> {
   const data = tryJson(attribs.data, {});
+
+  if (attribs.server === 'none') {
+    return '';
+  }
 
   if ('cid' in attribs || 'name' in attribs) {
     const renderer = injector.get('renderer');

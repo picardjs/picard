@@ -415,15 +415,10 @@ export function createElements(injector: DependencyInjector) {
         sheets.forEach((node) => node.remove());
       });
 
-      const ids = await scope.loadAssets('css');
+      const assets = await scope.loadAssets('css');
 
       appendSheets(
-        added.flatMap((name) =>
-          ids
-            .map((id) => scope.retrieveAsset(id))
-            .filter((m) => m.origin === name)
-            .map(makeSheet),
-        ),
+        added.flatMap((name) => assets.filter((m) => m.origin === name).map(makeSheet)),
         style,
       );
     });

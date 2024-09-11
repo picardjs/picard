@@ -22,9 +22,11 @@ const colors = [
   '#B10DC9',
 ];
 
+const defaultPosition = new DOMRectReadOnly(0, 0, 0, 0);
+
 function getTarget(element: Element): DOMRectReadOnly {
   const row = element.childNodes;
-  return [...row]
+  const positions = [...row]
     .map((item) => {
       if (item instanceof Element) {
         return item.getBoundingClientRect();
@@ -33,17 +35,18 @@ function getTarget(element: Element): DOMRectReadOnly {
         range.selectNode(item);
         return range.getBoundingClientRect();
       } else {
-        return new DOMRectReadOnly(0, 0, 0, 0);
+        return defaultPosition;
       }
     })
-    .filter((m) => m.height !== 0 && m.width !== 0)
-    .reduce((a, b) => {
-      const x = Math.min(a.left, b.left);
-      const y = Math.min(a.top, b.top);
-      const width = Math.max(a.right, b.right) - x;
-      const height = Math.max(a.bottom, b.bottom) - y;
-      return new DOMRectReadOnly(x, y, width, height);
-    });
+    .filter((m) => m.height !== 0 && m.width !== 0);
+  const initial = positions.pop() || defaultPosition;
+  return positions.reduce((a, b) => {
+    const x = Math.min(a.left, b.left);
+    const y = Math.min(a.top, b.top);
+    const width = Math.max(a.right, b.right) - x;
+    const height = Math.max(a.bottom, b.bottom) - y;
+    return new DOMRectReadOnly(x, y, width, height);
+  }, initial);
 }
 
 export function attachVisualizer(scope: PicardStore, events: EventSystem, componentName: string): Visualizer {

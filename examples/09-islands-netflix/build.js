@@ -3,8 +3,8 @@ const { sassPlugin } = require('esbuild-sass-plugin');
 const { resolve } = require('path');
 
 esbuild.build({
-  entryPoints: [resolve(__dirname, 'src/index.jsx')],
-  minify: true,
+  entryPoints: [resolve(__dirname, 'src/server/index.jsx')],
+  minify: false,
   bundle: true,
   platform: 'node',
   alias: {
@@ -16,4 +16,15 @@ esbuild.build({
       type: 'css-text',
     }),
   ],
+});
+
+esbuild.build({
+  entryPoints: [resolve(__dirname, 'src/client/index.jsx')],
+  minify: true,
+  bundle: true,
+  platform: 'browser',
+  alias: {
+    'picard-js/adapter': resolve(__dirname, '../../dist/adapter/picard.mjs'),
+  },
+  outfile: resolve(__dirname, 'public/dist/picard.js'),
 });

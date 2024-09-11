@@ -24,7 +24,7 @@ const demos = {
     '14-slot-capabilities',
     '15-component-capabilities',
   ],
-  node: ['09-islands-netflix/public'],
+  node: [],
 };
 
 await Promise.all(

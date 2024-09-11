@@ -15,7 +15,7 @@ const context = new AsyncLocalStorage();
 const stores = {};
 const picard = initializePicard({
   feed: 'https://feed.dev.piral.cloud/api/v1/pilet/netflix-islands-demo',
-  scriptUrl: '/dist/picard-ia.js',
+  scriptUrl: '/dist/picard.js',
   fragmentUrl: '/fragment',
   interactive: true,
   componentName: 'piral-component',
@@ -44,13 +44,13 @@ const picard = initializePicard({
               get() {
                 const store = stores[name];
                 const data = context.getStore();
-                return store(api, data).get();
+                return store(data).get();
               },
             };
           },
           setStore(name, loader) {
             loader().then((store) => {
-              stores[name] = store.default;
+              stores[name] = store.default.bind(undefined, api);
             });
           },
         });
@@ -76,16 +76,21 @@ app.use(
   }),
 );
 
-app.post('/', (req, res) => {
+app.post('/', async (req, res) => {
   const { store, item } = req.body;
   const handler = stores[store];
-  req.session.store = {
-    ...req.session.store,
-    [store]: item ? JSON.parse(item) : null,
-  };
 
-  const data = context.getStore();
-  return store(api, data).update(item);
+  await context.run(req.session.store, async () => {
+    const data = context.getStore();
+    const instance = handler(data);
+    await instance.update(JSON.parse(item));
+    req.session.store = {
+      ...req.session.store,
+      ...instance.get(),
+    };
+  });
+
+  return res.redirect('/browse');
 });
 
 app.get('/', (_, res) => {
@@ -106,7 +111,7 @@ app.get('*', async (req, res) => {
     const content = renderToString(<PageLayout route={route} />);
     return picard.decorate(content);
   });
-  res.send(html);
+  res.send(`<!DOCTYPE html>${html}`);
 });
 
 app.listen(port, () => {

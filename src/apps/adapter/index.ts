@@ -8,7 +8,7 @@ import { createEsm } from '@/common/browser/esm';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
-import { createRenderer } from './renderer';
+import { createRenderer } from '@/common/ui/renderer';
 import type { PicardStore, FragmentsService, ElementsService, DebugService } from '@/types';
 
 function deserializeConfig(): any {
@@ -22,13 +22,20 @@ function deserializeConfig(): any {
   return {};
 }
 
-declare global {
-  interface Window {
-    /**
-     * Gets access to the Picard.js API.
-     */
-    picard: PicardStore;
-  }
+export interface PicardOptions {
+  /**
+   * The config override if it should not be obtained
+   * from the script[type=pi-config] element.
+   */
+  config?: any;
+  /**
+   * The additional services to register.
+   */
+  services?: Record<string, any>;
+  /**
+   * The centrally shared dependencies to use.
+   */
+  dependencies?: Record<string, () => Promise<any>>;
 }
 
 declare module '@/types/injector' {
@@ -45,10 +52,15 @@ declare module '@/types/injector' {
   }
 }
 
-const resumePicard = (): void => {
-  const config = deserializeConfig();
+export function resumePicard(options?: PicardOptions): PicardStore {
+  const { config, services = {}, ...configOverrides } = options || {};
+  const defaultConfig = config || deserializeConfig();
   const serviceDefinitions = {
-    config: () => config,
+    ...services,
+    config: () => ({
+      ...defaultConfig,
+      ...configOverrides,
+    }),
     events: createListener,
     scope: createPicardScope,
     fragments: createFragments,
@@ -61,16 +73,10 @@ const resumePicard = (): void => {
     debug: createDebug,
   };
 
-  window.picard = createInjector(serviceDefinitions)
+  return createInjector(serviceDefinitions)
     .instantiate('loader')
     .instantiate('elements')
     .instantiate('router')
     .instantiate('debug')
     .get('scope');
-};
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', resumePicard);
-} else {
-  resumePicard();
 }

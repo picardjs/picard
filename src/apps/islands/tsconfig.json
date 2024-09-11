@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "paths": {
+      "@/*": ["../../*"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "../../common/**/*.ts",
+    "../../types/**/*.ts"
+  ]
+}

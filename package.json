@@ -62,11 +62,16 @@
       }
     },
     "./package.json": "./package.json",
+    "./adapter": {
+      "import": "./dist/adapter/picard.mjs",
+      "types": "./dist/adapter/picard.d.ts"
+    },
     "./browser": "./dist/browser/picard.js",
     "./client": {
       "import": "./dist/client/picard.mjs",
       "types": "./dist/client/picard.d.ts"
     },
+    "./islands": "./dist/islands/picard.js",
     "./native": {
       "require": "./dist/native/picard.js",
       "import": "./dist/native/picard.mjs",

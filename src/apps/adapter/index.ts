@@ -9,6 +9,12 @@ import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
 import { createRenderer } from '@/common/ui/renderer';
+import { createPilet } from '@/common/formats/pilet';
+import { createModuleFederation } from '@/common/formats/module';
+import { createNativeFederation } from '@/common/formats/native';
+import { createDefaultConverter } from '@/common/frameworks/default';
+import { createSingleSpaConverter } from '@/common/frameworks/single-spa';
+import { createWebComponentConverter } from '@/common/frameworks/web-component';
 import type { PicardStore, FragmentsService, ElementsService, DebugService } from '@/types';
 
 function deserializeConfig(): any {
@@ -71,6 +77,12 @@ export function resumePicard(options?: PicardOptions): PicardStore {
     elements: createElements,
     router: createRouter,
     debug: createDebug,
+    'format.module': createModuleFederation,
+    'format.native': createNativeFederation,
+    'format.pilet': createPilet,
+    'framework.single-spa': createSingleSpaConverter,
+    'framework.default': createDefaultConverter,
+    'framework.web-component': createWebComponentConverter,
   };
 
   return createInjector(serviceDefinitions)

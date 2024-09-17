@@ -1,17 +1,16 @@
+import React from 'react';
+import { hydrateRoot } from 'react-dom/client';
 import { resumePicard } from 'picard-js/adapter';
 
 function reactConverter() {
   return {
     convert(lazyComponent, { api, data = {} }) {
-      let React,
-        ReactDom,
-        Component,
+      let Component,
         initialData = {};
+
       return {
         async load() {
-          [React, ReactDom, { default: Component }] = await Promise.all([
-            import('react'),
-            import('react-dom/client'),
+          [{ default: Component }] = await Promise.all([
             lazyComponent(),
             ...Object.entries(data).map(async ([name, load]) => {
               const value = await load();
@@ -20,12 +19,7 @@ function reactConverter() {
           ]);
         },
         mount(container, props, locals) {
-          const element = React.createElement(Component, {
-            ...props,
-            ...initialData,
-            api,
-          });
-          ReactDom.hydrateRoot(container, element);
+          hydrateRoot(container, <Component {...props} {...initialData} api={api} />);
         },
       };
     },
@@ -35,8 +29,21 @@ function reactConverter() {
 window.picard = resumePicard({
   services: {
     'framework.react': reactConverter,
+    pilet: () => ({
+      extend(api) {
+        Object.assign(api, {
+          Component(props) {
+            return <piral-slot name={props.name} data={JSON.stringify(props.params)} />;
+          },
+          registerComponent() {},
+          registerPage() {},
+          getStore() {},
+          setStore() {},
+        });
+      },
+    }),
   },
   dependencies: {
-    'react@18.2.0': () => import('react'),
+    'react@18.2.0': () => Promise.resolve(React),
   },
 });

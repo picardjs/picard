@@ -40,13 +40,9 @@ const picard = initializePicard({
             api.registerComponent(`page:${path}`, Component, meta);
           },
           getStore(name) {
-            return {
-              get() {
-                const store = stores[name];
-                const data = context.getStore();
-                return store(data).get();
-              },
-            };
+            const store = stores[name];
+            const { [name]: data } = context.getStore() || {};
+            return store(data);
           },
           setStore(name, loader) {
             loader().then((store) => {
@@ -86,7 +82,7 @@ app.post('/', async (req, res) => {
     await instance.update(JSON.parse(item));
     req.session.store = {
       ...req.session.store,
-      ...instance.get(),
+      [store]: instance.get(),
     };
   });
 

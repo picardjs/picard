@@ -95,6 +95,17 @@ declare module '@/types/injector' {
   }
 }
 
+export {
+  createModuleFederation,
+  createNativeFederation,
+  createPilet,
+  createSingleSpaConverter,
+  createDefaultConverter,
+  createWebComponentConverter,
+  createSlotBehaviorForRouter,
+  createHtmlConverter,
+};
+
 export function share(exports: any) {
   return () => Promise.resolve(exports);
 }
@@ -113,17 +124,6 @@ export function initializePicard(options?: PicardOptions): PicardStore {
   } = options || {};
 
   const serviceDefinitions = {
-    ...services,
-    config: () => ({
-      feed,
-      state,
-      meta,
-      componentName,
-      partName,
-      slotName,
-      dependencies,
-      baseUrl,
-    }),
     events: createListener,
     scope: createPicardScope,
     feed: createFeed,
@@ -144,6 +144,17 @@ export function initializePicard(options?: PicardOptions): PicardStore {
     'framework.html': createHtmlConverter,
     'framework.web-component': createWebComponentConverter,
     'slotRel.router': createSlotBehaviorForRouter,
+    ...services,
+    config: () => ({
+      feed,
+      state,
+      meta,
+      componentName,
+      partName,
+      slotName,
+      dependencies,
+      baseUrl,
+    }),
   };
 
   return createInjector(serviceDefinitions)

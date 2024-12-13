@@ -96,6 +96,15 @@ declare module '@/types/injector' {
   }
 }
 
+export {
+  createModuleFederation,
+  createNativeFederation,
+  createPilet,
+  createDefaultConverter,
+  createSlotBehaviorForRouter,
+  createHtmlConverter,
+};
+
 export function initializePicard(options?: PicardOptions): DecoratorService {
   const {
     feed,
@@ -115,18 +124,6 @@ export function initializePicard(options?: PicardOptions): DecoratorService {
   }
 
   const serviceDefinitions = {
-    ...services,
-    config: () => ({
-      feed,
-      state,
-      componentName,
-      partName,
-      slotName,
-      fragmentUrl,
-      dependencies,
-      scriptUrl,
-      services,
-    }),
     events: createListener,
     scope: createPicardScope,
     feed: createFeed,
@@ -144,6 +141,18 @@ export function initializePicard(options?: PicardOptions): DecoratorService {
     'framework.html': createHtmlConverter,
     'part.style': createStylePart,
     'slotRel.router': createSlotBehaviorForRouter,
+    ...services,
+    config: () => ({
+      feed,
+      state,
+      componentName,
+      partName,
+      slotName,
+      fragmentUrl,
+      dependencies,
+      scriptUrl,
+      services,
+    }),
   };
 
   return createInjector(serviceDefinitions).instantiate('loader').instantiate('feed').get('decorator');

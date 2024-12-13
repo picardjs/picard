@@ -3,9 +3,9 @@ import type { ConverterService } from '@/types';
 
 interface SingleSpaParcel {
   bootstrap(): Promise<void>;
-  mount(props: any): void;
-  unmount(props: any): void;
-  update(props: any): void;
+  mount(props: any): Promise<void>;
+  unmount(props: any): Promise<void>;
+  update(props: any): Promise<void>;
   unload(): Promise<void>;
 }
 
@@ -28,9 +28,11 @@ export function createSingleSpaConverter(): ConverterService {
           });
         },
         unmount(container) {
-          component.unmount({
-            domElement: container,
-          });
+          component
+            .unmount({
+              domElement: container,
+            })
+            .catch(() => {});
         },
         update(props, locals) {
           component.update?.({ ...props, domElement: locals.container });

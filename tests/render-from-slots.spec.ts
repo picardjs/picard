@@ -37,11 +37,6 @@ test('two slots', async ({ page }) => {
   expect(await page.locator('pi-slot').count()).toBe(2);
 });
 
-test('three columns', async ({ page }) => {
-  await page.waitForSelector('pi-component');
-  expect(await page.locator('.row .col-sm-4').count()).toBe(3);
-});
-
 test('loads module federation successfully', async ({ page }) => {
   await expect(page.getByText('Column 2')).toBeVisible();
 });
@@ -52,4 +47,9 @@ test('loads native federation successfully', async ({ page }) => {
 
 test('loads pilet successfully', async ({ page }) => {
   await expect(page.getByRole('button')).toHaveText('0x clicked');
+});
+
+test('three columns', async ({ page }) => {
+  await page.waitForSelector('pi-component');
+  expect(await page.locator('.row .col-sm-4').count()).toBe(3);
 });

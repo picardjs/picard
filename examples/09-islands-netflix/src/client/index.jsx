@@ -26,19 +26,35 @@ function reactConverter() {
   };
 }
 
+const stores = {};
+
 window.picard = resumePicard({
   services: {
     'framework.react': reactConverter,
     pilet: () => ({
       extend(api) {
+        const rc = api.registerComponent;
         Object.assign(api, {
           Component(props) {
             return <piral-slot name={props.name} data={JSON.stringify(props.params)} />;
           },
-          registerComponent() {},
-          registerPage() {},
-          getStore() {},
-          setStore() {},
+          registerComponent(name, Component, meta) {
+            rc(name, Component, {
+              ...meta,
+              type: 'react',
+            });
+          },
+          registerPage(path, Component, meta) {
+            api.registerComponent(`page:${path}`, Component, meta);
+          },
+          getStore(name) {
+            return stores[name];
+          },
+          setStore(name, loader) {
+            loader().then((store) => {
+              stores[name] = store.default({}, api);
+            });
+          },
         });
       },
     }),

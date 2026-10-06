@@ -106,4 +106,8 @@ A preview release is the full release without a Git tag or the "normal" version 
 
 Module Federation remains the federation sharing mechanism, not the module execution engine: Picard's runtime provides the small registration and linking contract required by pilets and shared dependency resolvers. This avoids bundling the full SystemJS implementation while preserving browser and Node SSR behavior. Native Federation manifests are declarations of exposed modules and shared dependencies, not a separate Picard dependency runtime.
 
+Versioned package records retain their full ID together with separate package `name` and exact `version` fields, parsed once at registration. Scoped package names are supported; URL records and range aliases are not advertised as concrete package versions. Exact registered IDs take precedence over range matching. Compatible range requests prefer evaluated records, then registration order. Dependency listing uses the stored metadata rather than re-parsing registry keys.
+
+Concurrent imports share a module's evaluation promise. Circular dependency linking uses the existing namespace to avoid waiting on itself, and unchanged exports do not re-notify setters. The lazy browser ESM shim accesses the installed runtime through a type-only reference: value-importing the loader from this shim can cause esbuild to emit a shared chunk and turn the classic browser entry into an ESM script.
+
 The package emits a browser script, client ESM, Node CJS/ESM, and native ESM entrypoints. Keep `package.json` exports aligned with the formats actually produced by each `src/apps/*/app.json`; do not advertise a format that is not built. npm contents are restricted to `dist` and project documentation.

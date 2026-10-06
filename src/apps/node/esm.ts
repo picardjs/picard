@@ -1,5 +1,5 @@
-import { createContext, SourceTextModule, Context, SyntheticModule } from 'vm';
-import { System } from '@/common/loader/system';
+import { createContext, SourceTextModule, Context, SyntheticModule } from 'node:vm';
+import { system } from '@/common/loader';
 import type { EsmService } from '@/types';
 
 export function createEsm(): EsmService {
@@ -13,7 +13,7 @@ export function createEsm(): EsmService {
         meta.url = url;
       },
     });
-    
+
     mod.context = ctx;
 
     await mod.link(async (specifier) => {
@@ -23,17 +23,17 @@ export function createEsm(): EsmService {
       if (entry) {
         return entry;
       }
-  
+
       if (dep) {
-        const result = await System.import(dep, parent);
+        const result = await system.import(dep, parent);
         const names = Object.keys(result);
-        return cache[dep] = new SyntheticModule(names, function () {
+        return (cache[dep] = new SyntheticModule(names, function () {
           for (const name of names) {
             this.setExport(name, result[name]);
           }
-        });
+        }));
       }
-  
+
       const newUrl = new URL(specifier, url);
       return await linkModule(newUrl.href, ctx, depMap, parent);
     });

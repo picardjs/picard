@@ -1,3 +1,5 @@
+import { satisfies, validate } from './version';
+
 export type ModuleNamespace = Record<string, any>;
 export type ModuleExport = ((name: string, value: any) => any) & ((values: ModuleNamespace) => ModuleNamespace);
 export type ModuleSetter = (module: ModuleNamespace) => void;
@@ -18,6 +20,8 @@ export type ModuleDeclare = (exportModule: ModuleExport, context: ModuleContext)
 
 interface ModuleRecord {
   id: string;
+  name?: string;
+  version?: string;
   dependencies: Array<string>;
   declare?: ModuleDeclare;
   namespace: ModuleNamespace;
@@ -25,6 +29,8 @@ interface ModuleRecord {
   state: 'registered' | 'linking' | 'executing' | 'evaluated' | 'failed';
   error?: unknown;
   declaration?: ModuleDeclaration;
+  evaluation?: Promise<ModuleNamespace>;
+  waitingFor?: ModuleRecord;
 }
 
 export interface PicardSystem {
@@ -37,15 +43,58 @@ export interface PicardSystem {
   entries(): Iterable<[string, ModuleNamespace]>;
   resolve(id: string, parent?: string): string;
   import(id: string, parent?: string): Promise<ModuleNamespace>;
-  setResolveFallback(fallback: (id: string, parent?: string) => string | undefined): void;
+  list(): Array<{ id: string; name: string; version: string }>;
   setResolveListener(listener: (id: string, parent: string | undefined, result: string) => void): void;
+}
+
+const exactVersion = /^\d+\.\d+\.\d+(?:-[\da-z-]+(?:\.[\da-z-]+)*)?(?:\+[\da-z-]+(?:\.[\da-z-]+)*)?$/i;
+
+function splitPackageId(id: string) {
+  if (/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(id)) {
+    return undefined;
+  }
+
+  const separator = id.lastIndexOf('@');
+
+  if (separator <= 0) {
+    return undefined;
+  }
+
+  return {
+    name: id.substring(0, separator),
+    version: id.substring(separator + 1),
+  };
+}
+
+function getPackageMetadata(id: string) {
+  const packageId = splitPackageId(id);
+
+  if (packageId && exactVersion.test(packageId.version)) {
+    return packageId;
+  }
+
+  return undefined;
+}
+
+function findMatchingPackage(modules: Map<string, ModuleRecord>, id: string) {
+  const requested = splitPackageId(id);
+
+  if (requested && validate(requested.version)) {
+    const available = [...modules.values()].filter(
+      (module) => module.name === requested.name && module.version && satisfies(module.version, requested.version),
+    );
+    const preferred = available.find((module) => module.state === 'evaluated') || available[0];
+
+    return preferred?.id;
+  }
+
+  return undefined;
 }
 
 export function createSystem(): PicardSystem {
   const modules = new Map<string, ModuleRecord>();
   const loading = new Map<string, Promise<ModuleRecord>>();
   const registerRegistry: Record<string, true> = Object.create(null);
-  let resolveFallback: ((id: string, parent?: string) => string | undefined) | undefined;
   let resolveListener: ((id: string, parent: string | undefined, result: string) => void) | undefined;
   let registeringUrl: string | undefined;
 
@@ -61,6 +110,7 @@ export function createSystem(): PicardSystem {
 
     const record: ModuleRecord = {
       id,
+      ...getPackageMetadata(id),
       dependencies,
       declare,
       namespace: {},
@@ -80,7 +130,7 @@ export function createSystem(): PicardSystem {
     } else if (id.startsWith('.') && parent && /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(parent)) {
       result = new URL(id, parent).href;
     } else {
-      result = resolveFallback?.(id, parent) || id;
+      result = modules.has(id) ? id : findMatchingPackage(modules, id) || id;
     }
 
     resolveListener?.(id, parent, result);
@@ -91,6 +141,7 @@ export function createSystem(): PicardSystem {
     const namespace = value && typeof value === 'object' ? value : { default: value };
     modules.set(id, {
       id,
+      ...getPackageMetadata(id),
       dependencies: [],
       namespace,
       importers: [],
@@ -160,8 +211,32 @@ export function createSystem(): PicardSystem {
     }
   }
 
-  async function instantiate(record: ModuleRecord): Promise<ModuleNamespace> {
-    if (record.state === 'evaluated' || record.state === 'linking' || record.state === 'executing') {
+  function instantiate(record: ModuleRecord): Promise<ModuleNamespace> {
+    if (!record.evaluation) {
+      record.evaluation = evaluate(record);
+    }
+
+    return record.evaluation;
+  }
+
+  function createsDependencyCycle(dependency: ModuleRecord, importer: ModuleRecord) {
+    const visited = new Set<ModuleRecord>();
+    let current: ModuleRecord | undefined = dependency;
+
+    while (current && !visited.has(current)) {
+      if (current === importer) {
+        return true;
+      }
+
+      visited.add(current);
+      current = current.waitingFor;
+    }
+
+    return false;
+  }
+
+  async function evaluate(record: ModuleRecord): Promise<ModuleNamespace> {
+    if (record.state === 'evaluated') {
       return record.namespace;
     }
 
@@ -173,13 +248,19 @@ export function createSystem(): PicardSystem {
 
     const exportModule = ((nameOrValues: string | ModuleNamespace, value?: any) => {
       const updates = typeof nameOrValues === 'string' ? { [nameOrValues]: value } : nameOrValues;
+      const changed = Object.entries(updates).some(
+        ([name, exported]) =>
+          !Object.prototype.hasOwnProperty.call(record.namespace, name) || !Object.is(record.namespace[name], exported),
+      );
       Object.assign(record.namespace, updates);
 
-      for (const importer of record.importers) {
-        importer(record.namespace);
+      if (changed) {
+        for (const importer of record.importers) {
+          importer(record.namespace);
+        }
       }
 
-      return updates;
+      return typeof nameOrValues === 'string' ? value : updates;
     }) as ModuleExport;
 
     const context: ModuleContext = {
@@ -202,7 +283,10 @@ export function createSystem(): PicardSystem {
           dependency.importers.push(setter);
         }
 
-        setter?.(await instantiate(dependency));
+        record.waitingFor = dependency;
+        const namespace = createsDependencyCycle(dependency, record) ? dependency.namespace : await instantiate(dependency);
+        record.waitingFor = undefined;
+        setter?.(namespace);
       }
 
       record.state = 'executing';
@@ -213,11 +297,13 @@ export function createSystem(): PicardSystem {
       record.state = 'failed';
       record.error = error;
       throw error;
+    } finally {
+      record.waitingFor = undefined;
     }
   }
 
   const system: PicardSystem = {
-    register: register as PicardSystem['register'],
+    register,
     registerRegistry,
     set,
     get(id) {
@@ -229,14 +315,16 @@ export function createSystem(): PicardSystem {
     entries() {
       return [...modules].map(([id, record]) => [id, record.namespace]);
     },
+    list() {
+      return [...modules.values()].flatMap((module) =>
+        module.name && module.version ? [{ id: module.id, name: module.name, version: module.version }] : [],
+      );
+    },
     resolve,
     async import(id, parent) {
       const resolved = resolve(id, parent);
       const record = modules.get(resolved) || (await loadScript(resolved));
       return instantiate(record);
-    },
-    setResolveFallback(fallback) {
-      resolveFallback = fallback;
     },
     setResolveListener(listener) {
       resolveListener = listener;
@@ -245,8 +333,3 @@ export function createSystem(): PicardSystem {
 
   return system;
 }
-
-const System = createSystem();
-(globalThis as any).System = System;
-
-export { System };

@@ -55,6 +55,50 @@ test('gets an already registered module synchronously', async () => {
   expect(system.get(moduleUrl)).toEqual({ createElement: expect.any(Function) });
 });
 
+test('stores package name and version separately from a scoped module ID', () => {
+  const system = createSystem();
+  system.register('@scope/react@19.0.0', [], () => ({}));
+
+  expect(system.list()).toEqual([{ id: '@scope/react@19.0.0', name: '@scope/react', version: '19.0.0' }]);
+});
+
+test('prefers an evaluated compatible package version', async () => {
+  const system = createSystem();
+  system.register('react@18.0.0', [], (exportModule) => ({
+    execute() {
+      exportModule('selected', 'registered');
+    },
+  }));
+  system.register('react@18.2.0', [], (exportModule) => ({
+    execute() {
+      exportModule('selected', 'evaluated');
+    },
+  }));
+
+  await system.import('react@18.2.0');
+
+  await expect(system.import('react@^18.0.0')).resolves.toEqual({ selected: 'evaluated' });
+});
+
+test('preserves exact registered IDs before range matching', () => {
+  const system = createSystem();
+  system.set('react@18.0.0', {});
+  system.set('react@18.2.0', {});
+
+  expect(system.resolve('react@18.2.0')).toBe('react@18.2.0');
+});
+
+test('lists package metadata from set without treating URLs or ranges as package versions', () => {
+  const system = createSystem();
+  system.set('react@19.0.0', {});
+  system.set('https://picard.test/react@19.0.0', {});
+  system.set('react@^19.0.0', {});
+  system.set('unversioned', {});
+
+  expect(system.list()).toEqual([{ id: 'react@19.0.0', name: 'react', version: '19.0.0' }]);
+  expect(system.resolve('react@^19.0.0')).toBe('react@^19.0.0');
+});
+
 test('loads anonymous register modules and relative dependencies in Node', async () => {
   const system = createSystem();
   const entryUrl = 'https://picard.test/pilet/index.js';
@@ -80,4 +124,50 @@ test('loads anonymous register modules and relative dependencies in Node', async
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('concurrent imports wait for the same async module evaluation', async () => {
+  const system = createSystem();
+  let finishExecution: () => void;
+  const gate = new Promise<void>((resolve) => (finishExecution = resolve));
+  let executions = 0;
+  system.register('async-module', [], (exportModule) => ({
+    async execute() {
+      executions++;
+      await gate;
+      exportModule('ready', true);
+    },
+  }));
+
+  const first = system.import('async-module');
+  let secondCompleted = false;
+  const second = system.import('async-module').then((module) => {
+    secondCompleted = true;
+    return module;
+  });
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const completedBeforeExecution = secondCompleted;
+  finishExecution();
+
+  await expect(first).resolves.toEqual({ ready: true });
+  await expect(second).resolves.toEqual({ ready: true });
+  expect(completedBeforeExecution).toBe(false);
+  expect(executions).toBe(1);
+});
+
+test('links a circular dependency without waiting for its own evaluation', async () => {
+  const system = createSystem();
+  system.register('first', ['second'], (exportModule) => {
+    exportModule('name', 'first');
+    return { setters: [(module) => exportModule('dependency', module.name)] };
+  });
+  system.register('second', ['first'], (exportModule) => {
+    exportModule('name', 'second');
+    return { setters: [(module) => exportModule('dependency', module.name)] };
+  });
+
+  await expect(Promise.all([system.import('first'), system.import('second')])).resolves.toEqual([
+    { name: 'first', dependency: 'second' },
+    { name: 'second', dependency: 'first' },
+  ]);
 });

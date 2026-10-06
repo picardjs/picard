@@ -1,5 +1,3 @@
-import { System } from '@/common/loader/system';
-
 import { transform, globalName } from './transform';
 
 const promises: Record<string, Promise<any>> = {};
@@ -20,7 +18,7 @@ function loadDependency(id: string, url: string, parent: string, depMap: Record<
   const depId = depMap[id];
 
   if (depId) {
-    return System.import(depId, parent);
+    return (globalThis as any).System.import(depId, parent);
   }
 
   return loadModule(new URL(id, url).href, parent, depMap);
@@ -52,7 +50,7 @@ function evaluate(code: string) {
   });
 }
 
-window[globalName] = {
+(window as any)[globalName] = {
   define,
   load,
 };

@@ -130,6 +130,7 @@ export function createElements(injector: DependencyInjector) {
     private _ready = false;
     private _queue = createQueue();
     private _components: Array<PiComponent> = [];
+    private _stopLoader: (() => void) | undefined;
 
     get name() {
       return this.getAttribute(attrName) || '';
@@ -183,6 +184,8 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #clean() {
+      this._stopLoader?.();
+      this._stopLoader = undefined;
       this._queue.reset();
       this.innerHTML = '';
     }
@@ -204,7 +207,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     async #setupChildren() {
-      const stopLoader = loader(this);
+      const stopLoader = (this._stopLoader = loader(this));
 
       this._queue.enqueue(() => {
         const orderBy = this.getAttribute(attrOrderBy);
@@ -221,6 +224,7 @@ export function createElements(injector: DependencyInjector) {
         this._components = [];
 
         stopLoader();
+        this._stopLoader = undefined;
 
         if (content) {
           const fragment = document.createElement('template');
@@ -248,6 +252,9 @@ export function createElements(injector: DependencyInjector) {
     private _locals: any = {};
     private _queue = createQueue();
     private _ready = false;
+    private _stopStart: (() => void) | undefined;
+    private _stopLoader: (() => void) | undefined;
+    private _startGeneration = 0;
     private handleUpdate = (ev: UpdatedMicrofrontendsEvent) => {
       const source = this.getAttribute(attrSource);
 
@@ -312,26 +319,55 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #start() {
+      this._stopStart?.();
+      this._stopStart = undefined;
+      const generation = ++this._startGeneration;
+
       const client = this.getAttribute(attrClient);
 
       switch (client) {
         case 'none':
           return;
-        case 'idle':
-          return requestIdleCallback(() => this.#setupContent());
+        case 'idle': {
+          const idleCallback = requestIdleCallback(() => {
+            if (generation === this._startGeneration) {
+              this._stopStart = undefined;
+
+              if (this._ready) {
+                this.#setupContent();
+              }
+            }
+          });
+          this._stopStart = () => cancelIdleCallback(idleCallback);
+          return;
+        }
         case 'visible':
           this.style.display = 'block';
           const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
               if (entry.isIntersecting) {
+                if (!this._ready || generation !== this._startGeneration) {
+                  observer.disconnect();
+                  return;
+                }
+
                 this.style.display = 'contents';
-                this.#setupContent();
                 observer.disconnect();
+
+                if (this._stopStart) {
+                  this._stopStart = undefined;
+                }
+
+                if (this._ready) {
+                  this.#setupContent();
+                }
               }
             });
           });
 
-          return observer.observe(this);
+          observer.observe(this);
+          this._stopStart = () => observer.disconnect();
+          return;
         case 'load':
         default:
           return this.#setupContent();
@@ -339,13 +375,14 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #setupContent() {
-      const stopLoader = loader(this);
+      const stopLoader = (this._stopLoader = loader(this));
       this.#bootstrap();
 
       this._queue.enqueue(() => {
         const lc = this._lc;
 
         stopLoader();
+        this._stopLoader = undefined;
 
         if (lc) {
           lc.mount?.(this, this.data, this._locals);
@@ -357,6 +394,11 @@ export function createElements(injector: DependencyInjector) {
 
     #clean() {
       const lc = this._lc;
+      this._startGeneration++;
+      this._stopStart?.();
+      this._stopStart = undefined;
+      this._stopLoader?.();
+      this._stopLoader = undefined;
       this._queue.reset();
       lc?.unmount?.(this, this._locals);
       this._lc = undefined;

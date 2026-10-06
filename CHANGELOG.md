@@ -2,8 +2,10 @@
 
 ## 0.3.0 (tbd)
 
+- Fixed deferred component activation after disconnection and canceled pending idle/visibility work
+- Removed JSR publishing configuration and workflow
+- Restricted npm package contents and aligned exports with generated formats
 - Renamed `picard-js/server` to `picard-js/node` (#9)
-- Improved released package on JSR (only considering native output)
 - Added more inline documentation / type declarations
 - Added `loading-template-id` to attributes of `pi-component` and `pi-slot` (#8)
 - Added `@softarc/native-federaton` stub to the native federation format (#6)

@@ -94,8 +94,16 @@ For CI/CD purposes we have three distinct workflows:
 
 The build workflow (1) has a dependency to the tests (2). If the tests are failing no build or package release step is run.
 
-In case that (1) was triggered on the `main` branch it will eventually release the packages on the JSR and npm registries. If that works out a Git tag is created and pushed to GitHub. Finally, using that tag the GitHub release (3) workflow is triggered.
+In case that (1) was triggered on the `main` branch it will eventually release the package to npm. If that works out a Git tag is created and pushed to GitHub. Finally, using that tag the GitHub release (3) workflow is triggered.
 
 Only the build workflow (1) is sensitive to the branch. The release parts are only triggered in the `main` and `develop` branches. In case of a pull request only the build part is run. The release part is divided into two areas; one for preview releases (`develop` branch) and one for full releases (`main` branch).
 
 A preview release is the full release without a Git tag or the "normal" version number. Instead, the version number is augmented with a preview segment - something like `-pre.15`. Therefore, a version such as `1.2.3` would look like `1.2.3-pre.15` when being processed as a preview release.
+
+## Runtime and Federation Loading
+
+`LoaderService` is the shared dependency registry used by the runtime variants. The current implementation is based on SystemJS and is also responsible for URL/resolver registration, dependency version matching, and loading System.register modules. Pilets use this contract directly. Module Federation adapts shared modules in both directions between an MF container's share scope and the Picard loader. Native Federation resolves manifest dependencies through the same loader, while loading its ESM files through the platform-specific ESM service.
+
+This is not yet a Module Federation-only architecture. Replacing SystemJS with a custom SystemJS-compatible layer over Module Federation would change module registration, execution, resolution, and SSR behavior; it needs a separately versioned compatibility design and tests for pilets, shared dependency versions, browser loading, and Node SSR. Native Federation manifests should continue to be treated as declarations of exposed modules and shared dependencies, not as a separate dependency runtime.
+
+The package emits a browser script, client ESM, Node CJS/ESM, and native ESM entrypoints. Keep `package.json` exports aligned with the formats actually produced by each `src/apps/*/app.json`; do not advertise a format that is not built. npm contents are restricted to `dist` and project documentation.

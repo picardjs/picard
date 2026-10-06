@@ -22,7 +22,7 @@
     "build:client": "node tools/build.mjs client",
     "build:native": "node tools/build.mjs native",
     "build:node": "node tools/build.mjs node",
-    "test": "playwright test --project firefox",
+    "test": "playwright test --project chromium",
     "test:all": "playwright test"
   },
   "homepage": "https://picard.js.org",
@@ -32,7 +32,14 @@
   "browser": "dist/browser/picard.js",
   "module": "dist/node/picard.mjs",
   "main": "dist/node/picard.js",
-  "typings": "dist/node/picard.d.ts",
+  "types": "dist/node/picard.d.ts",
+  "files": [
+    "dist/**",
+    "LICENSE",
+    "README.md",
+    "ARCHITECTURE.md",
+    "SECURITY.md"
+  ],
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/smapiot"
@@ -47,57 +54,56 @@
   "exports": {
     ".": {
       "browser": {
-        "import": "./dist/client/picard.mjs",
-        "types": "./dist/client/picard.d.ts"
-      },
-      "node": {
-        "require": "./dist/node/picard.js",
-        "import": "./dist/node/picard.mjs",
-        "types": "./dist/node/picard.d.ts"
+        "types": "./dist/client/picard.d.ts",
+        "import": "./dist/client/picard.mjs"
       },
       "electron": {
-        "require": "./dist/native/picard.js",
-        "import": "./dist/native/picard.mjs",
-        "types": "./dist/native/picard.d.ts"
-      }
+        "types": "./dist/native/picard.d.ts",
+        "import": "./dist/native/picard.mjs"
+      },
+      "node": {
+        "types": "./dist/node/picard.d.ts",
+        "import": "./dist/node/picard.mjs",
+        "require": "./dist/node/picard.js"
+      },
+      "types": "./dist/node/picard.d.ts"
     },
     "./package.json": "./package.json",
     "./adapter": {
-      "import": "./dist/adapter/picard.mjs",
-      "types": "./dist/adapter/picard.d.ts"
+      "types": "./dist/adapter/picard.d.ts",
+      "import": "./dist/adapter/picard.mjs"
     },
     "./browser": "./dist/browser/picard.js",
     "./client": {
-      "import": "./dist/client/picard.mjs",
-      "types": "./dist/client/picard.d.ts"
+      "types": "./dist/client/picard.d.ts",
+      "import": "./dist/client/picard.mjs"
     },
     "./islands": "./dist/islands/picard.js",
     "./native": {
-      "require": "./dist/native/picard.js",
-      "import": "./dist/native/picard.mjs",
-      "types": "./dist/native/picard.d.ts"
+      "types": "./dist/native/picard.d.ts",
+      "import": "./dist/native/picard.mjs"
     },
     "./node": {
-      "require": "./dist/node/picard.js",
+      "types": "./dist/node/picard.d.ts",
       "import": "./dist/node/picard.mjs",
-      "types": "./dist/node/picard.d.ts"
+      "require": "./dist/node/picard.js"
     }
   },
   "sideEffects": false,
   "devDependencies": {
-    "@playwright/test": "1.45.0",
+    "@playwright/test": "^1.63.0",
     "@types/http-server": "^0",
-    "@types/node": "^20",
-    "@types/systemjs": "^6",
-    "dets": "0.16.0",
-    "dom-serializer": "2.0.0",
-    "domhandler": "5.0.3",
-    "esbuild": "0.25.1",
-    "htmlparser2": "9.1.0",
+    "@types/node": "^22.20.5",
+    "@types/systemjs": "^6.15.4",
+    "dets": "^1.0.0",
+    "dom-serializer": "^3.1.1",
+    "domhandler": "^6.0.1",
+    "esbuild": "^0.28.2",
+    "htmlparser2": "^12.0.0",
     "http-server": "14.1.1",
-    "prettier": "3.2.5",
-    "systemjs": "6.14.3",
-    "typescript": "5.4.3",
-    "zustand": "4.5.2"
+    "prettier": "^3.9.9",
+    "systemjs": "^6.15.1",
+    "typescript": "^5.9.3",
+    "zustand": "^5.0.15"
   }
 }

@@ -1,28 +1,7 @@
-import 'systemjs';
-import 'systemjs/dist/extras/named-register.js';
 import { satisfies, validate } from './version';
 import { loadModule, registerDependencyResolvers, registerDependencyUrls } from './utils';
+import { System } from './system';
 import type { DependencyInjector, DependencyModule, LoaderService } from '@/types';
-
-declare const System: {
-  registerRegistry: Record<string, any>;
-  set(url: string, content: any): void;
-  entries(): Iterable<[string, System.Module]>;
-  resolve(name: string, parent?: string): string;
-  import(name: string, parent?: string): Promise<System.Module>;
-};
-
-function isPrimitiveExport(content: any) {
-  const type = typeof content;
-  return (
-    type === 'number' ||
-    type === 'boolean' ||
-    type === 'symbol' ||
-    type === 'string' ||
-    type === 'bigint' ||
-    Array.isArray(content)
-  );
-}
 
 function getLoadedVersions(prefix: string) {
   return [...System.entries()]
@@ -59,64 +38,8 @@ export function createLoader(injector: DependencyInjector): LoaderService {
   const events = injector.get('events');
   const { dependencies } = injector.get('config');
 
-  const systemResolve = System.constructor.prototype.resolve;
-  const systemRegister = System.constructor.prototype.register;
-
-  const innerResolve = (context: any, id: string, parentUrl: string): string => {
-    try {
-      return systemResolve.call(context, id, parentUrl);
-    } catch (ex) {
-      const result = findMatchingPackage(id);
-
-      if (!result) {
-        throw ex;
-      }
-
-      return result;
-    }
-  };
-
-  System.constructor.prototype.resolve = function (id: string, parentUrl: string) {
-    const result = innerResolve(this, id, parentUrl);
-    events.emit('resolved-dependency', { id, parentUrl, result });
-    return result;
-  };
-
-  System.constructor.prototype.register = function (...args) {
-    const getContent = args.pop() as System.DeclareFn;
-
-    args.push((_export, ctx) => {
-      const exp = (...p) => {
-        if (p.length === 1) {
-          const content = p[0];
-
-          if (content instanceof Promise) {
-            return content.then(exp);
-          } else if (typeof content === 'function') {
-            _export('__esModule', true);
-            Object.keys(content).forEach((prop) => {
-              _export(prop, content[prop]);
-            });
-            _export('default', content);
-          } else if (isPrimitiveExport(content)) {
-            _export('__esModule', true);
-            _export('default', content);
-          } else if (content) {
-            _export(content);
-
-            if (typeof content === 'object' && !('default' in content)) {
-              _export('default', content);
-            }
-          }
-        } else {
-          return _export(...p);
-        }
-      };
-      return getContent(exp, ctx);
-    });
-
-    return systemRegister.apply(this, args);
-  };
+  System.setResolveFallback((id) => findMatchingPackage(id));
+  System.setResolveListener((id, parentUrl, result) => events.emit('resolved-dependency', { id, parentUrl, result }));
 
   registerDependencyResolvers(dependencies);
 

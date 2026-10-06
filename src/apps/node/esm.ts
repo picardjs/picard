@@ -1,4 +1,5 @@
 import { createContext, SourceTextModule, Context, SyntheticModule } from 'vm';
+import { System } from '@/common/loader/system';
 import type { EsmService } from '@/types';
 
 export function createEsm(): EsmService {

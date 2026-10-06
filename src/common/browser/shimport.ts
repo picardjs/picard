@@ -1,3 +1,5 @@
+import { System } from '@/common/loader/system';
+
 import { transform, globalName } from './transform';
 
 const promises: Record<string, Promise<any>> = {};

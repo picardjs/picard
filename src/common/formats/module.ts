@@ -20,7 +20,7 @@ const root = '__picard__';
 function populateKnownDependencies(parent: string, scope: ModuleFederationFactoryScope, loader: LoaderService) {
   const dependencies = loader.list();
 
-  // SystemJS to MF
+  // Picard loader to MF
   for (const { id, name, version } of dependencies) {
     if (!(name in scope)) {
       scope[name] = {};
@@ -43,7 +43,7 @@ function populateKnownDependencies(parent: string, scope: ModuleFederationFactor
 function extractSharedDependencies(parent: string, scope: ModuleFederationFactoryScope, loader: LoaderService) {
   const dependencies: Record<string, ModuleResolver> = {};
 
-  // MF to SystemJS
+  // MF to Picard loader
   for (const entryName of Object.keys(scope)) {
     const entries = scope[entryName];
 

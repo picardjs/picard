@@ -94,7 +94,6 @@
     "@playwright/test": "^1.63.0",
     "@types/http-server": "^0",
     "@types/node": "^22.20.5",
-    "@types/systemjs": "^6.15.4",
     "dets": "^1.0.0",
     "dom-serializer": "^3.1.1",
     "domhandler": "^6.0.1",
@@ -102,7 +101,6 @@
     "htmlparser2": "^12.0.0",
     "http-server": "14.1.1",
     "prettier": "^3.9.9",
-    "systemjs": "^6.15.1",
     "typescript": "^5.9.3",
     "zustand": "^5.0.15"
   }

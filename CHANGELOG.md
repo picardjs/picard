@@ -3,6 +3,7 @@
 ## 0.3.0 (tbd)
 
 - Fixed deferred component activation after disconnection and canceled pending idle/visibility work
+- Replaced the SystemJS dependency with Picard's focused `System.register` runtime
 - Removed JSR publishing configuration and workflow
 - Restricted npm package contents and aligned exports with generated formats
 - Renamed `picard-js/server` to `picard-js/node` (#9)

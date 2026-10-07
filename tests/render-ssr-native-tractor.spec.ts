@@ -1,6 +1,27 @@
 import { test, expect } from '@playwright/test';
 import { ChildProcess, fork } from 'child_process';
 import { resolve } from 'path';
+import { connect } from 'net';
+
+async function waitForPort(port: number, timeout = 30000) {
+  const end = Date.now() + timeout;
+
+  while (Date.now() < end) {
+    const ok = await new Promise<boolean>((done) => {
+      const socket = connect(port, 'localhost');
+      socket.once('connect', () => (socket.destroy(), done(true)));
+      socket.once('error', () => (socket.destroy(), done(false)));
+    });
+
+    if (ok) {
+      return;
+    }
+
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  throw new Error(`Server on port ${port} did not start in time.`);
+}
 
 const port = 4328;
 const address = `http://localhost:${port}/`;
@@ -8,21 +29,19 @@ const child = {
   current: undefined as ChildProcess | undefined,
 };
 
-test.beforeAll(({}) => {
+test.beforeAll(async ({}) => {
   const cwd = resolve(__dirname, '../examples/11-ssr-native-tractor/dist');
   const fn = resolve(cwd, 'server.js');
 
-  return new Promise<void>((resolve) => {
-    child.current = fork(fn, {
-      execArgv: ['--experimental-vm-modules'],
-      cwd,
-      env: {
-        PORT: `${port}`,
-      },
-    });
-
-    setTimeout(resolve, 100);
+  child.current = fork(fn, {
+    execArgv: ['--experimental-vm-modules'],
+    cwd,
+    env: {
+      PORT: `${port}`,
+    },
   });
+
+  await waitForPort(port);
 });
 
 test.beforeEach(async ({ page }) => {

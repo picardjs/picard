@@ -91,6 +91,7 @@
   },
   "sideEffects": false,
   "devDependencies": {
+    "@module-federation/runtime": "^2.9.2",
     "@playwright/test": "^1.63.0",
     "@types/http-server": "^0",
     "@types/node": "^22.20.5",

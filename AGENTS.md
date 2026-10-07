@@ -16,7 +16,7 @@
 ## Architecture Notes
 
 - `LoaderService` uses Picard's small `System.register` runtime in `src/common/loader/system.ts` for shared resolver registration, URL registration, linking, import, evaluated-module lookup, and dependency listing.
-- Module Federation bridges its container share scope to the Picard loader in `src/common/formats/module.ts`.
+- Module Federation uses the bundled `@module-federation/runtime` in `src/common/formats/module.ts` for remotes and share negotiation; preserve Picard loader interop for Pilets and Native Federation.
 - Native Federation uses its manifest's shared dependency list to register ESM resolvers through the same loader; it does not provide a separate Picard dependency registry.
 - Pilets use named and anonymous `System.register` modules. Keep registration, relative resolution, live export updates, dependency sharing, and Node SSR covered when changing the runtime.
 - Package-version records store `name` and exact `version` once; use this metadata for listing and matching. Preserve exact IDs before selecting an evaluated compatible version for range requests.

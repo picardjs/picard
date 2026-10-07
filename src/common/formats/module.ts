@@ -1,8 +1,7 @@
+import { createInstance, type ModuleFederation, type ModuleFederationRuntimePlugin } from '@module-federation/runtime';
 import { getUrl } from '@/common/utils/url';
 import type {
   ModuleFederationEntry,
-  ModuleFederationContainer,
-  ModuleFederationFactoryScope,
   ModuleFederationManifestV2,
   DependencyInjector,
   LoaderService,
@@ -12,103 +11,19 @@ import type {
   AssetDefinition,
   ComponentDefinition,
   ComponentGetter,
-  ModuleFederationManifestV2MetaData,
 } from '@/types';
 
-const root = '__picard__';
-
-function populateKnownDependencies(parent: string, scope: ModuleFederationFactoryScope, loader: LoaderService) {
-  const dependencies = loader.list();
-
-  // Picard loader to MF
-  for (const { id, name, version } of dependencies) {
-    if (!(name in scope)) {
-      scope[name] = {};
-    }
-
-    scope[name][version] = {
-      from: root,
-      loaded: false,
-      eager: false,
-      strategy: 'loaded-first',
-      version,
-      async get() {
-        const result = await loader.import(id, parent);
-        return () => result;
-      },
-    };
-  }
+interface RemoteDefinition {
+  id: string;
+  entry: string;
+  type?: string;
+  entryGlobalName?: string;
+  assetBase: string;
 }
 
-function extractSharedDependencies(parent: string, scope: ModuleFederationFactoryScope, loader: LoaderService) {
-  const dependencies: Record<string, ModuleResolver> = {};
+async function loadRemote(platform: PlatformService, entry: ModuleFederationEntry): Promise<RemoteDefinition> {
+  let id = entry.id;
 
-  // MF to Picard loader
-  for (const entryName of Object.keys(scope)) {
-    const entries = scope[entryName];
-
-    for (const entryVersion of Object.keys(entries)) {
-      const entry = entries[entryVersion];
-
-      if (entry.from !== root) {
-        const id = `${entryName}@${entryVersion}`;
-        const fn = entry.get;
-        entry.get = async () => {
-          const result = await loader.import(id, parent);
-          return () => result;
-        };
-        dependencies[id] = () => fn.call(entry).then((factory) => factory());
-      }
-    }
-  }
-
-  loader.registerResolvers(dependencies);
-}
-
-async function loadRemoteEntryPoint(
-  platform: PlatformService,
-  url: string,
-  type: string,
-  globalName: string,
-): Promise<ModuleFederationContainer> {
-  switch (type) {
-    case 'module':
-    case 'esm':
-      return await platform.loadModule(url);
-    case 'global':
-    case 'var':
-    default:
-      await platform.loadScript(url);
-      const remote = window[globalName];
-
-      if (!remote) {
-        throw new Error(`The remote "${globalName}" was not found in "${url}".`);
-      }
-
-      return remote;
-  }
-}
-
-async function loadFactory(loader: LoaderService, remote: ModuleFederationContainer, entry: ModuleFederationEntry) {
-  const { url } = entry;
-  const scope: ModuleFederationFactoryScope = {};
-  loader.registerModule(url, remote);
-  populateKnownDependencies(url, scope, loader);
-  remote.init(scope);
-  extractSharedDependencies(url, scope, loader);
-  return remote;
-}
-
-function reassign(meta: ModuleFederationManifestV2MetaData, entry: ModuleFederationEntry) {
-  const { globalName, remoteEntry } = meta;
-  const { name, type, path } = remoteEntry;
-  const file = `${path || '.'}/${name}`;
-  entry.url = getUrl(file, entry.url);
-  entry.type = type;
-  entry.id = globalName;
-}
-
-async function loadRemote(platform: PlatformService, entry: ModuleFederationEntry) {
   if (entry.url.endsWith('.json')) {
     if (!entry.metaData) {
       const manifest = await platform.loadJson<ModuleFederationManifestV2>(entry.url);
@@ -118,24 +33,150 @@ async function loadRemote(platform: PlatformService, entry: ModuleFederationEntr
       entry.metaData = manifest.metaData;
     }
 
-    reassign(entry.metaData, entry);
+    const { globalName, remoteEntry } = entry.metaData;
+    entry.id = globalName;
+    id = globalName;
+    return {
+      id,
+      entry: entry.url,
+      type: remoteEntry.type === 'module' ? 'module' : undefined,
+      entryGlobalName: globalName,
+      assetBase: getUrl('./', entry.url),
+    };
   }
 
-  return await loadRemoteEntryPoint(platform, entry.url, entry.type, entry.id);
+  const type = entry.type === 'esm' ? 'module' : entry.type;
+  const entryGlobalName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
+
+  return {
+    id,
+    entry: entry.url,
+    type,
+    entryGlobalName,
+    assetBase: entry.url,
+  };
+}
+
+function registerPicardShares(
+  federation: ModuleFederation,
+  loader: LoaderService,
+  parent: string,
+  registeredShares: Set<string>,
+) {
+  type Shares = NonNullable<Parameters<ModuleFederation['registerShared']>[0]>;
+  type ShareOptions = Exclude<Shares[string], unknown[]>;
+  const shares: Record<string, Array<ShareOptions>> = {};
+
+  for (const { id, name, version } of loader.list()) {
+    if (registeredShares.has(id)) {
+      continue;
+    }
+
+    (shares[name] ||= []).push({
+      version,
+      strategy: 'loaded-first',
+      shareConfig: { requiredVersion: false },
+      get: async () => async () => loader.import(id, parent),
+    });
+    registeredShares.add(id);
+  }
+
+  if (Object.keys(shares).length > 0) {
+    federation.registerShared(shares);
+  }
+}
+
+function registerFederationShares(federation: ModuleFederation, loader: LoaderService) {
+  const existing = new Set(loader.list().map(({ id }) => id));
+  const resolvers: Record<string, () => ModuleResolver> = {};
+
+  for (const scope of Object.values(federation.shareScopeMap)) {
+    for (const [name, versions] of Object.entries(scope)) {
+      for (const [version, share] of Object.entries(versions)) {
+        const id = `${name}@${version}`;
+
+        if (!existing.has(id)) {
+          resolvers[id] = () => async () => {
+            const get = await federation.loadShare(name, {
+              resolver: (available) => available.find((item) => item.version === version) || available[0],
+            });
+            return get && get();
+          };
+          existing.add(id);
+        }
+      }
+    }
+  }
+
+  loader.registerResolvers(resolvers);
+}
+
+function registerRemote(federation: ModuleFederation, remote: RemoteDefinition, registeredRemotes: Map<string, string>) {
+  const existingEntry = registeredRemotes.get(remote.id);
+
+  if (existingEntry === remote.entry) {
+    return;
+  }
+
+  const remotes = [
+    {
+      name: remote.id,
+      entry: remote.entry,
+      ...(remote.type ? { type: remote.type } : {}),
+      ...(remote.entryGlobalName ? { entryGlobalName: remote.entryGlobalName } : {}),
+    },
+  ];
+
+  if (existingEntry) {
+    federation.registerRemotes(remotes, { force: true });
+  } else {
+    federation.registerRemotes(remotes);
+  }
+
+  registeredRemotes.set(remote.id, remote.entry);
+}
+
+const legacyExposePlugin: ModuleFederationRuntimePlugin = {
+  name: 'picard-legacy-exposes',
+  getModuleFactory({ expose, remoteEntryExports }) {
+    return (async () => {
+      try {
+        return await remoteEntryExports.get(expose);
+      } catch (error) {
+        if (expose.startsWith('./') && error instanceof Error && error.message.includes('does not exist in container')) {
+          return remoteEntryExports.get(expose.substring(2));
+        }
+
+        throw error;
+      }
+    })();
+  },
+};
+
+function loadExposed(federation: ModuleFederation, loader: LoaderService, remote: RemoteDefinition, name: string) {
+  return federation.loadRemote(`${remote.id}/${name}`).then((module) => {
+    registerFederationShares(federation, loader);
+    return (module as any)?.default || module;
+  });
 }
 
 async function loadContainerV2(
+  federation: ModuleFederation,
   platform: PlatformService,
   loader: LoaderService,
+  registeredRemotes: Map<string, string>,
+  registeredShares: Set<string>,
   entry: ModuleFederationEntry,
 ): Promise<ComponentGetter> {
   const assets: Array<AssetDefinition> = [];
   const components: Array<ComponentDefinition> = [];
   const componentRefs: Record<string, { component: undefined | Promise<any> }> = {};
   const remote = await loadRemote(platform, entry);
-  const container = await loadFactory(loader, remote, entry);
 
-  for (const item of entry.exposes) {
+  registerPicardShares(federation, loader, remote.entry, registeredShares);
+  registerRemote(federation, remote, registeredRemotes);
+
+  for (const item of entry.exposes || []) {
     const name = item.name;
     components.push({ name });
     componentRefs[name] = { component: undefined };
@@ -143,7 +184,7 @@ async function loadContainerV2(
     for (const path of item.assets.css.sync) {
       assets.push({
         type: 'css',
-        url: getUrl(path, entry.url),
+        url: getUrl(path, remote.assetBase),
       });
     }
   }
@@ -157,10 +198,7 @@ async function loadContainerV2(
       }
 
       if (!componentRef.component) {
-        componentRef.component = container
-          .get(name)
-          .then((factory) => factory())
-          .then((c) => c?.default || c);
+        componentRef.component = loadExposed(federation, loader, remote, name);
       }
 
       return await componentRef.component;
@@ -175,15 +213,18 @@ async function loadContainerV2(
 }
 
 async function loadContainerV1(
+  federation: ModuleFederation,
   platform: PlatformService,
   loader: LoaderService,
+  registeredRemotes: Map<string, string>,
+  registeredShares: Set<string>,
   entry: ModuleFederationEntry,
 ): Promise<ComponentGetter> {
   const componentRefs: Record<string, { component: undefined | Promise<any> }> = {};
-  const { id, url, type } = entry;
-  const varName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
-  const remote = await loadRemoteEntryPoint(platform, url, type, varName);
-  const container = await loadFactory(loader, remote, entry);
+  const remote = await loadRemote(platform, entry);
+
+  registerPicardShares(federation, loader, remote.entry, registeredShares);
+  registerRemote(federation, remote, registeredRemotes);
 
   return {
     async load(name) {
@@ -191,11 +232,10 @@ async function loadContainerV1(
 
       if (!componentRef) {
         componentRef = {
-          component: container
-            .get(name)
-            .then((factory) => factory())
-            .then((c) => c?.default || c)
-            .catch(() => undefined),
+          component: loadExposed(federation, loader, remote, name).catch((error) => {
+            console.error(`Failed to load federated module "${remote.id}/${name}".`, error);
+            return undefined;
+          }),
         };
 
         componentRefs[name] = componentRef;
@@ -213,10 +253,10 @@ async function loadContainerV1(
 }
 
 function getRuntime(entry: ModuleFederationEntry) {
-  const r = entry.runtime;
+  const runtime = entry.runtime;
 
-  if (r) {
-    return r;
+  if (runtime) {
+    return runtime;
   } else if (!entry.id || entry.url.endsWith('.json')) {
     return '2.0';
   } else {
@@ -225,27 +265,33 @@ function getRuntime(entry: ModuleFederationEntry) {
 }
 
 function loadContainer(
+  federation: ModuleFederation,
   platform: PlatformService,
   loader: LoaderService,
+  registeredRemotes: Map<string, string>,
+  registeredShares: Set<string>,
   entry: ModuleFederationEntry,
 ): Promise<ComponentGetter> {
   switch (getRuntime(entry)) {
     case '2.0':
-      return loadContainerV2(platform, loader, entry);
+      return loadContainerV2(federation, platform, loader, registeredRemotes, registeredShares, entry);
     case '1.0':
     case '1.5':
     default:
-      return loadContainerV1(platform, loader, entry);
+      return loadContainerV1(federation, platform, loader, registeredRemotes, registeredShares, entry);
   }
 }
 
 export function createModuleFederation(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
   const platform = injector.get('platform');
+  const federation = createInstance({ name: 'picard', remotes: [], plugins: [legacyExposePlugin] });
+  const registeredRemotes = new Map<string, string>();
+  const registeredShares = new Set<string>();
 
   return {
     createContainer(entry: ModuleFederationEntry) {
-      return loadContainer(platform, loader, entry);
+      return loadContainer(federation, platform, loader, registeredRemotes, registeredShares, entry);
     },
   };
 }

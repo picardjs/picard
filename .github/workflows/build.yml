@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [develop]
 
+env:
+  NODE_VERSION: 24.15.0
+  NPM_CONFIG_PROVENANCE: true
+  
 jobs:
   tests:
     uses: ./.github/workflows/playwright.yml
@@ -19,9 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: "20.x"
+          node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
       - name: Install Dependencies
         run: npm install
@@ -39,9 +43,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: "20.x"
+          node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
       - name: Install Dependencies
         run: npm install
@@ -50,9 +54,10 @@ jobs:
       - name: Build Package
         run: npm run build
       - name: Publish Package
-        run: npm publish --tag next
+        run: npm publish --tag next --provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+          NODE_AUTH_TOKEN: "" # explicitly empty to avoid token fallback
+          NPM_CONFIG_PROVENANCE: true
 
   release:
     runs-on: ubuntu-latest
@@ -65,18 +70,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: "20.x"
+          node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
       - name: Install Dependencies
         run: npm install
       - name: Build Package
         run: npm run build
       - name: Publish Package on npm
-        run: npm publish
+        run: npm publish --tag latest --provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+          NODE_AUTH_TOKEN: "" # explicitly empty to avoid token fallback
+          NPM_CONFIG_PROVENANCE: true
       - name: Create Git Release Tag
         uses: actions/github-script@v7
         with:

@@ -1,4 +1,4 @@
-import { createInstance, type ModuleFederation, type ModuleFederationRuntimePlugin } from '@module-federation/runtime';
+import { createInstance, satisfy, type ModuleFederation, type ModuleFederationRuntimePlugin } from '@module-federation/runtime';
 import { getUrl } from '@/common/utils/url';
 import type {
   ModuleFederationEntry,
@@ -97,10 +97,8 @@ function registerFederationShares(federation: ModuleFederation, loader: LoaderSe
 
         if (!existing.has(id)) {
           resolvers[id] = () => async () => {
-            const get = await federation.loadShare(name, {
-              resolver: (available) => available.find((item) => item.version === version) || available[0],
-            });
-            return get && get();
+            const { factory } = await loadFederationShare(federation, name, version);
+            return factory && factory();
           };
           existing.add(id);
         }
@@ -109,6 +107,36 @@ function registerFederationShares(federation: ModuleFederation, loader: LoaderSe
   }
 
   loader.registerResolvers(resolvers);
+}
+
+async function loadFederationShare(federation: ModuleFederation, name: string, versionRange: string) {
+  let selectedVersion: string | undefined;
+  const factory = await federation.loadShare(name, {
+    resolver(shares) {
+      const candidates = new Map<string, (typeof federation.shareScopeMap)['default'][string][string]>();
+
+      for (const share of [...(shares || []), ...Object.values(federation.shareScopeMap.default?.[name] || {})]) {
+        if (!candidates.has(share.version)) {
+          candidates.set(share.version, share);
+        }
+      }
+
+      const available = [...candidates.values()];
+      const selected = available.find((share) => satisfy(share.version, versionRange));
+
+      if (!selected) {
+        throw new Error(`No shared version of "${name}" satisfies "${versionRange}".`);
+      }
+
+      selectedVersion = selected.version;
+      return {
+        ...selected,
+        shareConfig: { ...selected.shareConfig, requiredVersion: selected.version, singleton: false },
+      };
+    },
+  });
+
+  return { factory, version: selectedVersion };
 }
 
 function registerRemote(federation: ModuleFederation, remote: RemoteDefinition, registeredRemotes: Map<string, string>) {
@@ -288,6 +316,21 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
   const federation = createInstance({ name: 'picard', remotes: [], plugins: [legacyExposePlugin] });
   const registeredRemotes = new Map<string, string>();
   const registeredShares = new Set<string>();
+
+  loader.setPackageResolver(async (name, versionRange, parent) => {
+    registerPicardShares(federation, loader, parent || '', registeredShares);
+    const { factory, version } = await loadFederationShare(federation, name, versionRange);
+
+    if (!factory || !version) {
+      return undefined;
+    }
+
+    const id = `${name}@${version}`;
+    loader.registerResolvers({
+      [id]: () => async () => factory(),
+    });
+    return id;
+  });
 
   return {
     createContainer(entry: ModuleFederationEntry) {

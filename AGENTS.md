@@ -19,7 +19,7 @@
 - Module Federation uses the bundled `@module-federation/runtime` in `src/common/formats/module.ts` for remotes and share negotiation; preserve Picard loader interop for Pilets and Native Federation.
 - Native Federation uses its manifest's shared dependency list to register ESM resolvers through the same loader; it does not provide a separate Picard dependency registry.
 - Pilets use named and anonymous `System.register` modules. Keep registration, relative resolution, live export updates, dependency sharing, and Node SSR covered when changing the runtime.
-- Package-version records store `name` and exact `version` once; use this metadata for listing and matching. Preserve exact IDs before selecting an evaluated compatible version for range requests.
+- Package-version records store `name` and exact `version` once; use this metadata for listing. Preserve exact IDs; delegate unresolved ranges to Module Federation's `loadShare`/`satisfy` resolver and cache the selected exact ID through the Picard loader.
 - Keep lazy browser ESM shim imports of loader types type-only. A value import can introduce a shared chunk into the classic browser entry; validate the browser script after rebuilding examples.
 - Custom-element lifecycle work belongs in `src/common/browser/elements.ts`. Cancel deferred work on reset/disconnect and guard callbacks against detached elements.
 

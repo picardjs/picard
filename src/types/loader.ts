@@ -15,4 +15,5 @@ export interface LoaderService {
   load(url: string): Promise<any>;
   import(id: string, parent?: string): Promise<any>;
   list(): Array<DependencyModule>;
+  setPackageResolver(resolver: (name: string, versionRange: string, parent?: string) => Promise<string | undefined>): void;
 }

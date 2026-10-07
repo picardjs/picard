@@ -32,6 +32,9 @@ function createLoader(injector: DependencyInjector): LoaderService {
     list() {
       return system.list();
     },
+    setPackageResolver(resolver) {
+      system.setPackageResolver(resolver);
+    },
   };
 }
 

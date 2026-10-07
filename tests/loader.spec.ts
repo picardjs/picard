@@ -62,7 +62,7 @@ test('stores package name and version separately from a scoped module ID', () =>
   expect(system.list()).toEqual([{ id: '@scope/react@19.0.0', name: '@scope/react', version: '19.0.0' }]);
 });
 
-test('prefers an evaluated compatible package version', async () => {
+test('imports the exact version selected by the package resolver', async () => {
   const system = createSystem();
   system.register('react@18.0.0', [], (exportModule) => ({
     execute() {
@@ -75,7 +75,11 @@ test('prefers an evaluated compatible package version', async () => {
     },
   }));
 
-  await system.import('react@18.2.0');
+  system.setPackageResolver(async (name, range) => {
+    expect(name).toBe('react');
+    expect(range).toBe('^18.0.0');
+    return 'react@18.2.0';
+  });
 
   await expect(system.import('react@^18.0.0')).resolves.toEqual({ selected: 'evaluated' });
 });
@@ -86,6 +90,66 @@ test('preserves exact registered IDs before range matching', () => {
   system.set('react@18.2.0', {});
 
   expect(system.resolve('react@18.2.0')).toBe('react@18.2.0');
+});
+
+test('delegates versioned dependencies to the package resolver', async () => {
+  const system = createSystem();
+  const resolutions: Array<[string, string, string | undefined]> = [];
+  system.setPackageResolver(async (name, range, parent) => {
+    resolutions.push([name, range, parent]);
+    system.set('react@18.2.0', { version: '18.2.0' });
+    return 'react@18.2.0';
+  });
+  system.register('https://picard.test/pilet.js', ['react@^18.0.0'], (exportModule) => {
+    let react: Record<string, any>;
+
+    return {
+      setters: [(module) => (react = module)],
+      execute() {
+        exportModule('selectedVersion', react.version);
+      },
+    };
+  });
+
+  await expect(system.import('https://picard.test/pilet.js')).resolves.toEqual({ selectedVersion: '18.2.0' });
+  expect(resolutions).toEqual([['react', '^18.0.0', 'https://picard.test/pilet.js']]);
+});
+
+test('does not delegate exact registered package IDs', async () => {
+  const system = createSystem();
+  let resolverCalls = 0;
+  system.setPackageResolver(async () => {
+    resolverCalls++;
+    return undefined;
+  });
+  system.register('react@18.2.0', [], (exportModule) => ({
+    execute() {
+      exportModule('version', '18.2.0');
+    },
+  }));
+
+  await expect(system.import('react@18.2.0')).resolves.toEqual({ version: '18.2.0' });
+  expect(resolverCalls).toBe(0);
+});
+
+test('rechecks package resolution after the available version state changes', async () => {
+  const system = createSystem();
+  let selectedId = 'library@1.0.0';
+  system.setPackageResolver(async () => selectedId);
+  system.register('library@1.0.0', [], (exportModule) => ({
+    execute() {
+      exportModule('version', '1.0.0');
+    },
+  }));
+  system.register('library@1.1.0', [], (exportModule) => ({
+    execute() {
+      exportModule('version', '1.1.0');
+    },
+  }));
+
+  await expect(system.import('library@^1.0.0')).resolves.toEqual({ version: '1.0.0' });
+  selectedId = 'library@1.1.0';
+  await expect(system.import('library@^1.0.0')).resolves.toEqual({ version: '1.1.0' });
 });
 
 test('lists package metadata from set without treating URLs or ranges as package versions', () => {
@@ -128,7 +192,7 @@ test('loads anonymous register modules and relative dependencies in Node', async
 
 test('concurrent imports wait for the same async module evaluation', async () => {
   const system = createSystem();
-  let finishExecution: () => void;
+  let finishExecution!: () => void;
   const gate = new Promise<void>((resolve) => (finishExecution = resolve));
   let executions = 0;
   system.register('async-module', [], (exportModule) => ({

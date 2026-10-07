@@ -1,4 +1,4 @@
-import { satisfies, validate } from './version';
+import { validate } from './version';
 
 export type ModuleNamespace = Record<string, any>;
 export type ModuleExport = ((name: string, value: any) => any) & ((values: ModuleNamespace) => ModuleNamespace);
@@ -17,6 +17,7 @@ export interface ModuleContext {
 }
 
 export type ModuleDeclare = (exportModule: ModuleExport, context: ModuleContext) => ModuleDeclaration;
+export type PackageResolver = (name: string, versionRange: string, parent?: string) => Promise<string | undefined>;
 
 interface ModuleRecord {
   id: string;
@@ -44,6 +45,7 @@ export interface PicardSystem {
   resolve(id: string, parent?: string): string;
   import(id: string, parent?: string): Promise<ModuleNamespace>;
   list(): Array<{ id: string; name: string; version: string }>;
+  setPackageResolver(resolver: PackageResolver): void;
   setResolveListener(listener: (id: string, parent: string | undefined, result: string) => void): void;
 }
 
@@ -76,25 +78,12 @@ function getPackageMetadata(id: string) {
   return undefined;
 }
 
-function findMatchingPackage(modules: Map<string, ModuleRecord>, id: string) {
-  const requested = splitPackageId(id);
-
-  if (requested && validate(requested.version)) {
-    const available = [...modules.values()].filter(
-      (module) => module.name === requested.name && module.version && satisfies(module.version, requested.version),
-    );
-    const preferred = available.find((module) => module.state === 'evaluated') || available[0];
-
-    return preferred?.id;
-  }
-
-  return undefined;
-}
-
 export function createSystem(): PicardSystem {
   const modules = new Map<string, ModuleRecord>();
   const loading = new Map<string, Promise<ModuleRecord>>();
+  const resolvingPackages = new Map<string, Promise<ModuleRecord | undefined>>();
   const registerRegistry: Record<string, true> = Object.create(null);
+  let packageResolver: PackageResolver | undefined;
   let resolveListener: ((id: string, parent: string | undefined, result: string) => void) | undefined;
   let registeringUrl: string | undefined;
 
@@ -130,7 +119,7 @@ export function createSystem(): PicardSystem {
     } else if (id.startsWith('.') && parent && /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(parent)) {
       result = new URL(id, parent).href;
     } else {
-      result = modules.has(id) ? id : findMatchingPackage(modules, id) || id;
+      result = id;
     }
 
     resolveListener?.(id, parent, result);
@@ -211,6 +200,48 @@ export function createSystem(): PicardSystem {
     }
   }
 
+  async function resolveRecord(id: string, parent?: string): Promise<ModuleRecord> {
+    const resolved = resolve(id, parent);
+    const registered = modules.get(resolved);
+
+    if (registered) {
+      return registered;
+    }
+
+    const packageId = splitPackageId(resolved);
+
+    if (packageResolver && packageId && validate(packageId.version)) {
+      const key = `${packageId.name}@${packageId.version}`;
+      let pending = resolvingPackages.get(key);
+
+      if (!pending) {
+        pending = (async () => {
+          const selectedId = await packageResolver!(packageId.name, packageId.version, parent);
+
+          if (!selectedId) {
+            return undefined;
+          }
+
+          resolveListener?.(id, parent, selectedId);
+          return modules.get(selectedId) || (await loadScript(selectedId));
+        })();
+        resolvingPackages.set(key, pending);
+      }
+
+      try {
+        const packageModule = await pending;
+
+        if (packageModule) {
+          return packageModule;
+        }
+      } finally {
+        resolvingPackages.delete(key);
+      }
+    }
+
+    return loadScript(resolved);
+  }
+
   function instantiate(record: ModuleRecord): Promise<ModuleNamespace> {
     if (!record.evaluation) {
       record.evaluation = evaluate(record);
@@ -276,7 +307,7 @@ export function createSystem(): PicardSystem {
 
       for (let index = 0; index < record.dependencies.length; index++) {
         const dependencyId = resolve(record.dependencies[index], record.id);
-        const dependency = await loadScript(dependencyId);
+        const dependency = await resolveRecord(dependencyId, record.id);
         const setter = setters[index];
 
         if (setter) {
@@ -322,12 +353,14 @@ export function createSystem(): PicardSystem {
     },
     resolve,
     async import(id, parent) {
-      const resolved = resolve(id, parent);
-      const record = modules.get(resolved) || (await loadScript(resolved));
+      const record = await resolveRecord(id, parent);
       return instantiate(record);
     },
     setResolveListener(listener) {
       resolveListener = listener;
+    },
+    setPackageResolver(resolver) {
+      packageResolver = resolver;
     },
   };
 

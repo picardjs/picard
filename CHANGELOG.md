@@ -4,7 +4,7 @@
 
 - Fixed deferred component activation after disconnection and canceled pending idle/visibility work
 - Replaced the SystemJS dependency with Picard's focused `System.register` runtime
-- Added package name/version metadata to module records and restored evaluated-first range selection
+- Added package name/version metadata to module records and delegated unresolved version ranges to Module Federation
 - Fixed concurrent imports returning unfinished exports and circular live-export notification loops
 - Replaced the Module Federation container and share-scope handling with `@module-federation/runtime`
 - Removed JSR publishing configuration and workflow

@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [develop]
 
+permissions:
+  contents: write
+  id-token: write
+
 env:
   NODE_VERSION: 24.15.0
   NPM_CONFIG_PROVENANCE: true

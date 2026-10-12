@@ -10,15 +10,18 @@ import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
 import { createRenderer } from '@/common/ui/renderer';
 import { createPilet } from '@/common/formats/pilet';
-import { createModuleFederation } from '@/common/formats/module';
+import { createLazyModuleFederation } from '@/common/formats/module-lazy';
 import { createNativeFederation } from '@/common/formats/native';
 import { createDefaultConverter } from '@/common/frameworks/default';
 import { createSingleSpaConverter } from '@/common/frameworks/single-spa';
 import { createWebComponentConverter } from '@/common/frameworks/web-component';
 import type { PicardStore, FragmentsService, ElementsService, DebugService } from '@/types';
 
-function deserializeConfig(): any {
-  // we obtain the serialized config
+/**
+ * Reads the configuration serialized by the server, i.e.,
+ * the content of the script[type=pi-config] element.
+ */
+export function deserializeConfig(): any {
   const element = document.querySelector('script[type=pi-config]');
 
   if (element) {
@@ -58,6 +61,12 @@ declare module '@/types/injector' {
   }
 }
 
+/**
+ * Resumes a server-rendered Picard.js application. In contrast to the full
+ * client this neither loads a feed nor indexes slots. Micro frontends are
+ * only loaded once their components need to be hydrated or rendered, with
+ * the Module Federation runtime being loaded on demand.
+ */
 export function resumePicard(options?: PicardOptions): PicardStore {
   const { config, services = {}, ...configOverrides } = options || {};
   const defaultConfig = config || deserializeConfig();
@@ -77,7 +86,7 @@ export function resumePicard(options?: PicardOptions): PicardStore {
     elements: createElements,
     router: createRouter,
     debug: createDebug,
-    'format.module': createModuleFederation,
+    'format.module': createLazyModuleFederation,
     'format.native': createNativeFederation,
     'format.pilet': createPilet,
     'framework.single-spa': createSingleSpaConverter,

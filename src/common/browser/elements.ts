@@ -14,6 +14,7 @@ const attrSource = 'source';
 const attrFormat = 'format';
 const attrFramework = 'framework';
 const attrClient = 'client';
+const attrHydrate = 'hydrate';
 const attrData = 'data';
 const attrCid = 'cid';
 
@@ -178,8 +179,15 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #start() {
-      if (this.name && !this.hasChildNodes()) {
+      if (!this.name) {
+        // nothing to do without a name
+      } else if (!this.hasChildNodes()) {
         this.#setupChildren();
+      } else {
+        // resumed from the server; the children are already rendered
+        this._components = Array.from(this.querySelectorAll<PiComponent>(componentName)).filter(
+          (component) => component.parentElement?.closest(slotName) === this,
+        );
       }
     }
 
@@ -380,13 +388,16 @@ export function createElements(injector: DependencyInjector) {
 
       this._queue.enqueue(() => {
         const lc = this._lc;
+        // the server marks components with markup that can be hydrated
+        const hydrate = this.hasAttribute(attrHydrate);
 
         stopLoader();
         this._stopLoader = undefined;
 
         if (lc) {
+          this._locals.hydrate = hydrate;
           lc.mount?.(this, this.data, this._locals);
-        } else {
+        } else if (!hydrate) {
           fallback(this);
         }
       });
@@ -404,6 +415,7 @@ export function createElements(injector: DependencyInjector) {
       this._lc = undefined;
       this._locals = {};
       this.innerHTML = '';
+      this.removeAttribute(attrHydrate);
     }
 
     #reset() {

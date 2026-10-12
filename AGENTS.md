@@ -22,6 +22,8 @@
 - Package-version records store `name` and exact `version` once; use this metadata for listing. Preserve exact IDs; delegate unresolved ranges to Module Federation's `loadShare`/`satisfy` resolver and cache the selected exact ID through the Picard loader.
 - Keep lazy browser ESM shim imports of loader types type-only. A value import can introduce a shared chunk into the classic browser entry; validate the browser script after rebuilding examples.
 - Custom-element lifecycle work belongs in `src/common/browser/elements.ts`. Cancel deferred work on reset/disconnect and guard callbacks against detached elements.
+- The `islands` variant resumes server-rendered pages: no feed, no slot indexing, and Module Federation only through `src/common/formats/module-lazy.ts`. It is an ES module with shared chunks; the `node` variant embeds its output via `embedded:islands` (see `tools/build-one.mjs`) for `getIslandsFile`.
+- The decorator adds `hydrate` to components it rendered; the client passes this as `locals.hydrate` to `mount` and must not render fallbacks over server markup.
 
 ## Package and Release
 

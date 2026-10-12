@@ -310,14 +310,22 @@ function loadContainer(
   }
 }
 
-export function createModuleFederation(injector: DependencyInjector): ContainerService {
+export interface ModuleFederationService extends ContainerService {
+  /**
+   * Resolves the given version range of a package to an exact
+   * dependency ID using Module Federation's share negotiation.
+   */
+  resolvePackage(name: string, versionRange: string, parent?: string): Promise<string | undefined>;
+}
+
+export function createModuleFederation(injector: DependencyInjector): ModuleFederationService {
   const loader = injector.get('loader');
   const platform = injector.get('platform');
   const federation = createInstance({ name: 'picard', remotes: [], plugins: [legacyExposePlugin] });
   const registeredRemotes = new Map<string, string>();
   const registeredShares = new Set<string>();
 
-  loader.setPackageResolver(async (name, versionRange, parent) => {
+  const resolvePackage = async (name: string, versionRange: string, parent?: string) => {
     registerPicardShares(federation, loader, parent || '', registeredShares);
     const { factory, version } = await loadFederationShare(federation, name, versionRange);
 
@@ -330,11 +338,14 @@ export function createModuleFederation(injector: DependencyInjector): ContainerS
       [id]: () => async () => factory(),
     });
     return id;
-  });
+  };
+
+  loader.setPackageResolver(resolvePackage);
 
   return {
     createContainer(entry: ModuleFederationEntry) {
       return loadContainer(federation, platform, loader, registeredRemotes, registeredShares, entry);
     },
+    resolvePackage,
   };
 }

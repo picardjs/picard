@@ -17,7 +17,22 @@ import { createPilet } from '@/common/formats/pilet';
 import { createDefaultConverter } from '@/common/frameworks/default';
 import { createHtmlConverter } from '@/common/frameworks/html';
 import { createSlotBehaviorForRouter } from '@/common/slot-rels/router';
+import islandsFiles from 'embedded:islands';
 import type { DecoratorService, FeedDefinition, FeedService, PartService } from '@/types';
+
+export interface PicardClientOptions {
+  /**
+   * The services to add when resuming in the browser. Maps the name of
+   * the service (e.g., "framework.react") to the URL of an ES module,
+   * which default exports the service creator.
+   */
+  services?: Record<string, string>;
+  /**
+   * The centrally shared dependencies to use when resuming in the browser.
+   * Maps the dependency (e.g., "react@18.3.1") to the URL of an ES module.
+   */
+  dependencies?: Record<string, string>;
+}
 
 export interface PicardOptions {
   /**
@@ -41,7 +56,8 @@ export interface PicardOptions {
   fragmentUrl?: string;
   /**
    * The URL of the script for interactive sessions.
-   * If not given a public URL will be selected.
+   * If not given the islands variant from unpkg will be used.
+   * Use `getIslandsFile` to serve it from this process instead.
    */
   scriptUrl?: string;
   /**
@@ -67,6 +83,11 @@ export interface PicardOptions {
    * going into an islands architecture application.
    */
   interactive?: boolean;
+  /**
+   * The configuration for resuming in the browser. Only
+   * used if the rendering is interactive.
+   */
+  client?: PicardClientOptions;
 }
 
 const defaultOptions = {
@@ -74,7 +95,7 @@ const defaultOptions = {
   slotName: 'pi-slot',
   partName: 'pi-part',
   fragmentUrl: '',
-  scriptUrl: 'https://unpkg.com/picard-js/dist/node/picard-ia.js',
+  scriptUrl: `https://unpkg.com/picard-js@${process.env.PICARD_VERSION}/dist/islands/picard.js`,
   services: {},
   dependencies: {},
   interactive: false,
@@ -90,6 +111,7 @@ declare module '@/types/injector' {
   interface Configuration {
     feed?: FeedDefinition;
     scriptUrl?: string;
+    client?: PicardClientOptions;
     state?: any;
     fragmentUrl?: string;
     dependencies: Record<string, () => Promise<any>>;
@@ -105,6 +127,17 @@ export {
   createHtmlConverter,
 };
 
+/**
+ * Gets the content of a file of the islands variant, i.e., the lightweight
+ * client resuming the server-rendered page. Serve the files from the
+ * directory of the `scriptUrl` to resume without any external resource.
+ * @param name The name of the file, e.g., "picard.js".
+ * @returns The JavaScript content or undefined if no such file exists.
+ */
+export function getIslandsFile(name: string): string | undefined {
+  return Object.prototype.hasOwnProperty.call(islandsFiles, name) ? islandsFiles[name] : undefined;
+}
+
 export function initializePicard(options?: PicardOptions): DecoratorService {
   const {
     feed,
@@ -117,11 +150,8 @@ export function initializePicard(options?: PicardOptions): DecoratorService {
     slotName = defaultOptions.slotName,
     partName = defaultOptions.partName,
     interactive = defaultOptions.interactive,
+    client,
   } = options || {};
-
-  if (interactive) {
-    services['part.script'] = createScriptPart;
-  }
 
   const serviceDefinitions = {
     events: createListener,
@@ -141,6 +171,7 @@ export function initializePicard(options?: PicardOptions): DecoratorService {
     'framework.html': createHtmlConverter,
     'part.style': createStylePart,
     'slotRel.router': createSlotBehaviorForRouter,
+    ...(interactive ? { 'part.script': createScriptPart } : {}),
     ...services,
     config: () => ({
       feed,
@@ -151,6 +182,7 @@ export function initializePicard(options?: PicardOptions): DecoratorService {
       fragmentUrl,
       dependencies,
       scriptUrl,
+      client,
       services,
     }),
   };

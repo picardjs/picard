@@ -2,6 +2,8 @@
 
 ## 0.3.0 (tbd)
 
+- Updated the interactive script to be included as an ES module
+- Fixed the default `scriptUrl` of the `node` variant
 - Fixed deferred component activation after disconnection and canceled pending idle/visibility work
 - Replaced the SystemJS dependency with Picard's focused `System.register` runtime
 - Added package name/version metadata to module records and delegated unresolved version ranges to Module Federation
@@ -14,6 +16,9 @@
 - Added `loading-template-id` to attributes of `pi-component` and `pi-slot` (#8)
 - Added `@softarc/native-federaton` stub to the native federation format (#6)
 - Added slot ordering attributes to `pi-slot` (#7)
+- Added lightweight resumption via the `islands` variant, which loads the Module Federation runtime on demand (#5)
+- Added `getIslandsFile` and the `client` option to the `node` variant for serving and configuring the resuming client
+- Added the `hydrate` attribute to server-rendered `pi-component` elements and `locals.hydrate` to `mount`
 
 **Note**: ⚠️ Early preview: Not suitable for production yet
 

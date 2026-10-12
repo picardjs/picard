@@ -2,6 +2,11 @@ export interface ComponentLifecycle {
   load(): Promise<void>;
   unload(): Promise<void>;
 
+  /**
+   * Mounts the component into the container. If `locals.hydrate` is true,
+   * the container already holds the server-rendered markup of the component,
+   * which should be hydrated instead of rendered again.
+   */
   mount(container: HTMLElement, props: any, locals: any): void;
   unmount(container: HTMLElement, locals: any): void;
   update(props: any, locals: any): void;

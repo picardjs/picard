@@ -69,6 +69,9 @@ export function createNativeFederation(injector: DependencyInjector): ContainerS
   const platform = injector.get('platform');
   const esm = injector.get('esm');
 
+  // shared dependency ranges (e.g., "react@^18") are resolved via Module Federation's share negotiation
+  injector.instantiate('format.module');
+
   loader.registerResolvers({
     '@softarc/native-federation': () => () => ({
       async loadRemoteModule(opts: NativeFederationLoadRemoteOptions) {

@@ -120,8 +120,9 @@ async function Component(
       try {
         await lc.bootstrap?.();
         return await lc.stringify?.(data);
-      } catch {
+      } catch (error) {
         console.warn('Could not render the component "%s"', attribs.cid || attribs.name);
+        console.debug('Rendering the component "%s" failed: %O', attribs.cid || attribs.name, error);
       }
     }
   }

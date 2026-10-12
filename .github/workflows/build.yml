@@ -52,7 +52,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install -g npm@latest
+          npm install
       - name: Make Pre-Version
         run: npm version $(node -e "console.log(require('./package.json').version)")-pre.${{ github.run_number }} --no-git-tag-version
       - name: Build Package
@@ -79,7 +81,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install -g npm@latest
+          npm install
       - name: Build Package
         run: npm run build
       - name: Publish Package on npm

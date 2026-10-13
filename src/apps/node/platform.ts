@@ -1,4 +1,4 @@
-import { createContext, Script, type Context, type SourceTextModule } from 'node:vm';
+import { createContext, Script, type SourceTextModule } from 'node:vm';
 import { getVmModules } from './utils';
 import type { PlatformService } from '@/types';
 
@@ -13,22 +13,22 @@ async function loadScript(url: string, integrity?: string, crossOrigin?: string)
   script.runInContext(ctx);
 }
 
-async function linkModule(url: string, ctx: Context): Promise<SourceTextModule> {
+async function linkModule(url: string): Promise<SourceTextModule> {
   const res = await fetch(url);
   const content = await res.text();
   const { SourceTextModule } = getVmModules();
-  const mod = new SourceTextModule(content, { identifier: url, context: ctx });
+  // evaluated in the main context to have the globals (e.g., URL) of Node.js
+  const mod = new SourceTextModule(content, { identifier: url });
   await mod.link((specifier) => {
     const newUrl = new URL(specifier, url);
-    return linkModule(newUrl.href, ctx);
+    return linkModule(newUrl.href);
   });
   await mod.evaluate();
   return mod;
 }
 
 async function loadModule(url: string): Promise<Object> {
-  const ctx = createContext();
-  const res = await linkModule(url, ctx);
+  const res = await linkModule(url);
   return res.namespace;
 }
 

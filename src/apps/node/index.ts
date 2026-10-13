@@ -138,6 +138,15 @@ export function getIslandsFile(name: string): string | undefined {
   return Object.prototype.hasOwnProperty.call(islandsFiles, name) ? islandsFiles[name] : undefined;
 }
 
+/**
+ * Gets the names of the files of the islands variant, e.g., to write them
+ * next to statically generated pages.
+ * @returns The names of the files, e.g., "picard.js" and its chunks.
+ */
+export function getIslandsFileNames(): Array<string> {
+  return Object.keys(islandsFiles);
+}
+
 export function initializePicard(options?: PicardOptions): DecoratorService {
   const {
     feed,

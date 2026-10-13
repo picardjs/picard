@@ -11,6 +11,9 @@ export function createScriptPart(injector: DependencyInjector): PartService {
 
   return {
     async getReplacement() {
+      // wait for the pending micro frontends (e.g., from the feed), as the
+      // part may be rendered before any component (e.g., in a separate call)
+      await scope.loadAssets('css');
       const state = scope.readState();
       const config = `<script type="pi-config">${serialize({
         componentName,

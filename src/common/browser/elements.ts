@@ -150,15 +150,25 @@ export function createElements(injector: DependencyInjector) {
     }
 
     async connectedCallback() {
+      if (this._ready) {
+        // only moved (e.g., by streamed rendering) - keep the content
+        return;
+      }
+
       this._ready = true;
       this.#start();
       events.emit('mounted-slot', { element: this });
     }
 
     disconnectedCallback() {
-      this._ready = false;
-      this.#clean();
-      events.emit('unmounted-slot', { element: this });
+      // a moved element is reconnected in the same task, so only clean up if it stays disconnected
+      queueMicrotask(() => {
+        if (this._ready && !this.isConnected) {
+          this._ready = false;
+          this.#clean();
+          events.emit('unmounted-slot', { element: this });
+        }
+      });
     }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -288,6 +298,11 @@ export function createElements(injector: DependencyInjector) {
     }
 
     connectedCallback() {
+      if (this._ready) {
+        // only moved (e.g., by streamed rendering) - keep the (server-rendered) content
+        return;
+      }
+
       this._ready = true;
       events.on('updated-microfrontends', this.handleUpdate);
       this.#start();
@@ -295,10 +310,15 @@ export function createElements(injector: DependencyInjector) {
     }
 
     disconnectedCallback() {
-      this._ready = false;
-      events.off('updated-microfrontends', this.handleUpdate);
-      this.#clean();
-      events.emit('unmounted-component', { element: this });
+      // a moved element is reconnected in the same task, so only clean up if it stays disconnected
+      queueMicrotask(() => {
+        if (this._ready && !this.isConnected) {
+          this._ready = false;
+          events.off('updated-microfrontends', this.handleUpdate);
+          this.#clean();
+          events.emit('unmounted-component', { element: this });
+        }
+      });
     }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {

@@ -7,11 +7,13 @@
 - Improved `client="visible"` to observe server-rendered children instead of changing the element's layout
 - Improved the error message for components that could not be loaded
 - Updated the interactive script to be included as an ES module
+- Fixed `pi-component` and `pi-slot` losing their (server-rendered) content when moved in the document, e.g., by streamed rendering with React Suspense
+- Fixed the `script` part serializing the state before the micro frontends from the feed were loaded
 - Fixed the default `scriptUrl` of the `node` variant
 - Fixed loading the on-demand chunks of the `browser` variant when the script is cross-origin (e.g., from unpkg or jsdelivr)
 - Fixed the `browser` variant leaking its top-level names into the global scope
 - Fixed the `node` variant failing to load without the `--experimental-vm-modules` flag (e.g., in bundled ESM servers such as Angular SSR); only loading ES modules requires the flag
-- Fixed loading ES modules (e.g., Native Federation) in the `node` variant by creating all linked VM modules in the same context
+- Fixed loading ES modules (e.g., Native Federation) in the `node` variant by evaluating them in the main context
 - Fixed unhandled rejection reports (e.g., by zone.js) when probing Module Federation v1 containers
 - Fixed console errors when probing Module Federation v1 containers for modules they do not expose
 - Fixed deferred component activation after disconnection and canceled pending idle/visibility work
@@ -28,6 +30,7 @@
 - Added `@softarc/native-federaton` stub to the native federation format (#6)
 - Added slot ordering attributes to `pi-slot` (#7)
 - Added lightweight resumption via the `islands` variant, which loads the Module Federation runtime on demand (#5)
+- Added `getIslandsFileNames` to the `node` variant for writing the resuming client next to statically generated pages
 - Added `getIslandsFile` and the `client` option to the `node` variant for serving and configuring the resuming client
 - Added the `hydrate` attribute to server-rendered `pi-component` elements and `locals.hydrate` to `mount`
 

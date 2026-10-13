@@ -67,6 +67,24 @@ test('hydrates server-rendered components', async ({ page }) => {
   await expect(component.locator('button')).toHaveText('Count: 6');
 });
 
+test('keeps hydrated components when moved', async ({ page }) => {
+  await page.goto(address);
+  const component = page.locator('#counter pi-component');
+  await expect(component).toHaveAttribute('data-mode', 'hydrated');
+  // e.g., streamed rendering moves elements from a hidden container into place
+  await page.evaluate(() => {
+    const target = document.createElement('div');
+    target.id = 'moved';
+    document.body.appendChild(target);
+    target.appendChild(document.querySelector('#counter pi-component')!);
+  });
+  const moved = page.locator('#moved pi-component');
+  await expect(moved).toHaveAttribute('data-mode', 'hydrated');
+  await expect(moved.locator('.origin')).toHaveText('server');
+  await moved.locator('button').click();
+  await expect(moved.locator('button')).toHaveText('Count: 6');
+});
+
 test('renders client-only components on the client', async ({ page }) => {
   await page.goto(address);
   const component = page.locator('#client-only pi-component');

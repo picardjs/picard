@@ -51,7 +51,8 @@ test('marks server-rendered components for hydration', async ({ request }) => {
   const res = await request.get(address);
   const html = await res.text();
 
-  expect(html).toContain('<script type="module" src="/picard/picard.js"></script>');
+  // the client is only loaded after the first paint
+  expect(html).toContain('<script type="module">requestAnimationFrame(()=>setTimeout(()=>import("/picard/picard.js")))</script>');
   expect(html).toMatch(/<pi-component [^>]*data="{&quot;start&quot;:5}" hydrate><button[^>]*>Count: 5<\/button>/);
   expect(html).toMatch(/<pi-component [^>]*server="none"><\/pi-component>/);
 });

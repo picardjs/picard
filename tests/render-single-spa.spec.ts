@@ -49,27 +49,27 @@ test('can switch tractor - switches buy-button', async ({ page }) => {
 });
 
 test('can switch tractor - switches recommendation', async ({ page }) => {
-  const redLocs = await page.locator('.green-recos > img').all();
-  expect(redLocs.length).toBe(3);
-  await expect(redLocs[0]).toHaveAttribute('alt', 'Recommendation 3');
-  await expect(redLocs[1]).toHaveAttribute('alt', 'Recommendation 5');
-  await expect(redLocs[2]).toHaveAttribute('alt', 'Recommendation 6');
+  const redLocs = page.locator('.green-recos > img');
+  await expect(redLocs).toHaveCount(3);
+  await expect(redLocs.nth(0)).toHaveAttribute('alt', 'Recommendation 3');
+  await expect(redLocs.nth(1)).toHaveAttribute('alt', 'Recommendation 5');
+  await expect(redLocs.nth(2)).toHaveAttribute('alt', 'Recommendation 6');
 
   await page.click('#options > a:nth-child(2)');
 
-  const greenLocs = await page.locator('.green-recos > img').all();
-  expect(greenLocs.length).toBe(3);
-  await expect(greenLocs[0]).toHaveAttribute('alt', 'Recommendation 3');
-  await expect(greenLocs[1]).toHaveAttribute('alt', 'Recommendation 6');
-  await expect(greenLocs[2]).toHaveAttribute('alt', 'Recommendation 4');
+  const greenLocs = page.locator('.green-recos > img');
+  await expect(greenLocs).toHaveCount(3);
+  await expect(greenLocs.nth(0)).toHaveAttribute('alt', 'Recommendation 3');
+  await expect(greenLocs.nth(1)).toHaveAttribute('alt', 'Recommendation 6');
+  await expect(greenLocs.nth(2)).toHaveAttribute('alt', 'Recommendation 4');
 
   await page.click('#options > a:nth-child(3)');
 
-  const blueLocs = await page.locator('.green-recos > img').all();
-  expect(blueLocs.length).toBe(3);
-  await expect(blueLocs[0]).toHaveAttribute('alt', 'Recommendation 1');
-  await expect(blueLocs[1]).toHaveAttribute('alt', 'Recommendation 8');
-  await expect(blueLocs[2]).toHaveAttribute('alt', 'Recommendation 7');
+  const blueLocs = page.locator('.green-recos > img');
+  await expect(blueLocs).toHaveCount(3);
+  await expect(blueLocs.nth(0)).toHaveAttribute('alt', 'Recommendation 1');
+  await expect(blueLocs.nth(1)).toHaveAttribute('alt', 'Recommendation 8');
+  await expect(blueLocs.nth(2)).toHaveAttribute('alt', 'Recommendation 7');
 
   await page.click('#options > a:nth-child(1)');
 });

@@ -9,7 +9,7 @@
     "build:green": "node src/build-mf.js green/recommendations.jsx",
     "build:blue": "npm run build:blue-basket && npm run build:blue-button",
     "build:blue-basket": "node src/build-mf.js blue/basket-info.jsx",
-    "build:blue-button": "node src/build-mf.js blue/buy-button.jsx"
+    "build:blue-button": "node src/build-mf.js blue/buy-button.jsx && node -e \"require('fs').copyFileSync('src/blue/buy.png', 'public/mfs/dist/buy.png')\""
   },
   "dependencies": {
     "express": "^4",

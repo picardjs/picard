@@ -17,11 +17,14 @@ export const layout = (data) => `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A tractor shop composed of server-rendered Native Federation micro frontends.">
 <title>Picard.js SSR with Native Federation Example: Tractor Shop</title>
 <pi-part name="style"></pi-part>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+<main>
   <pi-component name="Products" source="red" framework="react" data="${escapeHtml(JSON.stringify(data))}"></pi-component>
+</main>
 </body>
 </html>`;

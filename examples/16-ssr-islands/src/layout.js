@@ -3,10 +3,16 @@ export const layout = () => `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Server-rendered micro frontends resumed by Picard.js islands.">
 <title>Picard.js SSR with Islands Example</title>
 <pi-part name="style"></pi-part>
+<style>
+  /* reserve the space of the island that is only rendered on the client */
+  #client-only pi-slot { display: block; min-height: 1.5em; }
+</style>
 </head>
 <body>
+<main>
   <h1>Islands</h1>
   <section id="counter">
     <h2>Hydrated on load</h2>
@@ -25,6 +31,7 @@ export const layout = () => `<!DOCTYPE html>
     <h2>Hydrated when visible</h2>
     <pi-slot name="visible"></pi-slot>
   </section>
-  <pi-part name="script"></pi-part>
+</main>
+<pi-part name="script"></pi-part>
 </body>
 </html>`;

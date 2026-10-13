@@ -350,7 +350,14 @@ export function createElements(injector: DependencyInjector) {
           return;
         }
         case 'visible':
-          this.style.display = 'block';
+          // the element itself has no box; observe its (server-rendered) children to avoid layout changes
+          const targets = Array.from(this.children);
+
+          if (!targets.length) {
+            this.style.display = 'block';
+            targets.push(this);
+          }
+
           const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
               if (entry.isIntersecting) {
@@ -359,7 +366,10 @@ export function createElements(injector: DependencyInjector) {
                   return;
                 }
 
-                this.style.display = 'contents';
+                if (targets[0] === this) {
+                  this.style.display = 'contents';
+                }
+
                 observer.disconnect();
 
                 if (this._stopStart) {
@@ -373,7 +383,7 @@ export function createElements(injector: DependencyInjector) {
             });
           });
 
-          observer.observe(this);
+          targets.forEach((target) => observer.observe(target));
           this._stopStart = () => observer.disconnect();
           return;
         case 'load':

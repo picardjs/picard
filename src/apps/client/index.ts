@@ -12,7 +12,7 @@ import { createDebug } from '@/common/browser/debug';
 import { createSheet } from '@/common/ui/styles';
 import { createRenderer } from '@/common/ui/renderer';
 import { createPilet } from '@/common/formats/pilet';
-import { createModuleFederation } from '@/common/formats/module';
+import { createLazyModuleFederation } from '@/common/formats/module-lazy';
 import { createNativeFederation } from '@/common/formats/native';
 import { createDefaultConverter } from '@/common/frameworks/default';
 import { createHtmlConverter } from '@/common/frameworks/html';
@@ -96,7 +96,7 @@ declare module '@/types/injector' {
 }
 
 export {
-  createModuleFederation,
+  createLazyModuleFederation as createModuleFederation,
   createNativeFederation,
   createPilet,
   createSingleSpaConverter,
@@ -136,7 +136,7 @@ export function initializePicard(options?: PicardOptions): PicardStore {
     router: createRouter,
     debug: createDebug,
     esm: createEsm,
-    'format.module': createModuleFederation,
+    'format.module': createLazyModuleFederation,
     'format.native': createNativeFederation,
     'format.pilet': createPilet,
     'framework.single-spa': createSingleSpaConverter,

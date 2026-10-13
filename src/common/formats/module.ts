@@ -1,5 +1,4 @@
 import { createInstance, satisfy, type ModuleFederation, type ModuleFederationRuntimePlugin } from '@module-federation/runtime';
-import { getUrl } from '@/common/utils/url';
 import type {
   ModuleFederationEntry,
   ModuleFederationManifestV2,
@@ -41,7 +40,8 @@ async function loadRemote(platform: PlatformService, entry: ModuleFederationEntr
       entry: entry.url,
       type: remoteEntry.type === 'module' ? 'module' : undefined,
       entryGlobalName: globalName,
-      assetBase: getUrl('./', entry.url),
+      // avoid shared modules with the entry, as this module is also loaded lazily (see module-lazy.ts)
+      assetBase: new URL('./', entry.url).href,
     };
   }
 
@@ -212,7 +212,7 @@ async function loadContainerV2(
     for (const path of item.assets.css.sync) {
       assets.push({
         type: 'css',
-        url: getUrl(path, remote.assetBase),
+        url: new URL(path, remote.assetBase).href,
       });
     }
   }
@@ -261,7 +261,11 @@ async function loadContainerV1(
       if (!componentRef) {
         componentRef = {
           component: loadExposed(federation, loader, remote, name).catch((error) => {
-            console.error(`Failed to load federated module "${remote.id}/${name}".`, error);
+            // v1 containers cannot be inspected; probing for a module they do not expose is expected
+            if (!/does not exist in container/.test(error?.message)) {
+              console.error(`Failed to load federated module "${remote.id}/${name}".`, error);
+            }
+
             return undefined;
           }),
         };

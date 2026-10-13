@@ -44,5 +44,6 @@ const runPicard = (): void => {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', runPicard);
 } else {
-  runPicard();
+  // e.g., loaded with defer or async; let the script's load handlers (e.g., setting config) run first
+  setTimeout(runPicard, 0);
 }

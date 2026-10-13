@@ -20,7 +20,8 @@ export function createScriptPart(injector: DependencyInjector): PartService {
         state,
         client,
       })}</script>`;
-      const script = `<script type="module" src=${JSON.stringify(scriptUrl)}></script>`;
+      // start loading only after the first paint to keep the client off the critical rendering path
+      const script = `<script type="module">requestAnimationFrame(()=>setTimeout(()=>import(${serialize(scriptUrl)})))</script>`;
       return `${config}${script}`;
     },
   };

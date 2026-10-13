@@ -32,3 +32,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+      - name: Run Lighthouse checks
+        id: lighthouse
+        if: github.event_name == 'pull_request' && github.base_ref == 'develop'
+        run: npm run lighthouse
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v4
+        if: always() && steps.lighthouse.outcome != 'skipped'
+        with:
+          name: lighthouse-report
+          path: lighthouse-report/
+          retention-days: 30

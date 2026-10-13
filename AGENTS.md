@@ -12,6 +12,7 @@
 - `npm run build` builds all runtime variants and copies browser output to applicable examples.
 - `npm run test` runs the configured default Playwright project.
 - `npm run test:all` runs all configured browser projects.
+- `npm run lighthouse` checks the SSR examples (16, 08, 11) for Lighthouse scores of 100 in all categories; it needs the built examples and writes HTML reports to `lighthouse-report`. Pass example names to check only some of them.
 
 ## Architecture Notes
 
@@ -22,7 +23,7 @@
 - Package-version records store `name` and exact `version` once; use this metadata for listing. Preserve exact IDs; delegate unresolved ranges to Module Federation's `loadShare`/`satisfy` resolver and cache the selected exact ID through the Picard loader.
 - Keep lazy browser ESM shim imports of loader types type-only. A value import can introduce a shared chunk into the classic browser entry; validate the browser script after rebuilding examples.
 - Custom-element lifecycle work belongs in `src/common/browser/elements.ts`. Cancel deferred work on reset/disconnect and guard callbacks against detached elements.
-- The `islands` variant resumes server-rendered pages: no feed, no slot indexing, and Module Federation only through `src/common/formats/module-lazy.ts`. It is an ES module with shared chunks; the `node` variant embeds its output via `embedded:islands` (see `tools/build-one.mjs`) for `getIslandsFile`.
+- The `islands` variant resumes server-rendered pages: no feed, no slot indexing. The `browser`, `client`, `adapter`, and `islands` variants load Module Federation through `src/common/formats/module-lazy.ts`; keep `src/common/formats/module.ts` free of value imports shared with entries, or the classic browser script gets a static chunk import. The `node` variant embeds its output via `embedded:islands` (see `tools/build-one.mjs`) for `getIslandsFile`.
 - The decorator adds `hydrate` to components it rendered; the client passes this as `locals.hydrate` to `mount` and must not render fallbacks over server markup.
 
 ## Package and Release

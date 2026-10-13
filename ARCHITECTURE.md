@@ -30,6 +30,12 @@ Before running the tests you need to make sure Playwright is fully installed. Ru
 npx playwright install
 ```
 
+Performance is checked with Lighthouse against the server-rendered examples, which must score 100 in all categories. After building (`npm run build` and `examples/prepare-all.sh`) run:
+
+```sh
+npm run lighthouse
+```
+
 ## Basic Principles
 
 ### Directories
@@ -93,6 +99,8 @@ For CI/CD purposes we have three distinct workflows:
 3. Creating a GitHub release
 
 The build workflow (1) has a dependency to the tests (2). If the tests are failing no build or package release step is run.
+
+For pull requests targeting `develop` the tests (2) also run `npm run lighthouse`, which fails if any of the server-rendered examples scores below 100. The reports are uploaded as the `lighthouse-report` artifact.
 
 In case that (1) was triggered on the `main` branch it will eventually release the package to npm. If that works out a Git tag is created and pushed to GitHub. Finally, using that tag the GitHub release (3) workflow is triggered.
 

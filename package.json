@@ -23,7 +23,8 @@
     "build:native": "node tools/build.mjs native",
     "build:node": "node tools/build.mjs node",
     "test": "playwright test --project chromium",
-    "test:all": "playwright test"
+    "test:all": "playwright test",
+    "lighthouse": "node tools/lighthouse.mjs"
   },
   "homepage": "https://picard.js.org",
   "license": "MIT",
@@ -101,7 +102,9 @@
     "esbuild": "^0.28.2",
     "htmlparser2": "^12.0.0",
     "http-server": "14.1.1",
+    "lighthouse": "^13.5.0",
     "prettier": "^3.9.9",
+    "puppeteer-core": "^25.9.0",
     "typescript": "^5.9.3",
     "zustand": "^5.0.15"
   }

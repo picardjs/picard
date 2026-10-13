@@ -2,16 +2,21 @@
 
 ## 0.3.0 (tbd)
 
+- Improved the `browser` and `client` variants to load the Module Federation runtime on demand (browser script reduced from 106 kB to 33 kB)
+- Improved the interactive script to load after the first paint, keeping it off the critical rendering path
+- Improved `client="visible"` to observe server-rendered children instead of changing the element's layout
 - Updated the interactive script to be included as an ES module
 - Fixed the default `scriptUrl` of the `node` variant
+- Fixed console errors when probing Module Federation v1 containers for modules they do not expose
 - Fixed deferred component activation after disconnection and canceled pending idle/visibility work
-- Replaced the SystemJS dependency with Picard's focused `System.register` runtime
-- Added package name/version metadata to module records and delegated unresolved version ranges to Module Federation
 - Fixed concurrent imports returning unfinished exports and circular live-export notification loops
+- Replaced the SystemJS dependency with Picard's focused `System.register` runtime
 - Replaced the Module Federation container and share-scope handling with `@module-federation/runtime`
 - Removed JSR publishing configuration and workflow
 - Restricted npm package contents and aligned exports with generated formats
 - Renamed `picard-js/server` to `picard-js/node` (#9)
+- Added support for loading the `browser` variant with `defer` or `async`
+- Added package name/version metadata to module records and delegated unresolved version ranges to Module Federation
 - Added more inline documentation / type declarations
 - Added `loading-template-id` to attributes of `pi-component` and `pi-slot` (#8)
 - Added `@softarc/native-federaton` stub to the native federation format (#6)

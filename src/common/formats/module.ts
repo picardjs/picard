@@ -167,17 +167,16 @@ function registerRemote(federation: ModuleFederation, remote: RemoteDefinition, 
 const legacyExposePlugin: ModuleFederationRuntimePlugin = {
   name: 'picard-legacy-exposes',
   getModuleFactory({ expose, remoteEntryExports }) {
-    return (async () => {
-      try {
-        return await remoteEntryExports.get(expose);
-      } catch (error) {
-        if (expose.startsWith('./') && error instanceof Error && error.message.includes('does not exist in container')) {
-          return remoteEntryExports.get(expose.substring(2));
-        }
-
-        throw error;
+    // attach the rejection handler synchronously; awaiting (or Promise.resolve) a non-native promise
+    // (e.g., from zone.js) attaches it only in a later microtask, which reports the rejection as unhandled
+    const factory: Promise<() => any> = remoteEntryExports.get(expose);
+    return factory.then(undefined, (error) => {
+      if (expose.startsWith('./') && error instanceof Error && error.message.includes('does not exist in container')) {
+        return remoteEntryExports.get(expose.substring(2));
       }
-    })();
+
+      throw error;
+    });
   },
 };
 

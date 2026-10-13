@@ -1,4 +1,5 @@
-import { createContext, SourceTextModule, Script, Context } from 'vm';
+import { createContext, Script, type Context, type SourceTextModule } from 'node:vm';
+import { getVmModules } from './utils';
 import type { PlatformService } from '@/types';
 
 async function loadScript(url: string, integrity?: string, crossOrigin?: string): Promise<void> {
@@ -15,8 +16,8 @@ async function loadScript(url: string, integrity?: string, crossOrigin?: string)
 async function linkModule(url: string, ctx: Context): Promise<SourceTextModule> {
   const res = await fetch(url);
   const content = await res.text();
-  const mod = new SourceTextModule(content);
-  mod.context = ctx;
+  const { SourceTextModule } = getVmModules();
+  const mod = new SourceTextModule(content, { identifier: url, context: ctx });
   await mod.link((specifier) => {
     const newUrl = new URL(specifier, url);
     return linkModule(newUrl.href, ctx);

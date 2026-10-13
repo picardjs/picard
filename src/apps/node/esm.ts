@@ -1,20 +1,27 @@
-import { createContext, SourceTextModule, Context, SyntheticModule } from 'node:vm';
+import { createContext, type Context, type SyntheticModule } from 'node:vm';
+import { getVmModules } from './utils';
 import { system } from '@/common/loader';
 import type { EsmService } from '@/types';
 
 export function createEsm(): EsmService {
-  const cache: Record<string, SyntheticModule> = {};
-
-  async function linkModule(url: string, ctx: Context, depMap: Record<string, string>, parent: string) {
+  async function linkModule(
+    url: string,
+    context: Context,
+    cache: Record<string, SyntheticModule>,
+    depMap: Record<string, string>,
+    parent: string,
+  ) {
     const res = await fetch(url);
     const content = await res.text();
+    const { SourceTextModule, SyntheticModule } = getVmModules();
+    // all linked modules must be created in the same context
     const mod = new SourceTextModule(content, {
+      identifier: url,
+      context,
       initializeImportMeta(meta) {
         meta.url = url;
       },
     });
-
-    mod.context = ctx;
 
     await mod.link(async (specifier) => {
       const dep = depMap[specifier];
@@ -27,15 +34,19 @@ export function createEsm(): EsmService {
       if (dep) {
         const result = await system.import(dep, parent);
         const names = Object.keys(result);
-        return (cache[dep] = new SyntheticModule(names, function () {
-          for (const name of names) {
-            this.setExport(name, result[name]);
-          }
-        }));
+        return (cache[dep] = new SyntheticModule(
+          names,
+          function () {
+            for (const name of names) {
+              this.setExport(name, result[name]);
+            }
+          },
+          { context },
+        ));
       }
 
       const newUrl = new URL(specifier, url);
-      return await linkModule(newUrl.href, ctx, depMap, parent);
+      return await linkModule(newUrl.href, context, cache, depMap, parent);
     });
 
     await mod.evaluate();
@@ -44,8 +55,8 @@ export function createEsm(): EsmService {
 
   return {
     async load(url, depMap, parent) {
-      const ctx = createContext();
-      const mod = await linkModule(url, ctx, depMap, parent);
+      const context = createContext();
+      const mod = await linkModule(url, context, {}, depMap, parent);
       return mod.namespace;
     },
   };

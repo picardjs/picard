@@ -5,8 +5,14 @@
 - Improved the `browser` and `client` variants to load the Module Federation runtime on demand (browser script reduced from 106 kB to 33 kB)
 - Improved the interactive script to load after the first paint, keeping it off the critical rendering path
 - Improved `client="visible"` to observe server-rendered children instead of changing the element's layout
+- Improved the error message for components that could not be loaded
 - Updated the interactive script to be included as an ES module
 - Fixed the default `scriptUrl` of the `node` variant
+- Fixed loading the on-demand chunks of the `browser` variant when the script is cross-origin (e.g., from unpkg or jsdelivr)
+- Fixed the `browser` variant leaking its top-level names into the global scope
+- Fixed the `node` variant failing to load without the `--experimental-vm-modules` flag (e.g., in bundled ESM servers such as Angular SSR); only loading ES modules requires the flag
+- Fixed loading ES modules (e.g., Native Federation) in the `node` variant by creating all linked VM modules in the same context
+- Fixed unhandled rejection reports (e.g., by zone.js) when probing Module Federation v1 containers
 - Fixed console errors when probing Module Federation v1 containers for modules they do not expose
 - Fixed deferred component activation after disconnection and canceled pending idle/visibility work
 - Fixed concurrent imports returning unfinished exports and circular live-export notification loops

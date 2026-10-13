@@ -21,7 +21,8 @@ export function createRenderer(injector: DependencyInjector): RendererService {
             const lc = convert(c.exports, meta, framework);
 
             if (!lc) {
-              throw new Error(`The component "${c.name}" could not be loaded.`);
+              const name = c.name || component.cid || `${component.source}/${component.name}`;
+              throw new Error(`The component "${name}" could not be loaded.`);
             }
 
             return lc;

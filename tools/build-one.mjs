@@ -68,10 +68,43 @@ async function createDeclHead(appDir) {
   return ['/**', ...desc, ' * @module', ' */'].join('\n');
 }
 
+// same length as "import" to keep the columns of the source map valid
+const chunkImport = '$piImp';
+const chunkImportPattern = /(?<![\w$.])import\((["'])(\.\/[^"']+)\1\)/g;
+
+// makes the ESM entry usable as a classic script: a classic script that is
+// cross-origin (e.g., from a CDN without "crossorigin" or from file://) has
+// "about:blank" as base URL for import(), so the chunks are resolved against
+// the script's own URL; the IIFE keeps the top-level names out of the global scope
+async function convertToClassicScript(file) {
+  const code = await readFile(file, 'utf8');
+
+  if (/^\s*(import|export)\b/m.test(code)) {
+    throw new Error(`The entry "${file}" contains static imports or exports and cannot be a classic script.`);
+  }
+
+  const marker = '\n//# sourceMappingURL=';
+  const index = code.lastIndexOf(marker);
+  const body = index === -1 ? code : code.substring(0, index);
+  const tail = index === -1 ? '' : code.substring(index);
+  const prefix = `(()=>{var ${chunkImport}=((b)=>(p)=>import(new URL(p,b).href))(document.currentScript?.src||location.href);`;
+  const content = body.replace(chunkImportPattern, `${chunkImport}($1$2$1)`);
+  await writeFile(file, `${prefix}\n${content}\n})();${tail}`, 'utf8');
+
+  const mapFile = `${file}.map`;
+  const map = await readJson(mapFile).catch(() => undefined);
+
+  if (map) {
+    // shift all mappings by the prefix line
+    map.mappings = `;${map.mappings}`;
+    await writeFile(mapFile, JSON.stringify(map), 'utf8');
+  }
+}
+
 export async function buildOne(app) {
   const appDir = resolve(root, `apps/${app}`);
   const typesDir = resolve(root, 'types');
-  const { name, platform, minify, entry, formats, outDirs, globalName, extension } = await readJson(
+  const { name, platform, minify, entry, formats, outDirs, globalName, extension, classic } = await readJson(
     resolve(appDir, `app.json`),
   );
 
@@ -114,6 +147,10 @@ export async function buildOne(app) {
         plugins: [embedPlugin],
         outExtension: { '.js': ext },
       });
+
+      if (classic) {
+        await convertToClassicScript(resolve(outdir, `${name}${ext}`));
+      }
 
       if (metafile) {
         await writeFile(resolve(outdir, `meta.${format}.json`), JSON.stringify(result.metafile), 'utf8');

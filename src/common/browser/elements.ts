@@ -108,6 +108,11 @@ function loader(element: HTMLElement) {
   return () => cancelAnimationFrame(frameIndex);
 }
 
+function serializeData(value: any) {
+  // frameworks such as Svelte or Vue set the property with the (serialized) value of the attribute
+  return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
 function fallback(element: HTMLElement) {
   const fallbackTemplateId = element.getAttribute(attrFallbackTemplateId) || '';
   const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
@@ -146,7 +151,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     set data(value: any) {
-      this.setAttribute(attrData, JSON.stringify(value));
+      this.setAttribute(attrData, serializeData(value));
     }
 
     async connectedCallback() {
@@ -294,7 +299,7 @@ export function createElements(injector: DependencyInjector) {
     }
 
     set data(value: any) {
-      this.setAttribute(attrData, JSON.stringify(value));
+      this.setAttribute(attrData, serializeData(value));
     }
 
     connectedCallback() {

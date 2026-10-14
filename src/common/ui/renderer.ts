@@ -16,6 +16,12 @@ export function createRenderer(injector: DependencyInjector): RendererService {
       if (result) {
         return createLazyLifecycle(() =>
           result.then((c) => {
+            if (!c) {
+              // e.g., the source is neither in the feed nor a URL with a format
+              const name = component.cid || `${component.source}/${component.name}`;
+              throw new Error(`The component "${name}" could not be found.`);
+            }
+
             const { meta, type = 'default' } = c;
             const { framework = type } = opts;
             const lc = convert(c.exports, meta, framework);

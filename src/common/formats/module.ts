@@ -180,6 +180,41 @@ const legacyExposePlugin: ModuleFederationRuntimePlugin = {
   },
 };
 
+function findHostFederation(origin: ModuleFederation): ModuleFederation | undefined {
+  // e.g., the runtime of an application bundled with Module Federation (rspack, webpack, Vite)
+  const instances: Array<ModuleFederation> = (globalThis as any).__FEDERATION__?.__INSTANCES__ || [];
+  return instances.find((instance) => instance !== origin);
+}
+
+const sharedScopePlugin: ModuleFederationRuntimePlugin = {
+  name: 'picard-shared-scope',
+  beforeInitContainer(args) {
+    const { origin, remoteEntryInitOptions } = args;
+    const host = findHostFederation(origin);
+
+    if (!host) {
+      return args;
+    }
+
+    // a container can only be initialized with a single share scope, but the remotes
+    // of the page's application may also be used by Picard.js - so share its scope
+    const [scopeName = 'default'] = ([] as Array<string>).concat(remoteEntryInitOptions.shareScopeKeys);
+    const hostScope = (host.shareScopeMap[scopeName] ||= {});
+    const ownScope = origin.shareScopeMap[scopeName];
+
+    if (ownScope !== hostScope) {
+      // keep the shares registered by Picard.js
+      for (const [name, versions] of Object.entries(ownScope || {})) {
+        hostScope[name] = { ...versions, ...hostScope[name] };
+      }
+
+      origin.initShareScopeMap(scopeName, hostScope);
+    }
+
+    return { ...args, shareScope: hostScope };
+  },
+};
+
 function loadExposed(federation: ModuleFederation, loader: LoaderService, remote: RemoteDefinition, name: string) {
   return federation.loadRemote(`${remote.id}/${name}`).then((module) => {
     registerFederationShares(federation, loader);
@@ -324,7 +359,7 @@ export interface ModuleFederationService extends ContainerService {
 export function createModuleFederation(injector: DependencyInjector): ModuleFederationService {
   const loader = injector.get('loader');
   const platform = injector.get('platform');
-  const federation = createInstance({ name: 'picard', remotes: [], plugins: [legacyExposePlugin] });
+  const federation = createInstance({ name: 'picard', remotes: [], plugins: [legacyExposePlugin, sharedScopePlugin] });
   const registeredRemotes = new Map<string, string>();
   const registeredShares = new Set<string>();
 

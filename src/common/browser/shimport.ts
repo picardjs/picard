@@ -10,7 +10,7 @@ function loadModule(url: string, parent: string, depMap: Record<string, string>)
     promises[url] ||
     (promises[url] = fetch(url)
       .then((r) => r.text())
-      .then((text) => evaluate(transform(text, url, parent, depMap))))
+      .then((text) => evaluate(transform(text, url, parent, depMap), url)))
   );
 }
 
@@ -26,8 +26,8 @@ function loadDependency(id: string, url: string, parent: string, depMap: Record<
 
 let uid = 1;
 
-function evaluate(code: string) {
-  return new Promise((resolve) => {
+function evaluate(code: string, url: string) {
+  return new Promise((resolve, reject) => {
     const id = `m${uid++}`;
 
     // creating a script tag gives us proper stack traces
@@ -38,12 +38,23 @@ function evaluate(code: string) {
     const script = document.createElement('script');
     script.src = URL.createObjectURL(blob);
 
+    const cleanup = () => {
+      URL.revokeObjectURL(script.src);
+      script.remove();
+    };
+
     script.onload = () => {
       //@ts-ignore
       const sp = window.__shimport__;
       resolve(sp[id]);
       delete sp[id];
-      script.remove();
+      cleanup();
+    };
+
+    script.onerror = () => {
+      // e.g., a Content Security Policy forbidding blob: scripts
+      cleanup();
+      reject(new Error(`Failed to evaluate the module "${url}".`));
     };
 
     document.head.appendChild(script);

@@ -158,7 +158,8 @@ async function Slot(
   const [name, data] = getSlotParameters(injector, attribs);
   const components = await renderComponents(injector, name, data, {
     orderBy: attribs['order-by'],
-    reverse: !!attribs['order-reverse'],
+    // a boolean attribute, i.e., present (usually with an empty value) or not - like in the browser
+    reverse: 'reverse-order' in attribs,
   });
 
   if (components.length > 0) {

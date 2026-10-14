@@ -3,7 +3,7 @@ import { createEmptyMicrofrontend } from '@/common/utils/dto';
 import type { DiscoveryResponse, PicardMicrofrontend } from '@/types';
 
 function inferKind(url: string, extras: any): PicardMicrofrontend['format'] {
-  const spec = extras.pilet.spec;
+  const spec = extras.pilet?.spec;
 
   if (spec === 'mf') {
     return 'module';
@@ -51,11 +51,11 @@ export function fromDiscovery(feed: DiscoveryResponse, baseUrl?: string): Array<
       } else {
         return createEmptyMicrofrontend(name, kind, url, {
           name,
-          integrity: metadata.integrity,
-          version: metadata.version,
+          integrity: metadata?.integrity,
+          version: metadata?.version,
           dependencies: extras.dependencies || {},
           config: extras.config,
-          spec: extras.pilet.spec,
+          spec: extras.pilet?.spec,
           url: getUrl(url, baseUrl),
         });
       }

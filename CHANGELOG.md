@@ -23,6 +23,8 @@
 - Fixed Module Federation containers already initialized by the page's Module Federation runtime (e.g., an rspack / webpack host) failing to load by sharing its share scope
 - Fixed ES modules (e.g., Native Federation) never settling when their evaluation failed in the browser
 - Fixed the error message for components whose micro frontend is unknown
+- Fixed discovery responses without a `pilet` section in the `extras` (e.g., `modulefederation` or no extras) failing to load
+- Fixed the `reverse-order` attribute of `pi-slot` being ignored on the server
 - Fixed concurrent imports returning unfinished exports and circular live-export notification loops
 - Replaced the SystemJS dependency with Picard's focused `System.register` runtime
 - Replaced the Module Federation container and share-scope handling with `@module-federation/runtime`

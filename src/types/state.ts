@@ -9,6 +9,11 @@ import type {
   PicardComponentWithExport,
 } from './components';
 
+export interface OrderingOptions {
+  reverse?: boolean;
+  orderBy?: string;
+}
+
 export interface PicardState {
   microfrontends: Array<PicardMicrofrontend>;
   components: Record<string, Array<PicardComponent>>;
@@ -21,8 +26,8 @@ export interface PicardStore {
   saveSnapshot(): string;
   subscribe(listener: (curr: PicardState, prev: PicardState) => void): Dispose;
   loadMicrofrontends(loader: Promise<Array<PicardMicrofrontend>>): Promise<void>;
-  loadComponents(name: string): Promise<Array<string>>;
-  loadAssets(type: string): Promise<Array<string>>;
+  loadComponents(name: string, options?: OrderingOptions): Promise<Array<PicardComponent>>;
+  loadAssets(type: string): Promise<Array<PicardAsset>>;
   getComponent(ref: ComponentRef): Promise<PicardComponentWithExport>;
   removeMicrofrontend(origin: string): void;
   removeMicrofrontends(origins: Array<string>): void;

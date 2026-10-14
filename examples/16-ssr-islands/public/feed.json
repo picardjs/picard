@@ -1,0 +1,8 @@
+[
+  {
+    "name": "demo",
+    "version": "1.0.0",
+    "spec": "v2",
+    "link": "pilets/demo/index.js"
+  }
+]

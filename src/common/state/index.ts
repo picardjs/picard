@@ -1,14 +1,14 @@
 import { loadContainer } from './container';
 import { createNewQueue } from './queue';
 import { initializeStore } from './store';
-import { getActiveMfNames, filterItems, mergeItems } from './utils';
+import { getActiveMfNames, filterItems, mergeItems, byCid } from './utils';
 import {
   registerComponent,
   retrieveComponent,
   createMicrofrontend,
   findMicrofrontend,
   registerAsset,
-  retrieveaAsset,
+  retrieveAsset,
   findComponent,
 } from './actions';
 import type { ComponentGetter, DependencyInjector, PicardAsset, PicardComponent, PicardStore } from '@/types';
@@ -82,12 +82,11 @@ export function createPicardScope(injector: DependencyInjector) {
       return retrieveComponent(store, id);
     },
     retrieveAsset(id) {
-      return retrieveaAsset(store, id);
+      return retrieveAsset(store, id);
     },
     loadAssets(type) {
       return queue.depends(() => {
-        const assets = scope.readState().assets[type] || [];
-        return assets.map((asset) => asset.id);
+        return scope.readState().assets[type] || [];
       });
     },
     loadMicrofrontends(loader) {
@@ -141,32 +140,44 @@ export function createPicardScope(injector: DependencyInjector) {
         return undefined;
       });
     },
-    loadComponents(name) {
+    loadComponents(name, options) {
       return queue.depends(async () => {
-        const ids: Array<string> = [];
+        const result: Array<PicardComponent> = [];
         const { microfrontends } = store.getState();
+        const orderBy = options?.orderBy || 'none';
+        const mfs = microfrontends.filter((mf) => !mf.flags);
+
+        if (orderBy === 'origin') {
+          mfs.sort((a, b) => a.name.localeCompare(b.name));
+        }
 
         await Promise.all(
-          microfrontends
-            .filter((mf) => !mf.flags)
-            .map(async (mf) => {
-              const container = await loadContainer(injector, mf, containers);
-              const { components } = store.getState();
-              let component = components[name].find((m) => m.origin === mf.name);
+          mfs.map(async (mf) => {
+            const container = await loadContainer(injector, mf, containers);
+            const { components } = store.getState();
+            let component = components[name]?.find((m) => m.origin === mf.name);
 
-              if (!component) {
-                if (await container.load(name)) {
-                  component = registerComponent(store, mf, { name });
-                } else {
-                  return;
-                }
+            if (!component) {
+              if (await container.load(name)) {
+                component = registerComponent(store, mf, { name });
+              } else {
+                return;
               }
+            }
 
-              ids.push(component.id);
-            }),
+            result.push(component);
+          }),
         );
 
-        return ids;
+        if (orderBy === 'cid') {
+          result.sort(byCid);
+        }
+
+        if (options?.reverse) {
+          result.reverse();
+        }
+
+        return result;
       });
     },
     appendMicrofrontend(mf) {

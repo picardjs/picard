@@ -1,4 +1,8 @@
-import type { PicardState } from '@/types';
+import type { PicardComponent, PicardState } from '@/types';
+
+export function byCid(a: PicardComponent, b: PicardComponent) {
+  return a.id.localeCompare(b.id);
+}
 
 export function filterItems<U extends { origin: string }, T extends Record<string, Array<U>>>(
   items: T,

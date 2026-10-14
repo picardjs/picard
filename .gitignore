@@ -23,5 +23,6 @@ coverage
 
 /test-results/
 /playwright-report/
+/lighthouse-report/
 /blob-report/
 /playwright/.cache/

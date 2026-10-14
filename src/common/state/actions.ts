@@ -80,7 +80,7 @@ export function findMicrofrontend(scope: PicardStore, origin: string): PicardMic
   return scope.readState().microfrontends.find((m) => m.name === origin);
 }
 
-export function retrieveaAsset(store: StoreApi<PicardState>, id: string): PicardAsset | undefined {
+export function retrieveAsset(store: StoreApi<PicardState>, id: string): PicardAsset | undefined {
   if (typeof id === 'string') {
     const { assets } = store.getState();
 

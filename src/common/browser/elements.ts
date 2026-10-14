@@ -5,11 +5,16 @@ import type { ComponentLifecycle, DependencyInjector, PicardAsset, UpdatedMicrof
 const attrName = 'name';
 const attrFallbackTemplateId = 'fallback-template-id';
 const attrItemTemplateId = 'item-template-id';
+const attrLoadingTemplateId = 'loading-template-id';
+const attrOrderBy = 'order-by';
+const attrReverseOrder = 'reverse-order';
 const attrRemoteName = 'remote-name';
 const attrRemoteType = 'remote-type';
 const attrSource = 'source';
 const attrFormat = 'format';
 const attrFramework = 'framework';
+const attrClient = 'client';
+const attrHydrate = 'hydrate';
 const attrData = 'data';
 const attrCid = 'cid';
 
@@ -88,6 +93,35 @@ function fillTemplate(fragment: DocumentFragment, template: HTMLElement, items: 
   return fragment;
 }
 
+function loader(element: HTMLElement) {
+  const frameIndex = requestAnimationFrame(() => {
+    if (!element.hasChildNodes()) {
+      const loadingTemplateId = element.getAttribute(attrLoadingTemplateId) || '';
+      const loadingTemplate = loadingTemplateId && document.getElementById(loadingTemplateId);
+
+      if (loadingTemplate instanceof HTMLTemplateElement) {
+        element.appendChild(getFragment(loadingTemplate).cloneNode(true));
+      }
+    }
+  });
+
+  return () => cancelAnimationFrame(frameIndex);
+}
+
+function serializeData(value: any) {
+  // frameworks such as Svelte or Vue set the property with the (serialized) value of the attribute
+  return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
+function fallback(element: HTMLElement) {
+  const fallbackTemplateId = element.getAttribute(attrFallbackTemplateId) || '';
+  const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
+
+  if (fallbackTemplate instanceof HTMLTemplateElement) {
+    element.appendChild(getFragment(fallbackTemplate).cloneNode(true));
+  }
+}
+
 export function createElements(injector: DependencyInjector) {
   const config = injector.get('config');
   const renderer = injector.get('renderer');
@@ -102,6 +136,7 @@ export function createElements(injector: DependencyInjector) {
     private _ready = false;
     private _queue = createQueue();
     private _components: Array<PiComponent> = [];
+    private _stopLoader: (() => void) | undefined;
 
     get name() {
       return this.getAttribute(attrName) || '';
@@ -116,19 +151,29 @@ export function createElements(injector: DependencyInjector) {
     }
 
     set data(value: any) {
-      this.setAttribute(attrData, JSON.stringify(value));
+      this.setAttribute(attrData, serializeData(value));
     }
 
     async connectedCallback() {
+      if (this._ready) {
+        // only moved (e.g., by streamed rendering) - keep the content
+        return;
+      }
+
       this._ready = true;
       this.#start();
       events.emit('mounted-slot', { element: this });
     }
 
     disconnectedCallback() {
-      this._ready = false;
-      this.#clean();
-      events.emit('unmounted-slot', { element: this });
+      // a moved element is reconnected in the same task, so only clean up if it stays disconnected
+      queueMicrotask(() => {
+        if (this._ready && !this.isConnected) {
+          this._ready = false;
+          this.#clean();
+          events.emit('unmounted-slot', { element: this });
+        }
+      });
     }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -143,16 +188,27 @@ export function createElements(injector: DependencyInjector) {
         this.#reset();
       } else if (name === attrFallbackTemplateId && this._empty) {
         this.#reset();
+      } else if (name === attrReverseOrder) {
+        this.#reset();
       }
     }
 
     #start() {
-      if (this.name) {
+      if (!this.name) {
+        // nothing to do without a name
+      } else if (!this.hasChildNodes()) {
         this.#setupChildren();
+      } else {
+        // resumed from the server; the children are already rendered
+        this._components = Array.from(this.querySelectorAll<PiComponent>(componentName)).filter(
+          (component) => component.parentElement?.closest(slotName) === this,
+        );
       }
     }
 
     #clean() {
+      this._stopLoader?.();
+      this._stopLoader = undefined;
       this._queue.reset();
       this.innerHTML = '';
     }
@@ -174,9 +230,13 @@ export function createElements(injector: DependencyInjector) {
     }
 
     async #setupChildren() {
+      const stopLoader = (this._stopLoader = loader(this));
+
       this._queue.enqueue(() => {
+        const orderBy = this.getAttribute(attrOrderBy);
+        const reverse = this.getAttribute(attrReverseOrder) !== null;
         const [name, data] = this.#details();
-        return fragments.load(name, data);
+        return fragments.load(name, data, { orderBy, reverse });
       });
 
       this._queue.enqueue((content: string) => {
@@ -186,23 +246,27 @@ export function createElements(injector: DependencyInjector) {
         this.innerHTML = '';
         this._components = [];
 
+        stopLoader();
+        this._stopLoader = undefined;
+
         if (content) {
           const fragment = document.createElement('template');
           fragment.innerHTML = content;
           this.appendChild(fillTemplate(getFragment(fragment), itemTemplate, this._components));
         } else {
-          const fallbackTemplateId = this.getAttribute(attrFallbackTemplateId) || '';
-          const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
+          fallback(this);
+        }
 
-          if (fallbackTemplate instanceof HTMLTemplateElement) {
-            this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
-          }
+        const loading = this.getAttribute(attrLoadingTemplateId);
+
+        if (loading) {
+          this._components.forEach((c) => c.setAttribute(attrLoadingTemplateId, loading));
         }
       });
     }
 
     static get observedAttributes() {
-      return [attrName, attrData, attrItemTemplateId, attrFallbackTemplateId];
+      return [attrName, attrData, attrItemTemplateId, attrFallbackTemplateId, attrReverseOrder];
     }
   }
 
@@ -211,13 +275,20 @@ export function createElements(injector: DependencyInjector) {
     private _locals: any = {};
     private _queue = createQueue();
     private _ready = false;
+    private _stopStart: (() => void) | undefined;
+    private _stopLoader: (() => void) | undefined;
+    private _startGeneration = 0;
     private handleUpdate = (ev: UpdatedMicrofrontendsEvent) => {
       const source = this.getAttribute(attrSource);
 
       if (source) {
-        if (ev.removed.includes(source)) {
+        const client = this.getAttribute(attrClient);
+
+        if (client === 'none') {
+          // Skip update as we don't want to render on the client
+        } else if (ev.removed.includes(source) && this._lc) {
           this.#reset();
-        } else if (ev.added.includes(source)) {
+        } else if (ev.added.includes(source) && !this._lc) {
           this.#reset();
         }
       }
@@ -228,10 +299,15 @@ export function createElements(injector: DependencyInjector) {
     }
 
     set data(value: any) {
-      this.setAttribute(attrData, JSON.stringify(value));
+      this.setAttribute(attrData, serializeData(value));
     }
 
     connectedCallback() {
+      if (this._ready) {
+        // only moved (e.g., by streamed rendering) - keep the (server-rendered) content
+        return;
+      }
+
       this._ready = true;
       events.on('updated-microfrontends', this.handleUpdate);
       this.#start();
@@ -239,10 +315,15 @@ export function createElements(injector: DependencyInjector) {
     }
 
     disconnectedCallback() {
-      this._ready = false;
-      events.off('updated-microfrontends', this.handleUpdate);
-      this.#clean();
-      events.emit('unmounted-component', { element: this });
+      // a moved element is reconnected in the same task, so only clean up if it stays disconnected
+      queueMicrotask(() => {
+        if (this._ready && !this.isConnected) {
+          this._ready = false;
+          events.off('updated-microfrontends', this.handleUpdate);
+          this.#clean();
+          events.emit('unmounted-component', { element: this });
+        }
+      });
     }
 
     attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -271,31 +352,105 @@ export function createElements(injector: DependencyInjector) {
     }
 
     #start() {
+      this._stopStart?.();
+      this._stopStart = undefined;
+      const generation = ++this._startGeneration;
+
+      const client = this.getAttribute(attrClient);
+
+      switch (client) {
+        case 'none':
+          return;
+        case 'idle': {
+          const idleCallback = requestIdleCallback(() => {
+            if (generation === this._startGeneration) {
+              this._stopStart = undefined;
+
+              if (this._ready) {
+                this.#setupContent();
+              }
+            }
+          });
+          this._stopStart = () => cancelIdleCallback(idleCallback);
+          return;
+        }
+        case 'visible':
+          // the element itself has no box; observe its (server-rendered) children to avoid layout changes
+          const targets = Array.from(this.children);
+
+          if (!targets.length) {
+            this.style.display = 'block';
+            targets.push(this);
+          }
+
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                if (!this._ready || generation !== this._startGeneration) {
+                  observer.disconnect();
+                  return;
+                }
+
+                if (targets[0] === this) {
+                  this.style.display = 'contents';
+                }
+
+                observer.disconnect();
+
+                if (this._stopStart) {
+                  this._stopStart = undefined;
+                }
+
+                if (this._ready) {
+                  this.#setupContent();
+                }
+              }
+            });
+          });
+
+          targets.forEach((target) => observer.observe(target));
+          this._stopStart = () => observer.disconnect();
+          return;
+        case 'load':
+        default:
+          return this.#setupContent();
+      }
+    }
+
+    #setupContent() {
+      const stopLoader = (this._stopLoader = loader(this));
       this.#bootstrap();
 
       this._queue.enqueue(() => {
         const lc = this._lc;
+        // the server marks components with markup that can be hydrated
+        const hydrate = this.hasAttribute(attrHydrate);
+
+        stopLoader();
+        this._stopLoader = undefined;
 
         if (lc) {
+          this._locals.hydrate = hydrate;
           lc.mount?.(this, this.data, this._locals);
-        } else {
-          const fallbackTemplateId = this.getAttribute(attrFallbackTemplateId) || '';
-          const fallbackTemplate = fallbackTemplateId && document.getElementById(fallbackTemplateId);
-
-          if (fallbackTemplate instanceof HTMLTemplateElement) {
-            this.appendChild(getFragment(fallbackTemplate).cloneNode(true));
-          }
+        } else if (!hydrate) {
+          fallback(this);
         }
       });
     }
 
     #clean() {
       const lc = this._lc;
+      this._startGeneration++;
+      this._stopStart?.();
+      this._stopStart = undefined;
+      this._stopLoader?.();
+      this._stopLoader = undefined;
       this._queue.reset();
       lc?.unmount?.(this, this._locals);
       this._lc = undefined;
       this._locals = {};
       this.innerHTML = '';
+      this.removeAttribute(attrHydrate);
     }
 
     #reset() {
@@ -349,15 +504,10 @@ export function createElements(injector: DependencyInjector) {
         sheets.forEach((node) => node.remove());
       });
 
-      const ids = await scope.loadAssets('css');
+      const assets = await scope.loadAssets('css');
 
       appendSheets(
-        added.flatMap((name) =>
-          ids
-            .map((id) => scope.retrieveAsset(id))
-            .filter((m) => m.origin === name)
-            .map(makeSheet),
-        ),
+        added.flatMap((name) => assets.filter((m) => m.origin === name).map(makeSheet)),
         style,
       );
     });

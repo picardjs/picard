@@ -3,7 +3,7 @@ import { render } from 'dom-serializer';
 import { escapeHtml } from '@/common/utils/escape';
 import { tryJson } from '@/common/utils/json';
 import type { ChildNode, Document, Element } from 'domhandler';
-import type { DecoratorService, DependencyInjector } from '@/types';
+import type { DecoratorService, DependencyInjector, OrderingOptions } from '@/types';
 
 function traverse(nodes: Array<ChildNode>, cb: (node: ChildNode) => boolean) {
   nodes.forEach((node) => {
@@ -41,11 +41,30 @@ function findByName(container: Document | Element, name: string): Element {
   return result;
 }
 
+interface ServerRendering {
+  /**
+   * The content to place inside the element.
+   */
+  content: string;
+  /**
+   * Indicates that the content can be hydrated on the client.
+   */
+  hydrate?: boolean;
+}
+
 type ServerComponent = (
   injector: DependencyInjector,
   attribs: Record<string, string>,
   document: Document,
-) => Promise<string>;
+) => Promise<string | ServerRendering>;
+
+type Marker = [name: string, attribs: Record<string, string>, index: number, length: number, openEnd: number];
+
+function getOpenTagEnd(element: Element) {
+  const [first] = element.childNodes;
+  // position of the ">" of the opening tag
+  return first ? first.startIndex! - 1 : element.endIndex! - element.name.length - 3;
+}
 
 function renderFallback(attribs: Record<string, string>, document: Document) {
   const fallbackTemplateId = attribs['fallback-template-id'];
@@ -74,14 +93,30 @@ function getSlotParameters(injector: DependencyInjector, attribs: Record<string,
   return service.apply(attribs);
 }
 
-async function renderComponents(injector: DependencyInjector, name: string, data: any) {
+function renderMeta(meta: any) {
+  let result = '';
+
+  if (meta) {
+    if (typeof meta.server === 'string') {
+      result += ` server="${meta.server}"`;
+    }
+
+    if (typeof meta.client === 'string') {
+      result += ` client="${meta.client}"`;
+    }
+  }
+
+  return result;
+}
+
+async function renderComponents(injector: DependencyInjector, name: string, data: any, opts?: OrderingOptions) {
   const { componentName } = injector.get('config');
   const scope = injector.get('scope');
-  const cids = await scope.loadComponents(name);
+  const components = await scope.loadComponents(name, opts);
 
-  return cids.map(
-    (id) =>
-      `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"></${componentName}>`,
+  return components.map(
+    ({ id, meta }) =>
+      `<${componentName} cid=${JSON.stringify(id)} data="${escapeHtml(JSON.stringify(data))}"${renderMeta(meta)}></${componentName}>`,
   );
 }
 
@@ -89,8 +124,12 @@ async function Component(
   injector: DependencyInjector,
   attribs: Record<string, string>,
   document: Document,
-): Promise<string> {
+): Promise<string | ServerRendering> {
   const data = tryJson(attribs.data, {});
+
+  if (attribs.server === 'none') {
+    return '';
+  }
 
   if ('cid' in attribs || 'name' in attribs) {
     const renderer = injector.get('renderer');
@@ -99,9 +138,11 @@ async function Component(
     if (lc) {
       try {
         await lc.bootstrap?.();
-        return await lc.stringify?.(data);
-      } catch {
+        const content = await lc.stringify?.(data);
+        return { content, hydrate: !!content };
+      } catch (error) {
         console.warn('Could not render the component "%s"', attribs.cid || attribs.name);
+        console.debug('Rendering the component "%s" failed: %O', attribs.cid || attribs.name, error);
       }
     }
   }
@@ -115,7 +156,11 @@ async function Slot(
   document: Document,
 ): Promise<string> {
   const [name, data] = getSlotParameters(injector, attribs);
-  const components = await renderComponents(injector, name, data);
+  const components = await renderComponents(injector, name, data, {
+    orderBy: attribs['order-by'],
+    // a boolean attribute, i.e., present (usually with an empty value) or not - like in the browser
+    reverse: 'reverse-order' in attribs,
+  });
 
   if (components.length > 0) {
     const itemTemplateId = attribs['item-template-id'];
@@ -160,7 +205,7 @@ async function Part(
 export function createDecorator(injector: DependencyInjector): DecoratorService {
   const { slotName, componentName, partName } = injector.get('config');
 
-  const components: Record<string, ServerComponent> = {
+  const renderers: Record<string, ServerComponent> = {
     [slotName]: Slot,
     [componentName]: Component,
     [partName]: Part,
@@ -176,7 +221,7 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
       withStartIndices: true,
       withEndIndices: true,
     });
-    const markers: Array<[string, Record<string, string>, number, number]> = [];
+    const markers: Array<Marker> = [];
     traverse(document.childNodes, (m) => {
       if (m.type !== 'tag') {
         return false;
@@ -184,12 +229,12 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
 
       if (m.name === componentName || m.name === slotName) {
         const insert = m.endIndex! - 2 - m.name.length;
-        markers.push([m.name, m.attribs, insert, 0]);
+        markers.push([m.name, m.attribs, insert, 0, getOpenTagEnd(m)]);
         return false;
       } else if (m.name === partName) {
         const start = m.startIndex!;
         const end = m.endIndex!;
-        markers.push([m.name, m.attribs, start, end - start + 1]);
+        markers.push([m.name, m.attribs, start, end - start + 1, start]);
       }
 
       return true;
@@ -198,12 +243,19 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
     let previous = 0;
     const parts: Array<string> = [content];
 
-    for (const [name, attribs, index, length] of markers) {
-      const render = components[name];
+    for (const [name, attribs, index, length, openEnd] of markers) {
+      const renderer = renderers[name];
+      const rendering = await renderer(injector, attribs, document);
+      const { content: replacement, hydrate } = typeof rendering === 'string' ? { content: rendering } : rendering;
+      const result = await decorate(replacement || '', count + 1);
       parts.pop();
-      parts.push(content.substring(previous, index));
-      const replacement = await render(injector, attribs, document);
-      const result = await decorate(replacement, count + 1);
+
+      if (hydrate && !('hydrate' in attribs)) {
+        parts.push(content.substring(previous, openEnd), ' hydrate', content.substring(openEnd, index));
+      } else {
+        parts.push(content.substring(previous, index));
+      }
+
       parts.push(result);
       previous = index + length;
       parts.push(content.substring(previous));
@@ -213,8 +265,8 @@ export function createDecorator(injector: DependencyInjector): DecoratorService 
   };
 
   return {
-    async render(name, data) {
-      const components = await renderComponents(injector, name, data);
+    async render(name, data, opts) {
+      const components = await renderComponents(injector, name, data, opts);
       const content = components.join('');
       return await decorate(content);
     },

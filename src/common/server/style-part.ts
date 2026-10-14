@@ -9,8 +9,6 @@ export function createStylePart(injector: DependencyInjector): PartService {
       const assets = await scope.loadAssets('css');
       const internals = `<style>${sheet?.content}</style>`;
       const externals = assets
-        .map((id) => scope.retrieveAsset(id))
-        .filter(Boolean)
         .map(
           (asset) =>
             `<link rel="stylesheet" href=${JSON.stringify(asset.url)} data-origin=${JSON.stringify(asset.origin)} data-ref-id=${JSON.stringify(asset.id)}>`,

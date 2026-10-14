@@ -1,0 +1,33 @@
+# Picard.js Contributor Notes
+
+## Project Shape
+
+- `src/apps` defines the browser, client, Node, native, islands, and adapter builds. Each `app.json` is the source of truth for emitted formats and output directories.
+- `src/common` holds shared runtime behavior. `src/types` defines the public and internal contracts.
+- `examples` are also test fixtures. Playwright serves their local `dist` folders, which `npm run build` populates; run the full build before browser tests after source changes.
+- `tests` contains browser end-to-end tests. The default `npm test` project is intentionally workspace-configurable; do not overwrite a user's existing script change.
+
+## Useful Commands
+
+- `npm run build` builds all runtime variants and copies browser output to applicable examples.
+- `npm run test` runs the configured default Playwright project.
+- `npm run test:all` runs all configured browser projects.
+- `npm run lighthouse` checks the SSR examples (16, 08, 11) for Lighthouse scores of 100 in all categories; it needs the built examples and writes HTML reports to `lighthouse-report`. Pass example names to check only some of them.
+
+## Architecture Notes
+
+- `LoaderService` uses Picard's small `System.register` runtime in `src/common/loader/system.ts` for shared resolver registration, URL registration, linking, import, evaluated-module lookup, and dependency listing.
+- Module Federation uses the bundled `@module-federation/runtime` in `src/common/formats/module.ts` for remotes and share negotiation; preserve Picard loader interop for Pilets and Native Federation.
+- Native Federation uses its manifest's shared dependency list to register ESM resolvers through the same loader; it does not provide a separate Picard dependency registry.
+- Pilets use named and anonymous `System.register` modules. Keep registration, relative resolution, live export updates, dependency sharing, and Node SSR covered when changing the runtime.
+- Package-version records store `name` and exact `version` once; use this metadata for listing. Preserve exact IDs; delegate unresolved ranges to Module Federation's `loadShare`/`satisfy` resolver and cache the selected exact ID through the Picard loader.
+- Keep lazy browser ESM shim imports of loader types type-only. A value import can introduce a shared chunk into the classic browser entry; validate the browser script after rebuilding examples.
+- Custom-element lifecycle work belongs in `src/common/browser/elements.ts`. Cancel deferred work on reset/disconnect and guard callbacks against detached elements.
+- The `islands` variant resumes server-rendered pages: no feed, no slot indexing. The `browser`, `client`, `adapter`, and `islands` variants load Module Federation through `src/common/formats/module-lazy.ts`; keep `src/common/formats/module.ts` free of value imports shared with entries, or the classic browser script gets a static chunk import. The `node` variant embeds its output via `embedded:islands` (see `tools/build-one.mjs`) for `getIslandsFile`.
+- The decorator adds `hydrate` to components it rendered; the client passes this as `locals.hydrate` to `mount` and must not render fallbacks over server markup.
+
+## Package and Release
+
+- npm is the supported package registry. JSR configuration and publishing have been removed.
+- Keep `package.json` exports consistent with the artifacts defined by `src/apps/*/app.json`. Browser script, client ESM, Node CJS/ESM, and native ESM are distinct outputs.
+- The npm `files` allowlist intentionally excludes examples, tests, and source files.

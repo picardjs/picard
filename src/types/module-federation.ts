@@ -15,64 +15,70 @@ export interface ModuleFederationFactoryScope {
   };
 }
 
+export interface ModuleFederationManifestV2MetaData {
+  name: string;
+  type: 'app';
+  buildInfo: {
+    buildVersion: string;
+    buildName: string;
+  };
+  remoteEntry: {
+    name: string;
+    path: string;
+    type: 'global' | 'module';
+  };
+  types: {
+    path: string;
+    name: string;
+    zip: string;
+    api: string;
+  };
+  globalName: string;
+  pluginVersion: string;
+  publicPath: string;
+}
+
+export interface ModuleFederationManifestV2SharedDependency {
+  id: string;
+  name: string;
+  version: string;
+  singleton: boolean;
+  requiredVersion: string;
+  assets: {
+    js: {
+      async: Array<string>;
+      sync: Array<string>;
+    };
+    css: {
+      sync: Array<string>;
+      async: Array<string>;
+    };
+  };
+}
+
+export interface ModuleFederationManifestV2Exposed {
+  id: string;
+  name: string;
+  assets: {
+    js: {
+      sync: Array<string>;
+      async: Array<string>;
+    };
+    css: {
+      sync: Array<string>;
+      async: Array<string>;
+    };
+  };
+  path: string;
+}
+
 export interface ModuleFederationManifestV2 {
   id: string;
   name: string;
-  metaData: {
-    name: string;
-    type: 'app';
-    buildInfo: {
-      buildVersion: string;
-      buildName: string;
-    };
-    remoteEntry: {
-      name: string;
-      path: string;
-      type: 'global' | 'module';
-    };
-    types: {
-      path: string;
-      name: string;
-      zip: string;
-      api: string;
-    };
-    globalName: string;
-    pluginVersion: string;
-    publicPath: string;
-  };
-  shared: Array<{
-    id: string;
-    name: string;
-    version: string;
-    singleton: boolean;
-    requiredVersion: string;
-    assets: {
-      js: {
-        async: Array<string>;
-        sync: Array<string>;
-      };
-      css: {
-        sync: Array<string>;
-        async: Array<string>;
-      };
-    };
-  }>;
+  metaData: ModuleFederationManifestV2MetaData;
+  shared: Array<ModuleFederationManifestV2SharedDependency>;
   remotes: Array<any>;
-  exposes: Array<{
-    id: string;
-    name: string;
-    assets: {
-      js: {
-        sync: Array<string>;
-        async: Array<string>;
-      };
-      css: {
-        sync: Array<string>;
-        async: Array<string>;
-      };
-    };
-    path: string;
-  }>;
+  exposes: Array<ModuleFederationManifestV2Exposed>;
 }
 
 export interface ModuleFederationContainer {
@@ -83,5 +89,10 @@ export interface ModuleFederationContainer {
 export interface ModuleFederationEntry {
   id: string;
   url: string;
-  type?: 'var' | 'esm';
+  type?: 'var' | 'esm' | 'global' | 'module';
+  runtime?: '1.0' | '1.5' | '2.0';
+  metaData?: ModuleFederationManifestV2MetaData;
+  shared?: Array<ModuleFederationManifestV2SharedDependency>;
+  remotes?: Array<any>;
+  exposes?: Array<ModuleFederationManifestV2Exposed>;
 }

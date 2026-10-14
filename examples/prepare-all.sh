@@ -30,3 +30,8 @@ cd ..
 cd 13-spa-tractor-v2-full/mfs
 ./prepare-mfs.sh
 cd ../..
+
+cd 16-ssr-islands
+npm i
+npm run build
+cd ..

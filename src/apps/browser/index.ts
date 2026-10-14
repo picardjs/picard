@@ -1,3 +1,4 @@
+import { getUrl } from '@/common/utils/url';
 import { initializePicard, PicardOptions } from '../client';
 import type { PicardStore } from '@/types';
 
@@ -7,7 +8,7 @@ interface PicardStartScriptElement extends HTMLScriptElement {
   config?: PicardOptions;
 }
 
-function deserializeState() {
+function deserializeState(): any {
   // we obtain the serialized state
   const element = document.querySelector('script[type=pi-state]');
 
@@ -27,7 +28,7 @@ declare global {
   }
 }
 
-const runPicard = () => {
+const runPicard = (): void => {
   const feed = script?.getAttribute('feed') || undefined;
   const options = script?.config;
   const state = deserializeState();
@@ -35,6 +36,7 @@ const runPicard = () => {
     ...options,
     feed,
     state,
+    baseUrl: getUrl('.', script.src),
   });
   window.picard = scope;
 };
@@ -42,5 +44,6 @@ const runPicard = () => {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', runPicard);
 } else {
-  runPicard();
+  // e.g., loaded with defer or async; let the script's load handlers (e.g., setting config) run first
+  setTimeout(runPicard, 0);
 }

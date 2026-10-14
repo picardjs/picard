@@ -13,6 +13,7 @@ export function createPilet(injector: DependencyInjector): ContainerService {
   const loader = injector.get('loader');
   const plugins = injector.getAll('pilet');
   const platform = injector.get('platform');
+  const events = injector.get('events');
 
   return {
     async createContainer(entry: PiletEntry) {
@@ -33,6 +34,7 @@ export function createPilet(injector: DependencyInjector): ContainerService {
       if (app && 'setup' in app) {
         const basePath = getUrl('.', entry.url);
         const api: PiletApi = {
+          ...events,
           meta: {
             basePath,
           },

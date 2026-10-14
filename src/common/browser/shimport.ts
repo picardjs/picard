@@ -1,24 +1,24 @@
-import { transform } from './transform';
+import { transform, globalName } from './transform';
 
 const promises: Record<string, Promise<any>> = {};
 
 type __Import = (id: string) => Promise<any>;
 type __Exports = Record<string, any>;
 
-function loadModule(url: string, parent: string, depMap: Record<string, string>) {
+function loadModule(url: string, parent: string, depMap: Record<string, string>): Promise<any> {
   return (
     promises[url] ||
     (promises[url] = fetch(url)
       .then((r) => r.text())
-      .then((text) => evaluate(transform(text, url, parent, depMap))))
+      .then((text) => evaluate(transform(text, url, parent, depMap), url)))
   );
 }
 
-function loadDependency(id: string, url: string, parent: string, depMap: Record<string, string>) {
+function loadDependency(id: string, url: string, parent: string, depMap: Record<string, string>): Promise<any> {
   const depId = depMap[id];
 
   if (depId) {
-    return System.import(depId, parent);
+    return (globalThis as any).System.import(depId, parent);
   }
 
   return loadModule(new URL(id, url).href, parent, depMap);
@@ -26,8 +26,8 @@ function loadDependency(id: string, url: string, parent: string, depMap: Record<
 
 let uid = 1;
 
-function evaluate(code: string) {
-  return new Promise((resolve) => {
+function evaluate(code: string, url: string) {
+  return new Promise((resolve, reject) => {
     const id = `m${uid++}`;
 
     // creating a script tag gives us proper stack traces
@@ -38,17 +38,33 @@ function evaluate(code: string) {
     const script = document.createElement('script');
     script.src = URL.createObjectURL(blob);
 
+    const cleanup = () => {
+      URL.revokeObjectURL(script.src);
+      script.remove();
+    };
+
     script.onload = () => {
       //@ts-ignore
       const sp = window.__shimport__;
       resolve(sp[id]);
       delete sp[id];
-      script.remove();
+      cleanup();
+    };
+
+    script.onerror = () => {
+      // e.g., a Content Security Policy forbidding blob: scripts
+      cleanup();
+      reject(new Error(`Failed to evaluate the module "${url}".`));
     };
 
     document.head.appendChild(script);
   });
 }
+
+(window as any)[globalName] = {
+  define,
+  load,
+};
 
 export async function define(
   url: string,
@@ -56,7 +72,7 @@ export async function define(
   deps: Array<string>,
   factory: (__import: __Import, __exports: __Exports, ...deps: Array<any>) => void,
   depMap: Record<string, string>,
-) {
+): Promise<any> {
   const __import = (dep: string) => loadDependency(dep, url, parent, depMap);
   const __deps = await Promise.all(deps.map(__import));
   const __exports = {};
@@ -64,6 +80,6 @@ export async function define(
   return __exports;
 }
 
-export function load(url: string, depMap: Record<string, string>, parent: string) {
+export function load(url: string, depMap: Record<string, string>, parent: string): Promise<any> {
   return loadModule(url, parent, depMap);
 }

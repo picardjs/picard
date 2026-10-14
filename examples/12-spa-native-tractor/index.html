@@ -84,7 +84,7 @@ window.loadComponent = (remoteName, exposedModule) => {
   return React.lazy(() => picard.getComponent({ name: exposedModule, source: remoteName }).then(comp => ({ default: comp.exports })));
 };
 </script>
-<script src="./dist/picard.js" feed="https://native-federation-demo.my.piral.cloud/api/v1/native-federation" onload="configure(event)"></script>
+<script src="./dist/picard.js" feed="https://native-federation-demo.my.piral.cloud/api/v1/native-federation" onload="configure(event)" defer></script>
 </head>
 <body>
   <p>The main purpose of this example is to show that we can re-use the micro frontends developed using Native Federation for another demo - which assumes React is used for the components.</p>

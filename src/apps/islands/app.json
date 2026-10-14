@@ -1,8 +1,9 @@
 {
-  "name": "picard-debug",
+  "name": "picard",
   "platform": "browser",
   "minify": true,
   "entry": "index.ts",
   "formats": ["esm"],
-  "outDirs": ["browser", "client", "node"]
+  "extension": ".js",
+  "outDirs": ["islands"]
 }

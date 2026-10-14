@@ -6,18 +6,16 @@ import type { EventSystem } from '@/types';
  * @returns The event emitter.
  */
 export function createListener(): EventSystem {
-  const emitter: Record<string, Array<(ev: any) => void>> = {};
-  const getArray = (type: string) => emitter[type] || (emitter[type] = []);
+  const emitter: Record<string, Set<(ev: any) => void>> = {};
+  const getArray = (type: string) => emitter[type] || (emitter[type] = new Set());
 
   const events: EventSystem = {
     on(type, callback) {
-      getArray(type).push(callback);
+      getArray(type).add(callback);
       return events;
     },
     off(type, callback) {
-      const arr = getArray(type);
-      const idx = arr.indexOf(callback);
-      idx >= 0 && arr.splice(idx, 1);
+      getArray(type).delete(callback);
       return events;
     },
     once(type, callback) {

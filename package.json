@@ -1,6 +1,6 @@
 {
   "name": "picard-js",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "A next generation micro frontends orchestrator. Framework agnostic, multi-runtime compatible.",
   "author": "smapiot",
   "keywords": [
@@ -18,20 +18,29 @@
   ],
   "scripts": {
     "build": "node tools/build-all.mjs",
-    "build:server": "node tools/build.mjs server",
+    "build:browser": "node tools/build.mjs browser",
     "build:client": "node tools/build.mjs client",
     "build:native": "node tools/build.mjs native",
-    "test": "playwright test --project firefox",
-    "test:all": "playwright test"
+    "build:node": "node tools/build.mjs node",
+    "test": "playwright test --project chromium",
+    "test:all": "playwright test",
+    "lighthouse": "node tools/lighthouse.mjs"
   },
   "homepage": "https://picard.js.org",
   "license": "MIT",
   "unpkg": "dist/browser/picard.js",
   "jsdelivr": "dist/browser/picard.js",
   "browser": "dist/browser/picard.js",
-  "module": "dist/server/picard.mjs",
-  "main": "dist/server/picard.js",
-  "typings": "dist/server/picard.d.ts",
+  "module": "dist/node/picard.mjs",
+  "main": "dist/node/picard.js",
+  "types": "dist/node/picard.d.ts",
+  "files": [
+    "dist/**",
+    "LICENSE",
+    "README.md",
+    "ARCHITECTURE.md",
+    "SECURITY.md"
+  ],
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/smapiot"
@@ -46,53 +55,57 @@
   "exports": {
     ".": {
       "browser": {
-        "import": "./dist/client/picard.mjs",
-        "types": "./dist/client/picard.d.ts"
-      },
-      "node": {
-        "require": "./dist/server/picard.js",
-        "import": "./dist/server/picard.mjs",
-        "types": "./dist/server/picard.d.ts"
+        "types": "./dist/client/picard.d.ts",
+        "import": "./dist/client/picard.mjs"
       },
       "electron": {
-        "require": "./dist/native/picard.js",
-        "import": "./dist/native/picard.mjs",
-        "types": "./dist/native/picard.d.ts"
-      }
+        "types": "./dist/native/picard.d.ts",
+        "import": "./dist/native/picard.mjs"
+      },
+      "node": {
+        "types": "./dist/node/picard.d.ts",
+        "import": "./dist/node/picard.mjs",
+        "require": "./dist/node/picard.js"
+      },
+      "types": "./dist/node/picard.d.ts"
     },
     "./package.json": "./package.json",
+    "./adapter": {
+      "types": "./dist/adapter/picard.d.ts",
+      "import": "./dist/adapter/picard.mjs"
+    },
     "./browser": "./dist/browser/picard.js",
     "./client": {
-      "import": "./dist/client/picard.mjs",
-      "types": "./dist/client/picard.d.ts"
+      "types": "./dist/client/picard.d.ts",
+      "import": "./dist/client/picard.mjs"
     },
+    "./islands": "./dist/islands/picard.js",
     "./native": {
-      "require": "./dist/native/picard.js",
-      "import": "./dist/native/picard.mjs",
-      "types": "./dist/native/picard.d.ts"
+      "types": "./dist/native/picard.d.ts",
+      "import": "./dist/native/picard.mjs"
     },
-    "./server": {
-      "require": "./dist/server/picard.js",
-      "import": "./dist/server/picard.mjs",
-      "types": "./dist/server/picard.d.ts"
+    "./node": {
+      "types": "./dist/node/picard.d.ts",
+      "import": "./dist/node/picard.mjs",
+      "require": "./dist/node/picard.js"
     }
   },
   "sideEffects": false,
   "devDependencies": {
-    "@playwright/test": "1.45.0",
+    "@module-federation/runtime": "^2.9.2",
+    "@playwright/test": "^1.63.0",
     "@types/http-server": "^0",
-    "@types/node": "^20",
-    "@types/systemjs": "^6",
-    "dets": "0.16.0",
-    "dom-serializer": "2.0.0",
-    "domhandler": "5.0.3",
-    "esbuild": "0.20.2",
-    "htmlparser2": "9.1.0",
+    "@types/node": "^22.20.5",
+    "dets": "^1.0.0",
+    "dom-serializer": "^3.1.1",
+    "domhandler": "^6.0.1",
+    "esbuild": "^0.28.2",
+    "htmlparser2": "^12.0.0",
     "http-server": "14.1.1",
-    "path-to-regexp": "7.0.0",
-    "prettier": "3.2.5",
-    "systemjs": "6.14.3",
-    "typescript": "5.4.3",
-    "zustand": "4.5.2"
+    "lighthouse": "^13.5.0",
+    "prettier": "^3.9.9",
+    "puppeteer-core": "^25.9.0",
+    "typescript": "^5.9.3",
+    "zustand": "^5.0.15"
   }
 }

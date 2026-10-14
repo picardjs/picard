@@ -15,6 +15,7 @@ export type * from './loader';
 export type * from './microfrontend';
 export type * from './module-federation';
 export type * from './native-federation';
+export type * from './part';
 export type * from './pilet';
 export type * from './platform';
 export type * from './renderer';

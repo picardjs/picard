@@ -8,11 +8,20 @@ import { createEsm } from '@/common/browser/esm';
 import { createPicardScope } from '@/common/state';
 import { createLoader } from '@/common/loader';
 import { createInjector } from '@/common/injector';
-import { createRenderer } from './renderer';
+import { createRenderer } from '@/common/ui/renderer';
+import { createPilet } from '@/common/formats/pilet';
+import { createLazyModuleFederation } from '@/common/formats/module-lazy';
+import { createNativeFederation } from '@/common/formats/native';
+import { createDefaultConverter } from '@/common/frameworks/default';
+import { createSingleSpaConverter } from '@/common/frameworks/single-spa';
+import { createWebComponentConverter } from '@/common/frameworks/web-component';
 import type { PicardStore, FragmentsService, ElementsService, DebugService } from '@/types';
 
-function deserializeConfig() {
-  // we obtain the serialized config
+/**
+ * Reads the configuration serialized by the server, i.e.,
+ * the content of the script[type=pi-config] element.
+ */
+export function deserializeConfig(): any {
   const element = document.querySelector('script[type=pi-config]');
 
   if (element) {
@@ -22,13 +31,20 @@ function deserializeConfig() {
   return {};
 }
 
-declare global {
-  interface Window {
-    /**
-     * Gets access to the Picard.js API.
-     */
-    picard: PicardStore;
-  }
+export interface PicardOptions {
+  /**
+   * The config override if it should not be obtained
+   * from the script[type=pi-config] element.
+   */
+  config?: any;
+  /**
+   * The additional services to register.
+   */
+  services?: Record<string, any>;
+  /**
+   * The centrally shared dependencies to use.
+   */
+  dependencies?: Record<string, () => Promise<any>>;
 }
 
 declare module '@/types/injector' {
@@ -45,10 +61,21 @@ declare module '@/types/injector' {
   }
 }
 
-const resumePicard = () => {
-  const config = deserializeConfig();
+/**
+ * Resumes a server-rendered Picard.js application. In contrast to the full
+ * client this neither loads a feed nor indexes slots. Micro frontends are
+ * only loaded once their components need to be hydrated or rendered, with
+ * the Module Federation runtime being loaded on demand.
+ */
+export function resumePicard(options?: PicardOptions): PicardStore {
+  const { config, services = {}, ...configOverrides } = options || {};
+  const defaultConfig = config || deserializeConfig();
   const serviceDefinitions = {
-    config: () => config,
+    ...services,
+    config: () => ({
+      ...defaultConfig,
+      ...configOverrides,
+    }),
     events: createListener,
     scope: createPicardScope,
     fragments: createFragments,
@@ -59,18 +86,18 @@ const resumePicard = () => {
     elements: createElements,
     router: createRouter,
     debug: createDebug,
+    'format.module': createLazyModuleFederation,
+    'format.native': createNativeFederation,
+    'format.pilet': createPilet,
+    'framework.single-spa': createSingleSpaConverter,
+    'framework.default': createDefaultConverter,
+    'framework.web-component': createWebComponentConverter,
   };
 
-  window.picard = createInjector(serviceDefinitions)
+  return createInjector(serviceDefinitions)
     .instantiate('loader')
     .instantiate('elements')
     .instantiate('router')
     .instantiate('debug')
     .get('scope');
-};
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', resumePicard);
-} else {
-  resumePicard();
 }

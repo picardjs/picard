@@ -1,8 +1,6 @@
-import { getUrl } from '@/common/utils/url';
+import { createInstance, satisfy, type ModuleFederation, type ModuleFederationRuntimePlugin } from '@module-federation/runtime';
 import type {
   ModuleFederationEntry,
-  ModuleFederationContainer,
-  ModuleFederationFactoryScope,
   ModuleFederationManifestV2,
   DependencyInjector,
   LoaderService,
@@ -14,105 +12,233 @@ import type {
   ComponentGetter,
 } from '@/types';
 
-const root = '__picard__';
+interface RemoteDefinition {
+  id: string;
+  entry: string;
+  type?: string;
+  entryGlobalName?: string;
+  assetBase: string;
+}
 
-function populateKnownDependencies(parent: string, scope: ModuleFederationFactoryScope, loader: LoaderService) {
-  const dependencies = loader.list();
+async function loadRemote(platform: PlatformService, entry: ModuleFederationEntry): Promise<RemoteDefinition> {
+  let id = entry.id;
 
-  // SystemJS to MF
-  for (const { id, name, version } of dependencies) {
-    if (!(name in scope)) {
-      scope[name] = {};
+  if (entry.url.endsWith('.json')) {
+    if (!entry.metaData) {
+      const manifest = await platform.loadJson<ModuleFederationManifestV2>(entry.url);
+      entry.exposes = manifest.exposes;
+      entry.shared = manifest.shared;
+      entry.remotes = manifest.remotes;
+      entry.metaData = manifest.metaData;
     }
 
-    scope[name][version] = {
-      from: root,
-      loaded: false,
-      eager: false,
-      strategy: 'loaded-first',
-      version,
-      async get() {
-        const result = await loader.import(id, parent);
-        return () => result;
-      },
+    const { globalName, remoteEntry } = entry.metaData;
+    entry.id = globalName;
+    id = globalName;
+    return {
+      id,
+      entry: entry.url,
+      type: remoteEntry.type === 'module' ? 'module' : undefined,
+      entryGlobalName: globalName,
+      // avoid shared modules with the entry, as this module is also loaded lazily (see module-lazy.ts)
+      assetBase: new URL('./', entry.url).href,
     };
   }
+
+  const type = entry.type === 'esm' ? 'module' : entry.type;
+  const entryGlobalName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
+
+  return {
+    id,
+    entry: entry.url,
+    type,
+    entryGlobalName,
+    assetBase: entry.url,
+  };
 }
 
-function extractSharedDependencies(parent: string, scope: ModuleFederationFactoryScope, loader: LoaderService) {
-  const dependencies: Record<string, ModuleResolver> = {};
+function registerPicardShares(
+  federation: ModuleFederation,
+  loader: LoaderService,
+  parent: string,
+  registeredShares: Set<string>,
+) {
+  type Shares = NonNullable<Parameters<ModuleFederation['registerShared']>[0]>;
+  type ShareOptions = Exclude<Shares[string], unknown[]>;
+  const shares: Record<string, Array<ShareOptions>> = {};
 
-  // MF to SystemJS
-  for (const entryName of Object.keys(scope)) {
-    const entries = scope[entryName];
+  for (const { id, name, version } of loader.list()) {
+    if (registeredShares.has(id)) {
+      continue;
+    }
 
-    for (const entryVersion of Object.keys(entries)) {
-      const entry = entries[entryVersion];
+    (shares[name] ||= []).push({
+      version,
+      strategy: 'loaded-first',
+      shareConfig: { requiredVersion: false },
+      get: async () => async () => loader.import(id, parent),
+    });
+    registeredShares.add(id);
+  }
 
-      if (entry.from !== root) {
-        const id = `${entryName}@${entryVersion}`;
-        const fn = entry.get;
-        entry.get = async () => {
-          const result = await loader.import(id, parent);
-          return () => result;
-        };
-        dependencies[id] = () => fn.call(entry).then((factory) => factory());
+  if (Object.keys(shares).length > 0) {
+    federation.registerShared(shares);
+  }
+}
+
+function registerFederationShares(federation: ModuleFederation, loader: LoaderService) {
+  const existing = new Set(loader.list().map(({ id }) => id));
+  const resolvers: Record<string, () => ModuleResolver> = {};
+
+  for (const scope of Object.values(federation.shareScopeMap)) {
+    for (const [name, versions] of Object.entries(scope)) {
+      for (const [version, share] of Object.entries(versions)) {
+        const id = `${name}@${version}`;
+
+        if (!existing.has(id)) {
+          resolvers[id] = () => async () => {
+            const { factory } = await loadFederationShare(federation, name, version);
+            return factory && factory();
+          };
+          existing.add(id);
+        }
       }
     }
   }
 
-  loader.registerResolvers(dependencies);
+  loader.registerResolvers(resolvers);
 }
 
-async function loadRemoteEntryPoint(
-  platform: PlatformService,
-  url: string,
-  type: string,
-  globalName: string,
-): Promise<ModuleFederationContainer> {
-  switch (type) {
-    case 'module':
-    case 'esm':
-      return await platform.loadModule(url);
-    case 'global':
-    case 'var':
-    default:
-      await platform.loadScript(url);
-      const remote = window[globalName];
+async function loadFederationShare(federation: ModuleFederation, name: string, versionRange: string) {
+  let selectedVersion: string | undefined;
+  const factory = await federation.loadShare(name, {
+    resolver(shares) {
+      const candidates = new Map<string, (typeof federation.shareScopeMap)['default'][string][string]>();
 
-      if (!remote) {
-        throw new Error(`The remote "${globalName}" was not found in "${url}".`);
+      for (const share of [...(shares || []), ...Object.values(federation.shareScopeMap.default?.[name] || {})]) {
+        if (!candidates.has(share.version)) {
+          candidates.set(share.version, share);
+        }
       }
 
-      return remote;
-  }
+      const available = [...candidates.values()];
+      const selected = available.find((share) => satisfy(share.version, versionRange));
+
+      if (!selected) {
+        throw new Error(`No shared version of "${name}" satisfies "${versionRange}".`);
+      }
+
+      selectedVersion = selected.version;
+      return {
+        ...selected,
+        shareConfig: { ...selected.shareConfig, requiredVersion: selected.version, singleton: false },
+      };
+    },
+  });
+
+  return { factory, version: selectedVersion };
 }
 
-async function loadFactory(loader: LoaderService, remote: ModuleFederationContainer, entry: ModuleFederationEntry) {
-  const { url } = entry;
-  const scope: ModuleFederationFactoryScope = {};
-  loader.registerModule(url, remote);
-  populateKnownDependencies(url, scope, loader);
-  remote.init(scope);
-  extractSharedDependencies(url, scope, loader);
-  return remote;
+function registerRemote(federation: ModuleFederation, remote: RemoteDefinition, registeredRemotes: Map<string, string>) {
+  const existingEntry = registeredRemotes.get(remote.id);
+
+  if (existingEntry === remote.entry) {
+    return;
+  }
+
+  const remotes = [
+    {
+      name: remote.id,
+      entry: remote.entry,
+      ...(remote.type ? { type: remote.type } : {}),
+      ...(remote.entryGlobalName ? { entryGlobalName: remote.entryGlobalName } : {}),
+    },
+  ];
+
+  if (existingEntry) {
+    federation.registerRemotes(remotes, { force: true });
+  } else {
+    federation.registerRemotes(remotes);
+  }
+
+  registeredRemotes.set(remote.id, remote.entry);
+}
+
+const legacyExposePlugin: ModuleFederationRuntimePlugin = {
+  name: 'picard-legacy-exposes',
+  getModuleFactory({ expose, remoteEntryExports }) {
+    // attach the rejection handler synchronously; awaiting (or Promise.resolve) a non-native promise
+    // (e.g., from zone.js) attaches it only in a later microtask, which reports the rejection as unhandled
+    const factory: Promise<() => any> = remoteEntryExports.get(expose);
+    return factory.then(undefined, (error) => {
+      if (expose.startsWith('./') && error instanceof Error && error.message.includes('does not exist in container')) {
+        return remoteEntryExports.get(expose.substring(2));
+      }
+
+      throw error;
+    });
+  },
+};
+
+function findHostFederation(origin: ModuleFederation): ModuleFederation | undefined {
+  // e.g., the runtime of an application bundled with Module Federation (rspack, webpack, Vite)
+  const instances: Array<ModuleFederation> = (globalThis as any).__FEDERATION__?.__INSTANCES__ || [];
+  return instances.find((instance) => instance !== origin);
+}
+
+const sharedScopePlugin: ModuleFederationRuntimePlugin = {
+  name: 'picard-shared-scope',
+  beforeInitContainer(args) {
+    const { origin, remoteEntryInitOptions } = args;
+    const host = findHostFederation(origin);
+
+    if (!host) {
+      return args;
+    }
+
+    // a container can only be initialized with a single share scope, but the remotes
+    // of the page's application may also be used by Picard.js - so share its scope
+    const [scopeName = 'default'] = ([] as Array<string>).concat(remoteEntryInitOptions.shareScopeKeys);
+    const hostScope = (host.shareScopeMap[scopeName] ||= {});
+    const ownScope = origin.shareScopeMap[scopeName];
+
+    if (ownScope !== hostScope) {
+      // keep the shares registered by Picard.js
+      for (const [name, versions] of Object.entries(ownScope || {})) {
+        hostScope[name] = { ...versions, ...hostScope[name] };
+      }
+
+      origin.initShareScopeMap(scopeName, hostScope);
+    }
+
+    return { ...args, shareScope: hostScope };
+  },
+};
+
+function loadExposed(federation: ModuleFederation, loader: LoaderService, remote: RemoteDefinition, name: string) {
+  return federation.loadRemote(`${remote.id}/${name}`).then((module) => {
+    registerFederationShares(federation, loader);
+    return (module as any)?.default || module;
+  });
 }
 
 async function loadContainerV2(
+  federation: ModuleFederation,
   platform: PlatformService,
   loader: LoaderService,
+  registeredRemotes: Map<string, string>,
+  registeredShares: Set<string>,
   entry: ModuleFederationEntry,
 ): Promise<ComponentGetter> {
   const assets: Array<AssetDefinition> = [];
   const components: Array<ComponentDefinition> = [];
   const componentRefs: Record<string, { component: undefined | Promise<any> }> = {};
-  const manifest = await platform.loadJson<ModuleFederationManifestV2>(entry.url);
-  const { globalName, remoteEntry } = manifest.metaData;
-  const { name, type } = remoteEntry;
-  const remote = await loadRemoteEntryPoint(platform, getUrl(name, entry.url), type, globalName);
-  const container = await loadFactory(loader, remote, entry);
+  const remote = await loadRemote(platform, entry);
 
-  for (const item of manifest.exposes) {
+  registerPicardShares(federation, loader, remote.entry, registeredShares);
+  registerRemote(federation, remote, registeredRemotes);
+
+  for (const item of entry.exposes || []) {
     const name = item.name;
     components.push({ name });
     componentRefs[name] = { component: undefined };
@@ -120,7 +246,7 @@ async function loadContainerV2(
     for (const path of item.assets.css.sync) {
       assets.push({
         type: 'css',
-        url: getUrl(path, entry.url),
+        url: new URL(path, remote.assetBase).href,
       });
     }
   }
@@ -134,10 +260,7 @@ async function loadContainerV2(
       }
 
       if (!componentRef.component) {
-        componentRef.component = container
-          .get(name)
-          .then((factory) => factory())
-          .then((c) => c?.default || c);
+        componentRef.component = loadExposed(federation, loader, remote, name);
       }
 
       return await componentRef.component;
@@ -152,15 +275,18 @@ async function loadContainerV2(
 }
 
 async function loadContainerV1(
+  federation: ModuleFederation,
   platform: PlatformService,
   loader: LoaderService,
+  registeredRemotes: Map<string, string>,
+  registeredShares: Set<string>,
   entry: ModuleFederationEntry,
 ): Promise<ComponentGetter> {
   const componentRefs: Record<string, { component: undefined | Promise<any> }> = {};
-  const { id, url, type } = entry;
-  const varName = id.replace(/^@/, '').replace('/', '-').replace(/\-/g, '_');
-  const remote = await loadRemoteEntryPoint(platform, url, type, varName);
-  const container = await loadFactory(loader, remote, entry);
+  const remote = await loadRemote(platform, entry);
+
+  registerPicardShares(federation, loader, remote.entry, registeredShares);
+  registerRemote(federation, remote, registeredRemotes);
 
   return {
     async load(name) {
@@ -168,11 +294,14 @@ async function loadContainerV1(
 
       if (!componentRef) {
         componentRef = {
-          component: container
-            .get(name)
-            .then((factory) => factory())
-            .then((c) => c?.default || c)
-            .catch(() => undefined),
+          component: loadExposed(federation, loader, remote, name).catch((error) => {
+            // v1 containers cannot be inspected; probing for a module they do not expose is expected
+            if (!/does not exist in container/.test(error?.message)) {
+              console.error(`Failed to load federated module "${remote.id}/${name}".`, error);
+            }
+
+            return undefined;
+          }),
         };
 
         componentRefs[name] = componentRef;
@@ -189,25 +318,72 @@ async function loadContainerV1(
   };
 }
 
-function loadContainer(
-  platform: PlatformService,
-  loader: LoaderService,
-  entry: ModuleFederationEntry,
-): Promise<ComponentGetter> {
-  if (entry.id) {
-    return loadContainerV1(platform, loader, entry);
-  }
+function getRuntime(entry: ModuleFederationEntry) {
+  const runtime = entry.runtime;
 
-  return loadContainerV2(platform, loader, entry);
+  if (runtime) {
+    return runtime;
+  } else if (!entry.id || entry.url.endsWith('.json')) {
+    return '2.0';
+  } else {
+    return '1.0';
+  }
 }
 
-export function createModuleFederation(injector: DependencyInjector): ContainerService {
+function loadContainer(
+  federation: ModuleFederation,
+  platform: PlatformService,
+  loader: LoaderService,
+  registeredRemotes: Map<string, string>,
+  registeredShares: Set<string>,
+  entry: ModuleFederationEntry,
+): Promise<ComponentGetter> {
+  switch (getRuntime(entry)) {
+    case '2.0':
+      return loadContainerV2(federation, platform, loader, registeredRemotes, registeredShares, entry);
+    case '1.0':
+    case '1.5':
+    default:
+      return loadContainerV1(federation, platform, loader, registeredRemotes, registeredShares, entry);
+  }
+}
+
+export interface ModuleFederationService extends ContainerService {
+  /**
+   * Resolves the given version range of a package to an exact
+   * dependency ID using Module Federation's share negotiation.
+   */
+  resolvePackage(name: string, versionRange: string, parent?: string): Promise<string | undefined>;
+}
+
+export function createModuleFederation(injector: DependencyInjector): ModuleFederationService {
   const loader = injector.get('loader');
   const platform = injector.get('platform');
+  const federation = createInstance({ name: 'picard', remotes: [], plugins: [legacyExposePlugin, sharedScopePlugin] });
+  const registeredRemotes = new Map<string, string>();
+  const registeredShares = new Set<string>();
+
+  const resolvePackage = async (name: string, versionRange: string, parent?: string) => {
+    registerPicardShares(federation, loader, parent || '', registeredShares);
+    const { factory, version } = await loadFederationShare(federation, name, versionRange);
+
+    if (!factory || !version) {
+      return undefined;
+    }
+
+    const id = `${name}@${version}`;
+    loader.registerResolvers({
+      [id]: () => async () => factory(),
+    });
+    return id;
+  };
+
+  loader.setPackageResolver(resolvePackage);
 
   return {
     createContainer(entry: ModuleFederationEntry) {
-      return loadContainer(platform, loader, entry);
+      return loadContainer(federation, platform, loader, registeredRemotes, registeredShares, entry);
     },
+    resolvePackage,
   };
 }

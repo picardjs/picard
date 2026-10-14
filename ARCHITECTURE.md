@@ -30,6 +30,12 @@ Before running the tests you need to make sure Playwright is fully installed. Ru
 npx playwright install
 ```
 
+Performance is checked with Lighthouse against the server-rendered examples, which must score 100 in all categories. After building (`npm run build` and `examples/prepare-all.sh`) run:
+
+```sh
+npm run lighthouse
+```
+
 ## Basic Principles
 
 ### Directories
@@ -94,8 +100,22 @@ For CI/CD purposes we have three distinct workflows:
 
 The build workflow (1) has a dependency to the tests (2). If the tests are failing no build or package release step is run.
 
-In case that (1) was triggered on the `main` branch it will eventually release the packages on the JSR and npm registries. If that works out a Git tag is created and pushed to GitHub. Finally, using that tag the GitHub release (3) workflow is triggered.
+For pull requests targeting `develop` the tests (2) also run `npm run lighthouse`, which fails if any of the server-rendered examples scores below 100. The reports are uploaded as the `lighthouse-report` artifact.
+
+In case that (1) was triggered on the `main` branch it will eventually release the package to npm. If that works out a Git tag is created and pushed to GitHub. Finally, using that tag the GitHub release (3) workflow is triggered.
 
 Only the build workflow (1) is sensitive to the branch. The release parts are only triggered in the `main` and `develop` branches. In case of a pull request only the build part is run. The release part is divided into two areas; one for preview releases (`develop` branch) and one for full releases (`main` branch).
 
 A preview release is the full release without a Git tag or the "normal" version number. Instead, the version number is augmented with a preview segment - something like `-pre.15`. Therefore, a version such as `1.2.3` would look like `1.2.3-pre.15` when being processed as a preview release.
+
+## Runtime and Federation Loading
+
+`LoaderService` is the shared dependency registry used by the runtime variants. Picard owns a small `System.register` runtime in `src/common/loader/system.ts`, responsible for URL/resolver registration, dependency version matching, module linking, evaluation, and synchronous lookup of evaluated modules. Its supported module contract covers named/anonymous registration, relative dependencies, live export setters, `import`, and `get`; it is intentionally not a complete SystemJS replacement. Pilets use this contract directly. Module Federation container loading and share-scope negotiation use the bundled `@module-federation/runtime`; Picard's versioned modules are registered as runtime shares, and discovered MF shares are made available to other Picard formats through the loader. Native Federation continues to resolve manifest dependencies through the same loader while loading ESM files through the platform-specific ESM service.
+
+Module Federation remains the federation sharing mechanism, not the Pilet module execution engine: Picard's runtime handles registration and linking for pilets, while the MF runtime handles MF containers and share negotiation. Native Federation manifests are declarations of exposed modules and shared dependencies, not a separate Picard dependency runtime.
+
+Versioned package records retain their full ID together with separate package `name` and exact `version` fields, parsed once at registration. Scoped package names are supported; URL records and range aliases are not advertised as concrete package versions. Exact registered IDs stay in Picard's registry. An unresolved `name@range` request is delegated through `LoaderService` to Module Federation's `loadShare` and `satisfy` APIs; the selected exact `name@version` is then cached in Picard's registry so System.register setters, Pilets, and Native Federation continue using the same namespace. Dependency listing uses stored metadata rather than re-parsing registry keys.
+
+Concurrent imports share a module's evaluation promise. Circular dependency linking uses the existing namespace to avoid waiting on itself, and unchanged exports do not re-notify setters. The lazy browser ESM shim accesses the installed runtime through a type-only reference: value-importing the loader from this shim can cause esbuild to emit a shared chunk and turn the classic browser entry into an ESM script.
+
+The package emits a browser script, client ESM, Node CJS/ESM, and native ESM entrypoints. Keep `package.json` exports aligned with the formats actually produced by each `src/apps/*/app.json`; do not advertise a format that is not built. npm contents are restricted to `dist` and project documentation.

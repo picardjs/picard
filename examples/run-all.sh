@@ -44,5 +44,9 @@ cd 11-ssr-native-tractor
 npm start & # port is 8091
 cd ..
 
+cd 16-ssr-islands
+npm start & # port is 8096
+cd ..
+
 trap 'kill $(jobs -pr)' INT
 wait

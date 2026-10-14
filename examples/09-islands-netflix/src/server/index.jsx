@@ -1,8 +1,8 @@
+import React from 'react';
 import express from 'express';
 import cookieSession from 'cookie-session';
 import bodyParser from 'body-parser';
 import { AsyncLocalStorage } from 'async_hooks';
-import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { resolve } from 'path';
 import { initializePicard } from 'picard-js/node';
@@ -15,6 +15,9 @@ const context = new AsyncLocalStorage();
 const stores = {};
 const picard = initializePicard({
   feed: 'https://feed.dev.piral.cloud/api/v1/pilet/netflix-islands-demo',
+  scriptUrl: '/dist/picard.js',
+  fragmentUrl: '/fragment',
+  interactive: true,
   componentName: 'piral-component',
   slotName: 'piral-slot',
   partName: 'piral-part',
@@ -37,17 +40,13 @@ const picard = initializePicard({
             api.registerComponent(`page:${path}`, Component, meta);
           },
           getStore(name) {
-            return {
-              get() {
-                const store = stores[name];
-                const data = context.getStore();
-                return store(api, data).get();
-              },
-            };
+            const store = stores[name];
+            const { [name]: data } = context.getStore() || {};
+            return store(data);
           },
           setStore(name, loader) {
             loader().then((store) => {
-              stores[name] = store.default;
+              stores[name] = store.default.bind(undefined, api);
             });
           },
         });
@@ -73,16 +72,20 @@ app.use(
   }),
 );
 
-app.post('/', (req, res) => {
+app.post('/', async (req, res) => {
   const { store, item } = req.body;
   const handler = stores[store];
-  req.session.store = {
-    ...req.session.store,
-    [store]: item ? JSON.parse(item) : null,
-  };
 
-  const data = context.getStore();
-  return store(api, data).update(item);
+  await context.run(req.session.store, async () => {
+    const data = context.getStore();
+    const instance = handler(data);
+    await instance.update(JSON.parse(item));
+    req.session.store = {
+      ...req.session.store,
+      [store]: instance.get(),
+    };
+  });
+
   return res.redirect('/browse');
 });
 
@@ -104,7 +107,7 @@ app.get('*', async (req, res) => {
     const content = renderToString(<PageLayout route={route} />);
     return picard.decorate(content);
   });
-  res.send(html);
+  res.send(`<!DOCTYPE html>${html}`);
 });
 
 app.listen(port, () => {

@@ -52,7 +52,9 @@ export function createRouter(injector: DependencyInjector): RouterService {
       !e.ctrlKey && // open in new tab (windows)
       !e.altKey && // download
       !e.shiftKey &&
-      !e.defaultPrevented
+      !e.defaultPrevented &&
+      // only pages with client-side routing; otherwise the browser (or, e.g., Turbo) navigates
+      document.querySelector(routerSlot)
     ) {
       e.preventDefault();
       navigate(link.href, {});

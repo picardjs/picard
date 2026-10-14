@@ -3,6 +3,8 @@
   "platform": "browser",
   "minify": true,
   "entry": "index.ts",
-  "formats": ["cjs"],
+  "formats": ["esm"],
+  "extension": ".js",
+  "classic": true,
   "outDirs": ["browser"]
 }

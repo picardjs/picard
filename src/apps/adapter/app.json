@@ -1,8 +1,8 @@
 {
-  "name": "picard-ia",
+  "name": "picard",
   "platform": "browser",
-  "minify": true,
+  "minify": false,
   "entry": "index.ts",
-  "formats": ["cjs"],
-  "outDirs": ["node"]
+  "formats": ["esm"],
+  "outDirs": ["adapter"]
 }
